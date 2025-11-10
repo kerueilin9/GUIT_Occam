@@ -1,0 +1,41 @@
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Output files
+output/
+*.png
+*.txt
+
+# Logs and trajectories
+*.log
+logs/
+AgentOccam-Trajectories/
+
+# Custom config files
+config_files/custom_*.yml
+config_files/tasks/Custom*.json
+
+# Auth files
+.auth/
+
+# WebArena (if needed)
+webarena/

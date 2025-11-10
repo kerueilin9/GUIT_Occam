@@ -1,0 +1,16 @@
+{
+  "sites": ["test_site"],
+  "task_id": "my_test_task",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "https://www.google.com",
+  "geolocation": null,
+  "intent": "Search for 'Python programming' and click on the first result",
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match"],
+    "reference_answers": {
+      "fuzzy_match": "Python"
+    }
+  }
+}
