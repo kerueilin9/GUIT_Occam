@@ -126,7 +126,8 @@ def run():
                 "task_id": task_config['task_id'],
                 "model": config.agent.actor.model if hasattr(config.agent, "actor") else config.agent.model_name,
                 "type": config.agent.type,
-                "logfile": re.search(r"/([^/]+/[^/]+\.json)$", log_file).group(1),
+                # Use OS-independent path pieces for logfile (format: <logdir>/<filename>.json)
+                "logfile": os.path.join(os.path.basename(dstdir), os.path.basename(log_file)).replace('\\', '/'),
             }
             if status:
                 summary_data.update(status)

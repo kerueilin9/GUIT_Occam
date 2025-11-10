@@ -241,7 +241,9 @@ class TextObervationProcessor(ObservationProcessor):
         win_right_bound = win_left_bound + win_width
         win_lower_bound = win_top_bound + win_height
         device_pixel_ratio = page.evaluate("window.devicePixelRatio")
-        assert device_pixel_ratio == 1.0, "devicePixelRatio is not 1.0"
+        # Warning instead of assertion for high DPI displays (Windows scaling != 100%)
+        if device_pixel_ratio != 1.0:
+            print(f"Warning: devicePixelRatio is {device_pixel_ratio}, not 1.0. This may affect element positioning.")
 
         config: BrowserConfig = {
             "win_top_bound": win_top_bound,

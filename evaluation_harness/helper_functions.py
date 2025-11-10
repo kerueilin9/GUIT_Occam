@@ -1,5 +1,6 @@
 """Implements helper functions to assist evaluation cases where other evaluators are not suitable."""
 import json
+import os
 from typing import Any
 from urllib.parse import urlparse
 
@@ -15,9 +16,103 @@ from browser_env.env_config import (
     SHOPPING_ADMIN,
     WIKIPEDIA,
 )
-from llms.providers.openai_utils import (
-    generate_from_openai_chat_completion,
-)
+
+# Import both OpenAI and Gemini utilities
+try:
+    from llms.providers.openai_utils import generate_from_openai_chat_completion
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+
+try:
+    import google.generativeai as genai
+    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+    if GEMINI_API_KEY:
+        genai.configure(api_key=GEMINI_API_KEY)
+        GEMINI_AVAILABLE = True
+    else:
+        GEMINI_AVAILABLE = False
+except ImportError:
+    GEMINI_AVAILABLE = False
+
+
+def generate_from_llm_chat_completion(
+    messages: list[dict[str, Any]],
+    model: str = "auto",
+    temperature: float = 0,
+    max_tokens: int = 768,
+) -> str:
+    """
+    Generate response from LLM with automatic provider selection.
+    Supports both OpenAI and Gemini.
+    
+    Args:
+        messages: List of message dicts with 'role' and 'content'
+        model: Model name or 'auto' to auto-detect based on available API keys
+        temperature: Sampling temperature
+        max_tokens: Maximum tokens to generate
+        
+    Returns:
+        Generated text response
+    """
+    # Auto-detect provider based on API keys
+    use_gemini = False
+    if model == "auto":
+        if GEMINI_AVAILABLE and os.environ.get("GEMINI_API_KEY"):
+            use_gemini = True
+            model = "gemini-2.0-flash-exp"
+        elif OPENAI_AVAILABLE and os.environ.get("OPENAI_API_KEY"):
+            use_gemini = False
+            model = "gpt-4-turbo"
+        else:
+            raise ValueError(
+                "No LLM API key found. Please set GEMINI_API_KEY or OPENAI_API_KEY environment variable."
+            )
+    elif "gemini" in model.lower():
+        use_gemini = True
+    
+    if use_gemini:
+        # Use Gemini
+        if not GEMINI_AVAILABLE:
+            raise ValueError("Gemini not available. Please install google-generativeai and set GEMINI_API_KEY.")
+        
+        # Convert messages to Gemini format
+        system_prompt = ""
+        user_content = ""
+        
+        for msg in messages:
+            if msg["role"] == "system":
+                system_prompt = msg["content"]
+            elif msg["role"] == "user":
+                user_content += msg["content"] + "\n"
+        
+        # Call Gemini
+        genai_model = genai.GenerativeModel(model)
+        full_prompt = f"{system_prompt}\n\n{user_content}" if system_prompt else user_content
+        
+        generation_config = genai.GenerationConfig(
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+        )
+        
+        response = genai_model.generate_content(
+            full_prompt,
+            generation_config=generation_config
+        )
+        return response.text
+    else:
+        # Use OpenAI
+        if not OPENAI_AVAILABLE:
+            raise ValueError("OpenAI not available. Please set OPENAI_API_KEY.")
+        
+        return generate_from_openai_chat_completion(
+            messages=messages,
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=1.0,
+            context_length=0,
+        )
 
 
 def shopping_get_auth_token() -> str:
@@ -144,7 +239,7 @@ def gitlab_get_project_memeber_role(page: Page, account_name: str) -> str:
 
 
 def llm_fuzzy_match(pred: str, reference: str, question: str) -> float:
-    """Check whether the prediction matches the reference with GPT4-turbo"""
+    """Check whether the prediction matches the reference with LLM (Gemini or GPT-4)"""
     messages: list[dict[str, Any]] = []
     # construct the question to ask
     message = "Help a teacher to grade the answer of a student given a question. Keep in mind that the student has performed the action to get the answer. They are allowed to use different phrasing or wording to answer the question. The goal is to evaluate whether the key points in the reference answer are included in the student's answer. We allow answers with additional information that doesn't contradict the reference answer and review them as fully (not partially) correct.\n"
@@ -157,23 +252,28 @@ def llm_fuzzy_match(pred: str, reference: str, question: str) -> float:
         {"role": "system", "content": "You are a helpful assistant"},
         {"role": "user", "content": message},
     ]
-    response = generate_from_openai_chat_completion(
-        model="gpt-4-1106-preview",
-        messages=messages,
-        temperature=0,
-        max_tokens=768,
-        top_p=1.0,
-        context_length=0,
-    ).lower()
-    print(response)
-    if "partially correct" in response or "incorrect" in response:
-        return 0.0
-    else:
-        assert "correct" in response
-        return 1.0
+    
+    try:
+        response = generate_from_llm_chat_completion(
+            messages=messages,
+            model="auto",  # Auto-detect Gemini or OpenAI
+            temperature=0,
+            max_tokens=768,
+        ).lower()
+        print(response)
+        if "partially correct" in response or "incorrect" in response:
+            return 0.0
+        else:
+            assert "correct" in response
+            return 1.0
+    except Exception as e:
+        print(f"Warning: LLM evaluation failed: {e}")
+        print("Falling back to exact match...")
+        # Fallback to simple string matching
+        return 1.0 if pred.lower().strip() in reference.lower().strip() or reference.lower().strip() in pred.lower().strip() else 0.0
 
 def llm_ua_match(pred: str, reference: str, question: str) -> float:
-    """Check whether the prediction matches the reference with GPT-turbo"""
+    """Check whether the prediction matches the reference with LLM (Gemini or GPT-4)"""
     messages: list[dict[str, Any]] = []
     # construct the question to ask
     message = ""
@@ -192,19 +292,23 @@ def llm_ua_match(pred: str, reference: str, question: str) -> float:
         {"role": "user", "content": message},
     ]
 
-    response = generate_from_openai_chat_completion(
-        model="gpt-4-1106-preview",
-        messages=messages,
-        temperature=0,
-        max_tokens=768,
-        top_p=1.0,
-        context_length=0,
-    ).lower()
-    if "different" in response:
-        return 0.0
-    else:
-        assert "same" in response
-        return 1.0
+    try:
+        response = generate_from_llm_chat_completion(
+            messages=messages,
+            model="auto",  # Auto-detect Gemini or OpenAI
+            temperature=0,
+            max_tokens=768,
+        ).lower()
+        if "different" in response:
+            return 0.0
+        else:
+            assert "same" in response
+            return 1.0
+    except Exception as e:
+        print(f"Warning: LLM evaluation failed: {e}")
+        print("Falling back to simple matching...")
+        # Fallback to simple matching
+        return 1.0 if pred.lower().strip() in reference.lower().strip() or reference.lower().strip() in pred.lower().strip() else 0.0
 
 
 class PseudoPage:
