@@ -28,6 +28,12 @@ from evaluation_harness.helper_functions import (
     shopping_get_sku_latest_review_author,
     shopping_get_sku_latest_review_rating,
 )
+from evaluation_harness.gherkin_evaluator import evaluate_gherkin_criteria
+try:
+    # Import gherkin_to_objective to support configs that use Gherkin instead of intent
+    from AgentOccam.gherkin_parser import gherkin_to_objective
+except Exception:
+    gherkin_to_objective = None
 
 Trajectory = list[Union[Action, StateInfo]]
 
@@ -153,6 +159,13 @@ class StringEvaluator(Evaluator):
         pred = self.clean_answer(last_action["answer"])
 
         score = 1.0
+        # Determine intent: prefer explicit 'intent', else derive from 'gherkin' if available
+        intent = configs.get("intent", None)
+        if intent is None and "gherkin" in configs and gherkin_to_objective is not None:
+            try:
+                intent = gherkin_to_objective(configs["gherkin"])
+            except Exception:
+                intent = ""
         for approach, value in configs["eval"]["reference_answers"].items():
             match approach:
                 case "exact_match":
@@ -170,7 +183,9 @@ class StringEvaluator(Evaluator):
                     must_include_score /= len(value)
                     score *= must_include_score
                 case "fuzzy_match":
-                    intent = configs["intent"]
+                    # use previously resolved intent (may be from gherkin)
+                    if intent is None:
+                        raise KeyError("No 'intent' or 'gherkin' found in task config for fuzzy_match evaluation")
                     if value == "N/A":
                         # if the instruction only asks the model to generate N/A when encountering an unachievable task
                         # without more concrete reasons
@@ -179,9 +194,9 @@ class StringEvaluator(Evaluator):
                         # this should be the default as it will prevent false positive N/A`
                         if score != 1:
                             score = 1.0 * self.ua_match(
-                                intent=configs["intent"],
-                                ref=configs["eval"]["string_note"],
-                                pred=pred,
+                                configs["eval"]["string_note"],
+                                pred,
+                                intent
                             )
                     else:
                         if isinstance(value, list):
@@ -397,6 +412,37 @@ class EvaluatorComb:
         return score
 
 
+class GherkinCriteriaEvaluator(Evaluator):
+    """Evaluator for Gherkin acceptance criteria"""
+    
+    @beartype
+    def __call__(
+        self,
+        trajectory: Trajectory,
+        config_file: Path | str,
+        page: Page | PseudoPage | None = None,
+        client: CDPSession | None = None,
+    ) -> float:
+        with open(config_file, "r") as f:
+            configs = json.load(f)
+        
+        # Get acceptance criteria from config
+        acceptance_criteria = configs["eval"]["reference_answers"].get("gherkin_acceptance_criteria", [])
+        
+        if not acceptance_criteria or not page:
+            return 1.0  # No criteria or no page to evaluate
+        
+        # Evaluate using Gherkin evaluator
+        score = evaluate_gherkin_criteria(
+            acceptance_criteria=acceptance_criteria,
+            page=page,
+            trajectory=trajectory,
+            client=client
+        )
+        
+        return score
+
+
 @beartype
 def evaluator_router(config_file: Path | str) -> EvaluatorComb:
     """Router to get the evaluator class"""
@@ -413,6 +459,8 @@ def evaluator_router(config_file: Path | str) -> EvaluatorComb:
                 evaluators.append(URLEvaluator())
             case "program_html":
                 evaluators.append(HTMLContentEvaluator())
+            case "gherkin_criteria":
+                evaluators.append(GherkinCriteriaEvaluator())
             case _:
                 raise ValueError(f"eval_type {eval_type} is not supported")
 

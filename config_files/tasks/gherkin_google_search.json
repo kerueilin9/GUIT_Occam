@@ -1,0 +1,32 @@
+{
+  "sites": ["test_site"],
+  "task_id": "gherkin_google_search",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3001",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Owner management",
+    "scenario": "Add a new owner and verify via search",
+    "given": ["The owner database is empty"],
+    "when": [
+      "I add a new owner with First Name \"Emily\" and Last Name \"Johnson\"",
+      "I search for the owner by Last Name \"Johnson\""
+    ],
+    "then": [
+      "I should see the owner \"Emily Johnson\" in the search results",
+      "The owner's Last Name should be \"Johnson\""
+    ]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "I should see the owner \"Emily Johnson\" in the search results",
+      "gherkin_acceptance_criteria": [
+        "I should see the owner \"Emily Johnson\" in the search results",
+        "The owner's Last Name should be \"Johnson\""
+      ]
+    }
+  }
+}

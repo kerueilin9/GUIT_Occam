@@ -1,0 +1,125 @@
+logging: true
+verbose: 1
+debug: false
+logdir: "../AgentOccam-Trajectories"
+logname: "gherkin_test"
+max_steps: 15
+
+agent:
+  type: "AgentOccam"
+  others:
+    max_steps: 15
+    logname: "gherkin_test"
+    logging: true
+    verbose: 1
+    debug: false
+  actor:
+    debug: 0
+    verbose: 1
+    number: 1
+    model: "gemini-2.0-flash"
+    documented_interaction_elements:
+      [
+        "url",
+        "plan",
+        "reason",
+        "observation summary",
+        "retained element ids",
+        "observation highlight",
+      ]
+    online_interaction_elements: []
+    input:
+      [
+        "step",
+        "objective",
+        "previous plans",
+        "interaction history",
+        "current observation",
+      ]
+    interaction_history:
+      verbose: true
+      type: ["text"]
+      step_num: 3
+    current_observation:
+      type: ["text"]
+    output:
+      [
+        "interaction history summary",
+        "observation description",
+        "reason",
+        "action",
+        "observation highlight",
+      ]
+    planning_command: ["branch", "prune"]
+    navigation_command: ["click", "type", "stop", "note", "go_back"]
+    play:
+      [
+        "step",
+        "objective",
+        "previous plans",
+        "observation description",
+        "reason",
+        "action",
+      ]
+    trash:
+      ["objective", "step", "url", "instruction", "online input", "response"]
+  critic:
+    mode: false
+    debug: 0
+    verbose: 1
+    model: "gemini-2.0-flash"
+    character: "normal"
+    documented_interaction_elements: []
+    online_interaction_elements: []
+    input:
+      [
+        "objective",
+        "previous plans",
+        "interaction history",
+        "step",
+        "current observation",
+      ]
+    interaction_history:
+      verbose: true
+      type: ["text"]
+      step_num: "all"
+    current_observation:
+      type: ["text"]
+    output: ["observation description", "mistakes"]
+    trash: ["instruction", "online input", "response"]
+  judge:
+    mode: false
+    debug: 0
+    verbose: 1
+    model: "gemini-2.0-flash"
+    strict: false
+    documented_interaction_elements: []
+    online_interaction_elements: []
+    input:
+      [
+        "objective",
+        "previous plans",
+        "interaction history",
+        "step",
+        "current observation",
+        "action choices",
+      ]
+    interaction_history:
+      verbose: true
+      type: ["text"]
+      step_num: "all"
+    current_observation:
+      type: ["text"]
+    output:
+      ["plan progress assessment", "action assessment", "action selection"]
+    trash: ["instruction", "online input", "response"]
+
+env:
+  fullpage: true
+  prune: false
+  max_browser_rows: 300
+  headless: false
+  task_ids: ["gherkin_google_search"]
+  viewport_size:
+    width: 1280
+    height: 720

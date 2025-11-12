@@ -12,6 +12,7 @@ from AgentOccam.obs_opt import (
     prune_tree,
     translate_node_to_str,
 )
+from AgentOccam.gherkin_parser import parse_gherkin, gherkin_to_objective
 
 
 class WebArenaEnvironmentWrapper():
@@ -31,7 +32,22 @@ class WebArenaEnvironmentWrapper():
         
         self.obs, self.info = self.webarena_env.reset(options={"config_file": self.config_file})
         self.terminated = False
-        self.objective = self.config["intent"]
+        
+        # Support both traditional "intent" and Gherkin format
+        if "gherkin" in self.config:
+            # Parse Gherkin scenario to natural language objective
+            gherkin_scenario = parse_gherkin(self.config)
+            self.objective = gherkin_scenario.to_natural_language()
+            self.gherkin_scenario = gherkin_scenario
+            self.acceptance_criteria = gherkin_scenario.get_acceptance_criteria()
+        elif "intent" in self.config:
+            # Traditional intent format
+            self.objective = self.config["intent"]
+            self.gherkin_scenario = None
+            self.acceptance_criteria = []
+        else:
+            raise ValueError("Task config must contain either 'intent' or 'gherkin' field")
+        
         self.url = self.config["start_url"]
         self.max_browser_rows = max_browser_rows
         self.max_steps = max_steps
@@ -54,12 +70,20 @@ class WebArenaEnvironmentWrapper():
     def get_objective(self):
         return self.objective 
     
+    def get_gherkin_scenario(self):
+        """Get the original Gherkin scenario object if available"""
+        return self.gherkin_scenario
+    
+    def get_acceptance_criteria(self):
+        """Get acceptance criteria from Gherkin scenario"""
+        return self.acceptance_criteria
+    
     def get_sites(self):
         return self.config["sites"]
         
     def observation(self): 
         self.url = self.webarena_env.page.url
-        if self.global_config and self.global_config.env.prune:
+        if self.global_config and hasattr(self.global_config.env, 'prune') and self.global_config.env.prune:
             root_node = self.obs["text"][1]
             DOM_root_node = prune_tree(objective=self.objective, root_node=root_node, mode="node")
             DOM_str = translate_node_to_str(node=DOM_root_node, mode="concise")
