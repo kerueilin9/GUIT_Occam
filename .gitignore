@@ -37,5 +37,3 @@ config_files/tasks/Custom*.json
 # Auth files
 .auth/
 
-# WebArena (if needed)
-webarena/
