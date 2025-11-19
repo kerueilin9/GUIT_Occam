@@ -1,0 +1,33 @@
+{
+  "sites": ["test_site"],
+  "task_id": "petclinic_task5",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3001",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Owner management",
+    "scenario": "Edit Emily Johnson's address to new city1 and verify the change",
+    "given": ["Emily Johnson exists in the owner database"],
+    "when": [
+      "I search for the owner by Last Name \"Johnson\"",
+      "I select the owner \"Emily Johnson\"",
+      "I edit the owner's City to \"new city1\"",
+      "I save the changes"
+    ],
+    "then": [
+      "The owner's City should be \"new city1\"",
+      "I should see the updated City value displayed"
+    ]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "new city1",
+      "gherkin_acceptance_criteria": [
+        "The owner's City should be \"new city1\""
+      ]
+    }
+  }
+}

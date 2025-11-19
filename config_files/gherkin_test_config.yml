@@ -2,14 +2,14 @@ logging: true
 verbose: 1
 debug: false
 logdir: "../AgentOccam-Trajectories"
-logname: "gherkin_test"
-max_steps: 15
+logname: "spring_petclinic"
+max_steps: 20
 
 agent:
   type: "AgentOccam"
   others:
-    max_steps: 15
-    logname: "gherkin_test"
+    max_steps: 20
+    logname: "spring_petclinic"
     logging: true
     verbose: 1
     debug: false
@@ -119,7 +119,8 @@ env:
   prune: false
   max_browser_rows: 300
   headless: false
-  task_ids: ["gherkin_google_search"]
+  relative_task_dir: "spring-petclinic"
+  task_ids: ["task6"]
   viewport_size:
     width: 1280
     height: 720

@@ -1,0 +1,22 @@
+{
+  "sites": ["test_site"],
+  "task_id": "petclinic_task2",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3001",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Error page navigation",
+    "scenario": "Navigate to Error page and verify error message",
+    "given": ["I am on the homepage"],
+    "when": ["I navigate to the Error page"],
+    "then": ["I should see the text \"Something happened...\""]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Something happened"
+    }
+  }
+}

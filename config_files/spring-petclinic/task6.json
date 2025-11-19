@@ -1,0 +1,16 @@
+{
+  "sites": ["test_site"],
+  "task_id": "petclinic_task6",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3001",
+  "geolocation": null,
+  "intent": "Update the city of the owner 'Emily Johnson' to 'new city2'",
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match"],
+    "reference_answers": {
+      "fuzzy_match": "new city2"
+    }
+  }
+}

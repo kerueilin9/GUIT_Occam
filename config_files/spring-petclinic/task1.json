@@ -1,6 +1,6 @@
 {
   "sites": ["test_site"],
-  "task_id": "gherkin_google_search",
+  "task_id": "petclinic_task1",
   "require_login": false,
   "storage_state": null,
   "start_url": "http://localhost:3001",
