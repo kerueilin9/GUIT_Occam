@@ -23,16 +23,12 @@ venv/
 # Output files
 output/
 *.png
-*.txt
+/*.txt
 
 # Logs and trajectories
 *.log
 logs/
 AgentOccam-Trajectories/
-
-# Custom config files
-config_files/custom_*.yml
-config_files/tasks/Custom*.json
 
 # Auth files
 .auth/

@@ -1,0 +1,16 @@
+{
+  "sites": ["my_custom_app"],
+  "task_id": "CustomApp--1",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3001",
+  "geolocation": null,
+  "intent": "Find Veterinarians in this application, and then find Sharon Jenkins.",
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match"],
+    "reference_answers": {
+      "fuzzy_match": "find Sharon Jenkins"
+    }
+  }
+}
