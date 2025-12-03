@@ -328,7 +328,7 @@ IDENTITY_CLASS_MAP = {
 }
 
 class Actor(Agent):
-    def __init__(self, config, objective, prompt_template, plan_tree_node):
+    def __init__(self, config, objective, prompt_template, plan_tree_node, is_gherkin_task=False):
         super().__init__(config, objective, prompt_template)
         self.plan_tree_root = plan_tree_node
         self.active_node = plan_tree_node
@@ -336,6 +336,7 @@ class Actor(Agent):
         self.planning_specifications = None
         self.navigation_specifications = None
         self.criticism_element_list = None
+        self.is_gherkin_task = is_gherkin_task
 
         self.output_play_path = os.path.join(CURRENT_DIR, f"play-{self.config.others.logname}.txt") if getattr(self.config.others, "logname", "") != "" else os.path.join(CURRENT_DIR, f"play.txt")
         self.output_trash_path = os.path.join(CURRENT_DIR, f"trash-{self.config.others.logname}.txt") if getattr(self.config.others, "logname", "") != "" else os.path.join(CURRENT_DIR, f"trash.txt")
@@ -565,7 +566,20 @@ class Actor(Agent):
     def get_navigation_specifications(self):
         if self.navigation_specifications:
             return self.navigation_specifications
-        self.navigation_specifications = "\n".join(["- " + "".join(open(os.path.join(CURRENT_DIR, "AgentOccam", "prompts", "navigation_specifications", f"{n}.txt"), "r").readlines()) for n in self.config.navigation_command])
+        
+        specs = []
+        for n in self.config.navigation_command:
+            # Use stop_gherkin.txt for Gherkin tasks, stop.txt for others
+            if n == "stop" and self.is_gherkin_task:
+                file_name = "stop_gherkin.txt"
+            else:
+                file_name = f"{n}.txt"
+            
+            spec_path = os.path.join(CURRENT_DIR, "AgentOccam", "prompts", "navigation_specifications", file_name)
+            with open(spec_path, "r") as f:
+                specs.append("- " + "".join(f.readlines()))
+        
+        self.navigation_specifications = "\n".join(specs)
         return self.navigation_specifications
     
     def get_actor_instruction(self, examples=None):
@@ -1327,7 +1341,8 @@ class AgentOccam:
             config=self.config.actor,
             objective=self.objective,
             prompt_template=self.prompt_dict["actor"],
-            plan_tree_node=PlanTreeNode(id=0, type="branch", text=f"Find the solution to \"{self.objective}\"", level=0, url=self.online_url, step=0)
+            plan_tree_node=PlanTreeNode(id=0, type="branch", text=f"Find the solution to \"{self.objective}\"", level=0, url=self.online_url, step=0),
+            is_gherkin_task=getattr(self, 'is_gherkin_task', False)
         )
         with open(self.actor.output_trash_path, "w") as _:
             pass
@@ -1376,6 +1391,7 @@ class AgentOccam:
     def act(self, objective, env):
         self.objective = objective
         self.sites = env.get_sites()
+        self.is_gherkin_task = hasattr(env, 'gherkin_scenario') and env.gherkin_scenario is not None
         observation = env.observation()
         url = env.get_url()
         self.update_online_state(url=url, observation=observation)

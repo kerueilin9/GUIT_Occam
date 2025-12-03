@@ -1,0 +1,30 @@
+{
+  "sites": ["test_site"],
+  "task_id": "petclinic_task09",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3001",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Pet management",
+    "scenario": "Add a new pet for Emily Johnson with name new dog and type dog",
+    "given": ["Emily Johnson exists in the owner database"],
+    "when": [
+      "I search for the owner by Last Name \"Johnson\"",
+      "I select the owner \"Emily Johnson\"",
+      "I add a new pet with name \"new dog\" and type \"dog\"",
+      "I fill in the birth date with year \"2020\", month \"01\", and day \"15\" separately"
+    ],
+    "then": [
+      "The pet should be added successfully",
+      "I should see a pet with name \"new dog\" and type \"dog\" for Emily Johnson"
+    ]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match"],
+    "reference_answers": {
+      "fuzzy_match": "new dog"
+    }
+  }
+}

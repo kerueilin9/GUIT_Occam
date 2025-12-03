@@ -1,0 +1,30 @@
+{
+  "sites": ["test_site"],
+  "task_id": "petclinic_task10",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3001",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Visit management",
+    "scenario": "Add a visit for Emily Johnson's pet new dog",
+    "given": ["Emily Johnson has a pet named \"new dog\" in the database"],
+    "when": [
+      "I search for the owner by Last Name \"Johnson\"",
+      "I select the owner \"Emily Johnson\"",
+      "I select the pet \"new dog\"",
+      "I add a visit with description \"test\""
+    ],
+    "then": [
+      "The visit should be added successfully",
+      "I should see a visit with description \"test\""
+    ]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match"],
+    "reference_answers": {
+      "fuzzy_match": "test"
+    }
+  }
+}

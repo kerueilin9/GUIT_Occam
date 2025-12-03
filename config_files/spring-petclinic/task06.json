@@ -1,0 +1,29 @@
+{
+  "sites": ["test_site"],
+  "task_id": "petclinic_task06",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3001",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Pet management",
+    "scenario": "Add a new pet for Emily Johnson with type cat",
+    "given": ["Emily Johnson exists in the owner database"],
+    "when": [
+      "I search for the owner by Last Name \"Johnson\"",
+      "I select the owner \"Emily Johnson\"",
+      "I add a new pet with type \"cat\""
+    ],
+    "then": [
+      "The pet should be added successfully",
+      "I should see a pet with type \"cat\" for Emily Johnson"
+    ]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match"],
+    "reference_answers": {
+      "fuzzy_match": "cat"
+    }
+  }
+}

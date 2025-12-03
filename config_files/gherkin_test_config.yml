@@ -3,7 +3,7 @@ verbose: 1
 debug: false
 logdir: "../AgentOccam-Trajectories"
 logname: "spring_petclinic"
-max_steps: 20
+max_steps: 30
 
 agent:
   type: "AgentOccam"
@@ -120,7 +120,7 @@ env:
   max_browser_rows: 300
   headless: false
   relative_task_dir: "spring-petclinic"
-  task_ids: ["task6"]
+  task_ids: ["task10"]
   viewport_size:
     width: 1280
     height: 720

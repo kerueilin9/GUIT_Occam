@@ -1,24 +1,27 @@
 {
   "sites": ["test_site"],
-  "task_id": "petclinic_task3",
+  "task_id": "petclinic_task04",
   "require_login": false,
   "storage_state": null,
   "start_url": "http://localhost:3001",
   "geolocation": null,
   "gherkin": {
     "feature": "Veterinarians page navigation",
-    "scenario": "Navigate to Veterinarians page and find James Carter",
+    "scenario": "Navigate to Veterinarians page second page and find Sharon Jenkins",
     "given": ["I am on the homepage"],
-    "when": ["I navigate to the Veterinarians page"],
-    "then": ["I should see \"James Carter\" in the veterinarians list"]
+    "when": [
+      "I navigate to the Veterinarians page",
+      "I go to the second page of the veterinarians list"
+    ],
+    "then": ["I should see \"Sharon Jenkins\" in the veterinarians list"]
   },
   "require_reset": false,
   "eval": {
     "eval_types": ["string_match", "gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "James Carter",
+      "fuzzy_match": "Sharon Jenkins",
       "gherkin_acceptance_criteria": [
-        "I should see \"James Carter\" in the veterinarians list"
+        "I should see \"Sharon Jenkins\" in the veterinarians list"
       ]
     }
   }

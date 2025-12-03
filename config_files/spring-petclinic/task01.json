@@ -1,6 +1,6 @@
 {
   "sites": ["test_site"],
-  "task_id": "petclinic_task1",
+  "task_id": "petclinic_task01",
   "require_login": false,
   "storage_state": null,
   "start_url": "http://localhost:3001",

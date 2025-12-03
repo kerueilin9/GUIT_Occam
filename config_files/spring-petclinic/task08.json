@@ -1,0 +1,30 @@
+{
+  "sites": ["test_site"],
+  "task_id": "petclinic_task08",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3001",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Pet management",
+    "scenario": "Edit Emily Johnson's pet birthday to 2020/01/01",
+    "given": ["Emily Johnson has a pet in the database"],
+    "when": [
+      "I search for the owner by Last Name \"Johnson\"",
+      "I select the owner \"Emily Johnson\"",
+      "I edit the pet's birthday to \"2020/01/01\"",
+      "I save the changes"
+    ],
+    "then": [
+      "The pet birthday should be updated to \"2020/01/01\"",
+      "I should see the pet birthday \"2020/01/01\" displayed"
+    ]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match"],
+    "reference_answers": {
+      "fuzzy_match": "2020/01/01"
+    }
+  }
+}

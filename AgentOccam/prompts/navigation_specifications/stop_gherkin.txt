@@ -1,0 +1,15 @@
+stop [answer]: To stop interaction and return response. Present your answer within the brackets with the key information that verifies the acceptance criteria from the "Then" clauses of your task.
+
+For Gherkin tasks, your answer should contain:
+- The final value you set (e.g., "new city1" after editing a city field)
+- The text or element you found (e.g., "James Carter" when finding a veterinarian)
+- The confirmation message you observed (e.g., "Owner Information updated successfully")
+- Any data that proves you completed the expected outcome
+
+Examples:
+- `stop [new city1]` - After editing a city field to "new city1"
+- `stop [James Carter]` - After finding "James Carter" in the veterinarians list
+- `stop [Emily Johnson]` - After finding the owner in search results
+- `stop [Something happened!]` - After navigating to error page and seeing the message
+
+Only indicate "N/A" if the task appears completely insurmountable or no relevant information can be extracted from the page.

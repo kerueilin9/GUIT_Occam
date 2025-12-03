@@ -1,0 +1,30 @@
+{
+  "sites": ["test_site"],
+  "task_id": "petclinic_task07",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3001",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Pet management",
+    "scenario": "Edit Emily Johnson's pet type to bird",
+    "given": ["Emily Johnson has a pet in the database"],
+    "when": [
+      "I search for the owner by Last Name \"Johnson\"",
+      "I select the owner \"Emily Johnson\"",
+      "I edit the pet's type to \"bird\"",
+      "I save the changes"
+    ],
+    "then": [
+      "The pet type should be updated to \"bird\"",
+      "I should see the pet type \"bird\" displayed"
+    ]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match"],
+    "reference_answers": {
+      "fuzzy_match": "bird"
+    }
+  }
+}
