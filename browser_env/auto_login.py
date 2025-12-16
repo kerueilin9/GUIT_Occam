@@ -18,21 +18,23 @@ from browser_env.env_config import (
     REDDIT,
     SHOPPING,
     SHOPPING_ADMIN,
+    TIMEOFF,
 )
 
 HEADLESS = True
 SLOW_MO = 0
 
 
-SITES = ["gitlab", "shopping", "shopping_admin", "reddit"]
+SITES = ["gitlab", "shopping", "shopping_admin", "reddit", "timeoff"]
 URLS = [
     f"{GITLAB}/-/profile",
     f"{SHOPPING}/wishlist/",
     f"{SHOPPING_ADMIN}/dashboard",
     f"{REDDIT}/user/{ACCOUNTS['reddit']['username']}/account",
+    f"{TIMEOFF}/",
 ]
-EXACT_MATCH = [True, True, True, True]
-KEYWORDS = ["", "", "Dashboard", "Delete"]
+EXACT_MATCH = [True, True, True, True, False]
+KEYWORDS = ["", "", "Dashboard", "Delete", ""]
 
 
 def is_expired(
@@ -44,14 +46,17 @@ def is_expired(
 
     context_manager = sync_playwright()
     playwright = context_manager.__enter__()
-    browser = playwright.chromium.launch(headless=True, slow_mo=SLOW_MO)
-    context = browser.new_context(storage_state=storage_state)
-    page = context.new_page()
-    page.goto(url)
-    time.sleep(1)
-    d_url = page.url
-    content = page.content()
-    context_manager.__exit__()
+    try:
+        browser = playwright.chromium.launch(headless=True, slow_mo=SLOW_MO)
+        context = browser.new_context(storage_state=storage_state)
+        page = context.new_page()
+        page.goto(url)
+        time.sleep(1)
+        d_url = page.url
+        content = page.content()
+    finally:
+        context_manager.__exit__(None, None, None)
+    
     if keyword:
         return keyword not in content
     else:
@@ -65,11 +70,69 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
     for c in comb:
         context_manager = sync_playwright()
         playwright = context_manager.__enter__()
+        try:
+            browser = playwright.chromium.launch(headless=HEADLESS)
+            context = browser.new_context()
+            page = context.new_page()
+
+            if c == "shopping":
+                username = ACCOUNTS["shopping"]["username"]
+                password = ACCOUNTS["shopping"]["password"]
+                page.goto(f"{SHOPPING}/customer/account/login/")
+                page.get_by_label("Email", exact=True).fill(username)
+                page.get_by_label("Password", exact=True).fill(password)
+                page.get_by_role("button", name="Sign In").click()
+
+            if c == "reddit":
+                username = ACCOUNTS["reddit"]["username"]
+                password = ACCOUNTS["reddit"]["password"]
+                page.goto(f"{REDDIT}/login")
+                page.get_by_label("Username").fill(username)
+                page.get_by_label("Password").fill(password)
+                page.get_by_role("button", name="Log in").click()
+
+            if c == "shopping_admin":
+                username = ACCOUNTS["shopping_admin"]["username"]
+                password = ACCOUNTS["shopping_admin"]["password"]
+                page.goto(f"{SHOPPING_ADMIN}")
+                page.get_by_placeholder("user name").fill(username)
+                page.get_by_placeholder("password").fill(password)
+                page.get_by_role("button", name="Sign in").click()
+
+            if c == "gitlab":
+                username = ACCOUNTS["gitlab"]["username"]
+                password = ACCOUNTS["gitlab"]["password"]
+                page.goto(f"{GITLAB}/users/sign_in")
+                page.screenshot(path="debug.png")
+                page.get_by_test_id("username-field").click()
+                page.get_by_test_id("username-field").fill(username)
+                page.get_by_test_id("username-field").press("Tab")
+                page.get_by_test_id("password-field").fill(password)
+                page.get_by_test_id("sign-in-button").click()
+
+            if c == "timeoff":
+                username = ACCOUNTS["timeoff"]["username"]
+                password = ACCOUNTS["timeoff"]["password"]
+                page.goto(f"{TIMEOFF}/login/")
+                page.wait_for_timeout(1000)
+                page.fill('input[name="username"]', username)
+                page.fill('input[name="password"]', password)
+                page.click('button[type="submit"]:has-text("Login")')
+                page.wait_for_timeout(2000)
+
+            context.storage_state(path=f"{auth_folder}/{c}_state.json")
+        finally:
+            context_manager.__exit__(None, None, None)
+    
+    # Create combined cookie for multiple sites
+    context_manager = sync_playwright()
+    playwright = context_manager.__enter__()
+    try:
         browser = playwright.chromium.launch(headless=HEADLESS)
         context = browser.new_context()
         page = context.new_page()
 
-        if c == "shopping":
+        if "shopping" in comb:
             username = ACCOUNTS["shopping"]["username"]
             password = ACCOUNTS["shopping"]["password"]
             page.goto(f"{SHOPPING}/customer/account/login/")
@@ -77,7 +140,7 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
             page.get_by_label("Password", exact=True).fill(password)
             page.get_by_role("button", name="Sign In").click()
 
-        if c == "reddit":
+        if "reddit" in comb:
             username = ACCOUNTS["reddit"]["username"]
             password = ACCOUNTS["reddit"]["password"]
             page.goto(f"{REDDIT}/login")
@@ -85,7 +148,7 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
             page.get_by_label("Password").fill(password)
             page.get_by_role("button", name="Log in").click()
 
-        if c == "shopping_admin":
+        if "shopping_admin" in comb:
             username = ACCOUNTS["shopping_admin"]["username"]
             password = ACCOUNTS["shopping_admin"]["password"]
             page.goto(f"{SHOPPING_ADMIN}")
@@ -93,63 +156,29 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
             page.get_by_placeholder("password").fill(password)
             page.get_by_role("button", name="Sign in").click()
 
-        if c == "gitlab":
+        if "gitlab" in comb:
             username = ACCOUNTS["gitlab"]["username"]
             password = ACCOUNTS["gitlab"]["password"]
             page.goto(f"{GITLAB}/users/sign_in")
-            page.screenshot(path="debug.png")
             page.get_by_test_id("username-field").click()
             page.get_by_test_id("username-field").fill(username)
             page.get_by_test_id("username-field").press("Tab")
             page.get_by_test_id("password-field").fill(password)
             page.get_by_test_id("sign-in-button").click()
 
-        context.storage_state(path=f"{auth_folder}/{c}_state.json")
+        if "timeoff" in comb:
+            username = ACCOUNTS["timeoff"]["username"]
+            password = ACCOUNTS["timeoff"]["password"]
+            page.goto(f"{TIMEOFF}/login/")
+            page.wait_for_timeout(1000)
+            page.fill('input[name="username"]', username)
+            page.fill('input[name="password"]', password)
+            page.click('button[type="submit"]:has-text("Login")')
+            page.wait_for_timeout(2000)
 
-        context_manager.__exit__()
-    context_manager = sync_playwright()
-    playwright = context_manager.__enter__()
-    browser = playwright.chromium.launch(headless=HEADLESS)
-    context = browser.new_context()
-    page = context.new_page()
-
-    if "shopping" in comb:
-        username = ACCOUNTS["shopping"]["username"]
-        password = ACCOUNTS["shopping"]["password"]
-        page.goto(f"{SHOPPING}/customer/account/login/")
-        page.get_by_label("Email", exact=True).fill(username)
-        page.get_by_label("Password", exact=True).fill(password)
-        page.get_by_role("button", name="Sign In").click()
-
-    if "reddit" in comb:
-        username = ACCOUNTS["reddit"]["username"]
-        password = ACCOUNTS["reddit"]["password"]
-        page.goto(f"{REDDIT}/login")
-        page.get_by_label("Username").fill(username)
-        page.get_by_label("Password").fill(password)
-        page.get_by_role("button", name="Log in").click()
-
-    if "shopping_admin" in comb:
-        username = ACCOUNTS["shopping_admin"]["username"]
-        password = ACCOUNTS["shopping_admin"]["password"]
-        page.goto(f"{SHOPPING_ADMIN}")
-        page.get_by_placeholder("user name").fill(username)
-        page.get_by_placeholder("password").fill(password)
-        page.get_by_role("button", name="Sign in").click()
-
-    if "gitlab" in comb:
-        username = ACCOUNTS["gitlab"]["username"]
-        password = ACCOUNTS["gitlab"]["password"]
-        page.goto(f"{GITLAB}/users/sign_in")
-        page.get_by_test_id("username-field").click()
-        page.get_by_test_id("username-field").fill(username)
-        page.get_by_test_id("username-field").press("Tab")
-        page.get_by_test_id("password-field").fill(password)
-        page.get_by_test_id("sign-in-button").click()
-
-    context.storage_state(path=f"{auth_folder}/{'.'.join(comb)}_state.json")
-
-    context_manager.__exit__()
+        context.storage_state(path=f"{auth_folder}/{'.'.join(comb)}_state.json")
+    finally:
+        context_manager.__exit__(None, None, None)
 
 
 def get_site_comb_from_filepath(file_path: str) -> list[str]:

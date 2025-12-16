@@ -630,25 +630,25 @@ class Actor(Agent):
         }
 
         if self.config.others.verbose > 0 and self.config.verbose > 0:
-            with open(self.output_trash_path, "a") as af:
+            with open(self.output_trash_path, "a", encoding="utf-8") as af:
                 af.write("-"*32+"ACTOR"+"-"*32+"\n")
             for t in self.config.trash:
                 content = VERBOSE_TO_CONTENT_MAP.get(t, "")
-                with open(self.output_trash_path, "a") as af:
+                with open(self.output_trash_path, "a", encoding="utf-8") as af:
                     af.write(f"{t.upper()}:\n{content}\n\n")
-            with open(self.output_play_path, "w") as _:
+            with open(self.output_play_path, "w", encoding="utf-8") as _:
                 pass
             for p in other_play_keys:
                 content = VERBOSE_TO_CONTENT_MAP.get(p, "")
-                with open(self.output_play_path, "a") as af:
+                with open(self.output_play_path, "a", encoding="utf-8") as af:
                     af.write(f"{p.upper()}:\n{content}\n\n")
             for i, action_elements in enumerate(action_element_list):
                 if len(action_element_list) > 1:
-                    with open(self.output_play_path, "a") as af:
+                    with open(self.output_play_path, "a", encoding="utf-8") as af:
                         af.write("-"*32+f"AGENT {i}"+"-"*32+"\n")
                 for action_element_key in action_element_keys:
                     content = action_elements.get(action_element_key, "N/A")
-                    with open(self.output_play_path, "a") as af:
+                    with open(self.output_play_path, "a", encoding="utf-8") as af:
                         af.write(f"{action_element_key.upper()}:\n{content}\n\n")
     
     def parse_plan(self, planning):
