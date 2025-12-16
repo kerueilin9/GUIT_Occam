@@ -81,6 +81,7 @@ class WebArenaEnvironmentWrapper():
     def get_sites(self):
         return self.config["sites"]
         
+    # 觀察
     def observation(self): 
         self.url = self.webarena_env.page.url
         if self.global_config and hasattr(self.global_config.env, 'prune') and self.global_config.env.prune:

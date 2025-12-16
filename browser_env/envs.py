@@ -285,6 +285,7 @@ class ScriptBrowserEnv(Env[dict[str, Observation], Action]):
         )
         return msg
 
+    # 修改頁面(標記元素)
     def modify_page(self):
         self.page.wait_for_timeout(500)
         try:

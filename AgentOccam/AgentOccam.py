@@ -1334,7 +1334,7 @@ class AgentOccam:
             return self.online_observation
     
     def init_actor(self):
-        self.config.actor.others = self.config.others
+        self.config.actor.others = self.config.others ## pass others config to actor
         if len(self.sites) > 1:
             self.config.actor.navigation_command += ["go_home"]
         self.actor = Actor(
