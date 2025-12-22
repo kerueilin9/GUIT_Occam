@@ -1,26 +1,29 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task02",
+  "task_id": "timeoff_task11",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3100",
   "geolocation": null,
   "gherkin": {
-    "feature": "TimeOff Navigation",
-    "scenario": "Navigate to Employee calendar",
+    "feature": "TimeOff User Authentication",
+    "scenario": "User logout",
     "given": ["I am logged in as an employee"],
-    "when": ["I click on Calendar in the head bar"],
-    "then": ["The page should navigate to Employee calendar"]
+    "when": ["I click on the user menu", "I click on the logout button"],
+    "then": [
+      "I should be redirected to the login page",
+      "The login form should be visible"
+    ]
   },
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
     "eval_types": ["string_match", "gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "Employee calendar",
+      "fuzzy_match": "login",
       "gherkin_acceptance_criteria": [
-        "The page should display Employee calendar",
-        "The current URL should contain \"/calendar\""
+        "The login form should be visible",
+        "The current URL should contain \"/login\""
       ]
     }
   }

@@ -1,15 +1,15 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task02",
+  "task_id": "timeoff_task05",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3100",
   "geolocation": null,
   "gherkin": {
     "feature": "TimeOff Navigation",
-    "scenario": "Navigate to Employee calendar",
+    "scenario": "Navigate to Employee calendar from TimeOff.Management",
     "given": ["I am logged in as an employee"],
-    "when": ["I click on Calendar in the head bar"],
+    "when": ["I click on TimeOff.Management in the head bar"],
     "then": ["The page should navigate to Employee calendar"]
   },
   "intent_template_id": 0,

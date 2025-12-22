@@ -1,33 +1,31 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task01",
+  "task_id": "timeoff_task06",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3100",
   "geolocation": null,
   "gherkin": {
     "feature": "TimeOff Leave Request",
-    "scenario": "Submit a new leave request",
+    "scenario": "Submit a new absence request",
     "given": ["I am logged in as an employee"],
     "when": [
-      "I navigate to the leave request page",
-      "I set start date as \"2025-01-15\"",
-      "I set end date as \"2025-01-17\"",
-      "I submit the leave request"
+      "I navigate to the new absence page",
+      "I fill in the absence request form",
+      "I add comment \"test\"",
+      "I submit the new absence"
     ],
     "then": [
-      "The leave request should be created successfully",
-      "The status should show as \"Pending\""
+      "The message \"New leave request was added\" should appear on the screen"
     ]
   },
-  "intent_template_id": 0,
   "require_reset": false,
   "eval": {
     "eval_types": ["string_match", "gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "new city1",
+      "fuzzy_match": "New leave request was added",
       "gherkin_acceptance_criteria": [
-        "The owner's City should be \"new city1\""
+        "The message \"New leave request was added\" should be visible on the page"
       ]
     }
   }

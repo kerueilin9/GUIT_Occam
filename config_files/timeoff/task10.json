@@ -1,0 +1,23 @@
+{
+  "sites": ["timeoff"],
+  "task_id": "timeoff_task10",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3100",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "TimeOff Navigation",
+    "scenario": "Navigate to My feeds from user menu",
+    "given": ["I am logged in as an employee"],
+    "when": ["I click on the user menu", "I click on Feeds"],
+    "then": ["The page should navigate to My feeds"]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "My feeds",
+      "gherkin_acceptance_criteria": ["The page should display My feeds"]
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "sites": ["timeoff"],
+  "task_id": "timeoff_task08",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3100",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "TimeOff Staff Management",
+    "scenario": "Update Vector Crawler Staff information",
+    "given": ["I am logged in as an admin"],
+    "when": [
+      "I navigate to the Vector Crawler Staff's profile page",
+      "I change the first name to \"Ke\"",
+      "I change the last name to \"rueilin\"",
+      "I save the changes"
+    ],
+    "then": [
+      "The message \"Details for Ke rueilin were updated\" should appear on the screen"
+    ]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Details for Ke rueilin were updated",
+      "gherkin_acceptance_criteria": [
+        "The message \"Details for Ke rueilin were updated\" should be visible on the page"
+      ]
+    }
+  }
+}
