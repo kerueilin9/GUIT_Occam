@@ -17,7 +17,7 @@ agent:
     debug: 0
     verbose: 1
     number: 1
-    model: "gemini-2.5-flash"
+    model: "adk-gemini-2.5-flash"
     documented_interaction_elements:
       [
         "url",
@@ -67,7 +67,7 @@ agent:
     mode: false
     debug: 0
     verbose: 1
-    model: "gemini-2.5-flash"
+    model: "adk-gemini-2.5-flash"
     character: "normal"
     documented_interaction_elements: []
     online_interaction_elements: []
@@ -91,7 +91,7 @@ agent:
     mode: false
     debug: 0
     verbose: 1
-    model: "gemini-2.5-flash"
+    model: "adk-gemini-2.5-flash"
     strict: false
     documented_interaction_elements: []
     online_interaction_elements: []
@@ -120,7 +120,7 @@ env:
   max_browser_rows: 300
   headless: false
   relative_task_dir: "timeoff"
-  task_ids: ["all"]
+  task_ids: ["task12", "task13", "task14"]
   viewport_size:
     width: 1280
     height: 720

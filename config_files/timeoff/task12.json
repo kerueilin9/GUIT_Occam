@@ -1,0 +1,36 @@
+{
+  "sites": ["timeoff"],
+  "task_id": "timeoff_task12",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3100",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "TimeOff Company Settings Management",
+    "scenario": "Update company general settings",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+      "I navigate to General settings",
+      "I change the Company name to \"ker\"",
+      "I change the Country to \"CN\"",
+      "I save the settings"
+    ],
+    "then": [
+      "I should see a success message \"Company was successfully updated\"",
+      "The company settings should be saved"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Company was successfully updated",
+      "gherkin_acceptance_criteria": [
+        "The page should display \"Company was successfully updated\"",
+        "The Company name should be \"ker\"",
+        "The Country should be \"CN\""
+      ]
+    }
+  }
+}

@@ -6,6 +6,7 @@ from AgentOccam.llms.llama import call_llama, call_llama_with_messages, arrange_
 from AgentOccam.llms.titan import call_titan, call_titan_with_messages, arrange_message_for_titan
 from AgentOccam.llms.gpt import call_gpt, call_gpt_with_messages, arrange_message_for_gpt
 from AgentOccam.llms.gemini import call_gemini, call_gemini_with_messages, arrange_message_for_gemini
+from AgentOccam.llms.adk import call_adk, call_adk_with_messages, arrange_message_for_adk
 from AgentOccam.utils import CURRENT_DIR, HOMEPAGE_URL
 
 from typing import Dict
@@ -22,7 +23,7 @@ warnings.filterwarnings("ignore")
 
 DEFAULT_DOCUMENTED_INTERACTION_ELEMENTS = ["observation", "action"]
 DEFAULT_ONLINE_INTERACTION_ELEMENTS = ["url", "observation"]
-MODEL_FAMILIES = ["claude", "mistral", "cohere", "llama", "titan", "gpt", "gemini"]
+MODEL_FAMILIES = ["claude", "mistral", "cohere", "llama", "titan", "gpt", "adk", "gemini"]
 CALL_MODEL_MAP = {
     "claude": call_claude,
     "mistral": call_mistral,
@@ -31,6 +32,7 @@ CALL_MODEL_MAP = {
     "titan": call_titan,
     "gpt": call_gpt,
     "gemini": call_gemini,
+    "adk": call_adk,
 }
 CALL_MODEL_WITH_MESSAGES_FUNCTION_MAP = {
     "claude": call_claude_with_messages,
@@ -40,6 +42,7 @@ CALL_MODEL_WITH_MESSAGES_FUNCTION_MAP = {
     "titan": call_titan_with_messages,
     "gpt": call_gpt_with_messages,
     "gemini": call_gemini_with_messages,
+    "adk": call_adk_with_messages,
 }
 ARRANGE_MESSAGE_FOR_MODEL_MAP = {
     "claude": arrange_message_for_claude,
@@ -49,6 +52,7 @@ ARRANGE_MESSAGE_FOR_MODEL_MAP = {
     "titan": arrange_message_for_titan,
     "gpt": arrange_message_for_gpt,
     "gemini": arrange_message_for_gemini,
+    "adk": arrange_message_for_adk,
 }
 
 class Agent:

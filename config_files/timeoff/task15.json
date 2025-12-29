@@ -1,0 +1,39 @@
+{
+  "sites": ["timeoff"],
+  "task_id": "timeoff_task15",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3100",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "TimeOff Leave Types Management",
+    "scenario": "Add a new leave type with allowance",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+      "I navigate to General settings",
+      "I go to the Leave Types section",
+      "I add a new leave type with Name \"test\"",
+      "I check the \"Use allowance\" checkbox",
+      "I select red color",
+      "I set the Limit to \"5\"",
+      "I save the leave type"
+    ],
+    "then": [
+      "I should see a success message \"Changes to leave types were saved\"",
+      "The leave type \"test\" should be in the list with red color"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Changes to leave types were saved",
+      "gherkin_acceptance_criteria": [
+        "The page should display \"Changes to leave types were saved\"",
+        "The leave type \"test\" should be visible in the leave types list",
+        "The leave type should have allowance enabled with limit 5"
+      ]
+    }
+  }
+}
