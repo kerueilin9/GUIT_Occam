@@ -12,8 +12,10 @@
     "when": [
       "I navigate to the new absence page",
       "I select leave type as \"Sick Leave\"",
-      "I set From as \"Morning\"",
-      "I set To as \"Afternoon\"",
+      "I select From date as \"2025/12/01\"",
+      "I select From as \"Morning\"",
+      "I select To date as \"2025/12/01\"",
+      "I select To as \"Afternoon\"",
       "I add comment \"test\"",
       "I submit the new absence"
     ],

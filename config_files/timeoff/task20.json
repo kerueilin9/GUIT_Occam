@@ -1,0 +1,35 @@
+{
+  "sites": ["timeoff"],
+  "task_id": "timeoff_task20",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3100",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "TimeOff Integration API Management",
+    "scenario": "Regenerate API token",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+      "I navigate to the Integration API page",
+      "I click to regenerate the token",
+      "I save the settings"
+    ],
+    "then": [
+      "The page should display 'Settings were saved'",
+      "A new token should be generated",
+      "The token should be visible on the page"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Settings were saved",
+      "gherkin_acceptance_criteria": [
+        "The page should display 'Settings were saved'",
+        "A new API token should be present"
+      ]
+    }
+  }
+}

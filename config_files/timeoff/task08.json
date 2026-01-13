@@ -10,7 +10,7 @@
     "scenario": "Update Vector Crawler Staff information",
     "given": ["I am logged in as an admin"],
     "when": [
-      "I navigate to the Vector Crawler Staff's profile page",
+      "I navigate to the Staff's profile page",
       "I change the first name to \"Ke\"",
       "I change the last name to \"rueilin\"",
       "I save the changes"

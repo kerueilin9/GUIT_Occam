@@ -1,18 +1,27 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task12",
+  "task_id": "timeoff_task17",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3100",
   "geolocation": null,
   "gherkin": {
-    "feature": "TimeOff User Authentication",
-    "scenario": "User logout",
-    "given": ["I am logged in as an employee"],
-    "when": ["I click on the user menu", "I click on the logout button"],
+    "feature": "TimeOff Staff Management",
+    "scenario": "Add a new employee account",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+      "I navigate to the Staff page",
+      "I add a new employee",
+      "I enter First Name as 'te'",
+      "I enter Last Name as 'st'",
+      "I enter Email Address as 'test@gmail.com'",
+      "I enter Password as 'test'",
+      "I save the new employee"
+    ],
     "then": [
-      "I should be redirected to the login page",
-      "The login form should be visible"
+      "The page should display 'New user account successfully added'",
+      "The new employee 'te st' should appear in the staff list",
+      "The employee email should be 'test@gmail.com'"
     ]
   },
   "intent_template_id": 0,
@@ -20,10 +29,10 @@
   "eval": {
     "eval_types": ["string_match", "gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "login",
+      "fuzzy_match": "New user account successfully added",
       "gherkin_acceptance_criteria": [
-        "The login form should be visible",
-        "The current URL should contain \"/login\""
+        "The page should display 'New user account successfully added'",
+        "The employee 'te st' should be visible in the staff list"
       ]
     }
   }

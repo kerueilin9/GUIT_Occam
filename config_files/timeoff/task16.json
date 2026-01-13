@@ -1,18 +1,23 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task12",
+  "task_id": "timeoff_task16",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3100",
   "geolocation": null,
   "gherkin": {
-    "feature": "TimeOff User Authentication",
-    "scenario": "User logout",
-    "given": ["I am logged in as an employee"],
-    "when": ["I click on the user menu", "I click on the logout button"],
+    "feature": "TimeOff Departments Management",
+    "scenario": "Add a new department with allowance",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+      "I navigate to Departments settings",
+      "I add a new department with Name \"test\"",
+      "I set the Allowance to \"10\"",
+      "I save the department"
+    ],
     "then": [
-      "I should be redirected to the login page",
-      "The login form should be visible"
+      "I should see a success message \"Changes to departments were saved\"",
+      "The department \"test\" should be in the list with allowance 10"
     ]
   },
   "intent_template_id": 0,
@@ -20,10 +25,11 @@
   "eval": {
     "eval_types": ["string_match", "gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "login",
+      "fuzzy_match": "Changes to departments were saved",
       "gherkin_acceptance_criteria": [
-        "The login form should be visible",
-        "The current URL should contain \"/login\""
+        "The page should display \"Changes to departments were saved\"",
+        "The department \"test\" should be visible in the departments list",
+        "The allowance should be set to 10"
       ]
     }
   }
