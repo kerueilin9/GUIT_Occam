@@ -18,6 +18,16 @@ agent:
     verbose: 1
     number: 1
     model: "adk-gemini-2.5-flash"
+    adk_config:
+      runtime: "local" # Use local runtime for development
+      orchestration_mode: "sequential" # Sequential: Critic -> Actor -> Judge
+      toolsets:
+        - "browser_automation" # Enable browser interaction tools
+        - "planning" # Enable planning tools (branch, prune)
+      max_tool_calls: 10 # Maximum tool calls per step
+      tool_choice: "auto" # Let ADK decide when to use tools
+      enable_reasoning_traces: true # Log reasoning steps
+
     documented_interaction_elements:
       [
         "url",
@@ -120,7 +130,7 @@ env:
   max_browser_rows: 300
   headless: false
   relative_task_dir: "timeoff"
-  task_ids: ["task12", "task13", "task14"]
+  task_ids: ["task16", "task17", "task18", "task19", "task20", "task99"]
   viewport_size:
     width: 1280
     height: 720

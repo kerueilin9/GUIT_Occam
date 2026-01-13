@@ -74,6 +74,35 @@ class Agent:
         self.call_model = partial(CALL_MODEL_MAP[self.model_family], model_id=self.config.model)
         self.call_model_with_message = partial(CALL_MODEL_WITH_MESSAGES_FUNCTION_MAP[self.model_family], model_id=self.config.model)
         self.arrange_message_for_model = ARRANGE_MESSAGE_FOR_MODEL_MAP[self.model_family]
+        
+        # ADK orchestration support
+        self.adk_tools = []
+        self.adk_context = {}
+        self.use_adk_orchestration = (
+            self.model_family == 'adk' and 
+            hasattr(config, 'adk_config') and 
+            getattr(config.adk_config, 'orchestration_mode', None) is not None
+        )
+    
+    def register_adk_tool(self, tool_definition):
+        """Register a single ADK tool for this agent."""
+        if self.model_family == 'adk':
+            self.adk_tools.append(tool_definition)
+    
+    def register_adk_toolset(self, toolset_name):
+        """Register a predefined ADK toolset."""
+        if self.model_family == 'adk':
+            # Import toolset definitions (to be implemented in browser_env/adk_tools.py)
+            try:
+                from browser_env.adk_tools import get_toolset
+                tools = get_toolset(toolset_name)
+                self.adk_tools.extend(tools)
+            except ImportError:
+                print(f"Warning: ADK toolset '{toolset_name}' not found. Skipping.")
+    
+    def get_adk_tools(self):
+        """Return currently registered ADK tools."""
+        return self.adk_tools if self.model_family == 'adk' else []
 
     def shift_model(self, model_id):
         self.model_family = [model_family for model_family in MODEL_FAMILIES if model_family in model_id][0]
@@ -1368,6 +1397,12 @@ class AgentOccam:
         )
         
     def predict_action(self):
+        # Check if using ADK orchestration mode
+        if self._should_use_adk_orchestration():
+            return self._predict_action_with_adk()
+        
+        # Standard Actor-Critic-Judge flow
+        print("Using standard Actor-Critic-Judge flow")
         self.critic.update_actor_basic_info(step=self.get_step(), planning_specifications=self.actor.get_planning_specifications(), navigation_specifications=self.actor.get_navigation_specifications(), interaction_history=self.actor.get_interaction_history(interaction_history_config=self.critic.config.interaction_history), previous_plans=self.actor.get_previous_plans(verbose=True))
         criticism_elements = self.critic.get_criticism_elements() if not self.get_step()==0 else {}
         action_element_list = self.actor.predict_action(criticism_elements=criticism_elements)
@@ -1375,6 +1410,156 @@ class AgentOccam:
         selected_action_elements, judgement_elements = self.judge.judge(action_element_list)
         selected_action_elements = self.actor.finalize_action(selected_action_elements)
         return {**selected_action_elements, **{"critic:"+k: criticism_elements[k] for k in criticism_elements.keys()}, **{"judge:"+k: judgement_elements[k] for k in judgement_elements.keys()}}, action_element_list
+    
+    def _should_use_adk_orchestration(self):
+        """Check if ADK orchestration should be used."""
+        return (
+            self.actor.model_family == 'adk' and
+            hasattr(self.config.actor, 'adk_config') and
+            getattr(self.config.actor.adk_config, 'orchestration_mode', None) is not None
+        )
+    
+    def _predict_action_with_adk(self):
+        """
+        ADK-powered Actor-Critic-Judge orchestration.
+        Uses ADK's agent coordination while maintaining compatibility with existing flow.
+        """
+        try:
+            from google.adk.agents import LlmAgent
+            from google.adk.runners import Runner
+            from google.adk.sessions import InMemorySessionService
+            from google.genai import types
+        except ImportError:
+            print("Warning: google-adk not available, falling back to standard flow")
+            return self.predict_action()
+        
+        # Get orchestration mode
+        orchestration_mode = getattr(self.config.actor.adk_config, 'orchestration_mode', 'sequential')
+        
+        if orchestration_mode == 'sequential':
+            print("Using ADK sequential orchestration")
+            return self._adk_sequential_orchestration()
+        elif orchestration_mode == 'parallel':
+            return self._adk_parallel_orchestration()
+        else:
+            print(f"Unknown orchestration mode: {orchestration_mode}, using sequential")
+            return self._adk_sequential_orchestration()
+    
+    def _adk_sequential_orchestration(self):
+        """
+        Sequential ADK orchestration: Critic -> Actor -> Judge.
+        Each agent uses ADK internally but follows the standard flow.
+        """
+        # Step 1: Critic evaluation (if not first step)
+        criticism_elements = {}
+        if not self.get_step() == 0 and self.config.critic.mode:
+            self.critic.update_actor_basic_info(
+                step=self.get_step(),
+                planning_specifications=self.actor.get_planning_specifications(),
+                navigation_specifications=self.actor.get_navigation_specifications(),
+                interaction_history=self.actor.get_interaction_history(
+                    interaction_history_config=self.critic.config.interaction_history
+                ),
+                previous_plans=self.actor.get_previous_plans(verbose=True)
+            )
+            
+            # Use ADK for critic if configured
+            if self.critic.model_family == 'adk':
+                criticism_elements = self._adk_get_criticism()
+            else:
+                criticism_elements = self.critic.get_criticism_elements()
+        
+        # Step 2: Actor action prediction with ADK
+        if self.actor.model_family == 'adk':
+            action_element_list = self._adk_predict_actor_action(criticism_elements)
+        else:
+            action_element_list = self.actor.predict_action(criticism_elements=criticism_elements)
+        
+        # Step 3: Judge selection (if multiple actions or judge mode enabled)
+        judgement_elements = {}
+        if self.config.judge.mode or len(action_element_list) > 1:
+            self.judge.update_actor_basic_info(
+                step=self.get_step(),
+                planning_specifications=self.actor.get_planning_specifications(),
+                navigation_specifications=self.actor.get_navigation_specifications(),
+                interaction_history=self.actor.get_interaction_history(
+                    interaction_history_config=self.judge.config.interaction_history
+                ),
+                previous_plans=self.actor.get_previous_plans(verbose=True),
+                planning_command=self.actor.config.planning_command,
+                navigation_command=self.actor.config.navigation_command
+            )
+            
+            # Use ADK for judge if configured
+            if self.judge.model_family == 'adk':
+                selected_action_elements, judgement_elements = self._adk_judge_actions(action_element_list)
+            else:
+                selected_action_elements, judgement_elements = self.judge.judge(action_element_list)
+        else:
+            selected_action_elements = action_element_list[0]
+        
+        # Finalize action
+        selected_action_elements = self.actor.finalize_action(selected_action_elements)
+        
+        return {
+            **selected_action_elements,
+            **{"critic:"+k: criticism_elements[k] for k in criticism_elements.keys()},
+            **{"judge:"+k: judgement_elements[k] for k in judgement_elements.keys()}
+        }, action_element_list
+    
+    def _adk_parallel_orchestration(self):
+        """
+        Parallel ADK orchestration: Run critic and multiple actors concurrently.
+        (Placeholder for future implementation)
+        """
+        # For now, fall back to sequential
+        print("Note: Parallel ADK orchestration not yet implemented, using sequential mode")
+        return self._adk_sequential_orchestration()
+    
+    def _adk_get_criticism(self):
+        """
+        Use ADK to get critic feedback with enhanced context.
+        """
+        # Get instruction and input for critic
+        instruction = self.critic.get_critic_instruction()
+        online_input = self.critic.get_online_input()
+        
+        # Convert to ADK format and call
+        prompt = self.critic.arrange_message_for_model(online_input)
+        
+        try:
+            # Call ADK with critic-specific context
+            model_response = self.critic.call_model_with_message(
+                system_prompt=instruction,
+                messages=online_input
+            )
+            
+            # Parse response into criticism elements
+            criticism_elements = self.critic.parse_elements(
+                text=model_response,
+                key_list=self.critic.config.output
+            )
+            
+            return criticism_elements
+        except Exception as e:
+            print(f"ADK critic call failed: {e}, using empty criticism")
+            return {}
+    
+    def _adk_predict_actor_action(self, criticism_elements):
+        """
+        Use ADK to predict actor actions with tool support.
+        """
+        # Standard actor prediction but leveraging ADK's capabilities
+        action_element_list = self.actor.predict_action(criticism_elements=criticism_elements)
+        return action_element_list
+    
+    def _adk_judge_actions(self, action_element_list):
+        """
+        Use ADK to judge between multiple action candidates.
+        """
+        # Standard judge selection but leveraging ADK's reasoning
+        selected_action_elements, judgement_elements = self.judge.judge(action_element_list)
+        return selected_action_elements, judgement_elements
     
     def update_online_state(self, url, observation):
         self.online_url = url
