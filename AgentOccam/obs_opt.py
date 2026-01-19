@@ -1,6 +1,7 @@
 import re
 from browser_env.processors import TreeNode
 from functools import partial
+from AgentOccam.logger import logger
 
 RETAINED_PROPERTIES = ["required", "disabled", "checked", "valuemin", "valuemax", "valuetext", "selected", "page_dialog_message"]
 UNWANTED_PROPERTIES = ["focused", "autocomplete", "hasPopup", "expanded", "multiselectable", "orientation", "controls"]

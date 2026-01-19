@@ -8,6 +8,8 @@ from AgentOccam.llms.gpt import call_gpt, call_gpt_with_messages, arrange_messag
 from AgentOccam.llms.gemini import call_gemini, call_gemini_with_messages, arrange_message_for_gemini
 from AgentOccam.llms.adk import call_adk, call_adk_with_messages, arrange_message_for_adk
 from AgentOccam.utils import CURRENT_DIR, HOMEPAGE_URL
+from AgentOccam.logger import logger
+from browser_env.processors import TreeNode
 
 from typing import Dict
 import re
@@ -969,6 +971,7 @@ class Actor(Agent):
                 elif invalid_actions:
                     model_response = self.call_model_with_message(system_prompt=instruction+"\nGenerating the command `{}` will be severely punished! Don't generate invalid actions! We don't have that element id in the current observation!".format(invalid_action_str), messages=self.arrange_message_for_model(online_input))
                 else:
+                    logger.debug(f"Calling model with instruction: {instruction}, {self.arrange_message_for_model(online_input)}")
                     model_response = self.call_model_with_message(system_prompt=instruction, messages=self.arrange_message_for_model(online_input))
                 action_elements = self.parse_elements(text=model_response, key_list=self.config.output)
                 action_elements = self.parse_action_from_action_candidates(action_elements=action_elements)
