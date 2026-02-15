@@ -152,7 +152,7 @@ class StringEvaluator(Evaluator):
         page: Page | PseudoPage | None = None,
         client: CDPSession | None = None,
     ) -> float:
-        with open(config_file, "r") as f:
+        with open(config_file, "r", encoding="utf-8") as f:
             configs = json.load(f)
 
         last_action = self.get_last_action(trajectory)
@@ -221,7 +221,7 @@ class URLEvaluator(Evaluator):
         page: Page | PseudoPage,
         client: CDPSession | None = None,
     ) -> float:
-        with open(config_file, "r") as f:
+        with open(config_file, "r", encoding="utf-8") as f:
             configs = json.load(f)
 
         def clean_url(url: str) -> str:
@@ -300,7 +300,7 @@ class HTMLContentEvaluator(Evaluator):
         page: Page | PseudoPage,
         client: CDPSession | None = None,
     ) -> float:
-        with open(config_file, "r") as f:
+        with open(config_file, "r", encoding="utf-8") as f:
             configs = json.load(f)
 
         targets = configs["eval"]["program_html"]
@@ -423,7 +423,7 @@ class GherkinCriteriaEvaluator(Evaluator):
         page: Page | PseudoPage | None = None,
         client: CDPSession | None = None,
     ) -> float:
-        with open(config_file, "r") as f:
+        with open(config_file, "r", encoding="utf-8") as f:
             configs = json.load(f)
         
         # Get acceptance criteria from config
@@ -446,7 +446,7 @@ class GherkinCriteriaEvaluator(Evaluator):
 @beartype
 def evaluator_router(config_file: Path | str) -> EvaluatorComb:
     """Router to get the evaluator class"""
-    with open(config_file, "r") as f:
+    with open(config_file, "r", encoding="utf-8") as f:
         configs = json.load(f)
 
     eval_types = configs["eval"]["eval_types"]

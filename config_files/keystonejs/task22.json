@@ -1,0 +1,38 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task22",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Copy post content to create a new post",
+    "given": ["I am logged in as an administrator", "A post exists"],
+    "when": [
+      "I navigate to Posts list",
+      "I click on a post",
+      "I copy the post content",
+      "I create a new post",
+      "I paste and modify the content",
+      "I change the title to \"Copied Post\"",
+      "I save the new post"
+    ],
+    "then": [
+      "A new post should be created successfully",
+      "The new post title should be \"Copied Post\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Copied Post",
+      "gherkin_acceptance_criteria": [
+        "The post \"Copied Post\" should be created",
+        "The new post should appear in the posts list"
+      ]
+    }
+  }
+}

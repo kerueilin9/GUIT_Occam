@@ -1,0 +1,35 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task11",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Publish a draft post",
+    "given": ["I am logged in as an administrator", "A draft post exists"],
+    "when": [
+      "I navigate to Posts list",
+      "I click on a draft post",
+      "I change the status to Published",
+      "I save the changes"
+    ],
+    "then": [
+      "The post should be published successfully",
+      "The status should show as Published"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Published",
+      "gherkin_acceptance_criteria": [
+        "The post status should be \"Published\"",
+        "A success message should be displayed"
+      ]
+    }
+  }
+}

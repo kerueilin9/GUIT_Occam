@@ -1,0 +1,34 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task24",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Change post author",
+    "given": ["I am logged in as an administrator", "A post and multiple users exist"],
+    "when": [
+      "I navigate to Posts list",
+      "I click on a post",
+      "I select a different author from the author dropdown",
+      "I save the changes"
+    ],
+    "then": [
+      "The post author should be updated successfully",
+      "The new author should be displayed on the post"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The post should have a new author assigned",
+        "A success message should be displayed"
+      ]
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task18",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Navigation",
+    "scenario": "Navigate to Comments list",
+    "given": ["I am logged in as an administrator"],
+    "when": ["I click on Comments in the sidebar"],
+    "then": ["The page should navigate to Comments list"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Comments",
+      "gherkin_acceptance_criteria": [
+        "The page should display Comments list",
+        "The current URL should contain \"/comments\""
+      ]
+    }
+  }
+}

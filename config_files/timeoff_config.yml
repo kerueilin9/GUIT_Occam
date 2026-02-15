@@ -127,10 +127,10 @@ agent:
 env:
   fullpage: true
   prune: false
-  max_browser_rows: 300
+  max_browser_rows: 2000
   headless: false
   relative_task_dir: "timeoff"
-  task_ids: ["task16", "task17", "task18", "task19", "task20", "task99"]
+  task_ids: ["all"]
   viewport_size:
     width: 1280
     height: 720

@@ -26,7 +26,7 @@ class WebArenaEnvironmentWrapper():
                     global_config=global_config
                 )
         self.config_file = config_file
-        with open(self.config_file, "r") as f:
+        with open(self.config_file, "r", encoding="utf-8") as f:
             self.config = json.load(f)
         self.global_config = global_config
         

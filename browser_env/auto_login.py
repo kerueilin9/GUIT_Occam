@@ -19,6 +19,7 @@ from browser_env.env_config import (
     SHOPPING,
     SHOPPING_ADMIN,
     TIMEOFF,
+    KEYSTONEJS
 )
 
 HEADLESS = True
@@ -119,6 +120,16 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
                 page.fill('input[name="password"]', password)
                 page.click('button[type="submit"]:has-text("Login")')
                 page.wait_for_timeout(2000)
+                
+            if c == "keystonejs":
+                username = ACCOUNTS["keystonejs"]["username"]
+                password = ACCOUNTS["keystonejs"]["password"]
+                page.goto(f"{KEYSTONEJS}/keystone/signin")
+                page.wait_for_timeout(1000)
+                page.fill('input[name="email"]', username)
+                page.fill('input[name="password"]', password)
+                page.click('button[type="submit"]')
+                page.wait_for_timeout(2000)
 
             context.storage_state(path=f"{auth_folder}/{c}_state.json")
         finally:
@@ -174,6 +185,16 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
             page.fill('input[name="username"]', username)
             page.fill('input[name="password"]', password)
             page.click('button[type="submit"]:has-text("Login")')
+            page.wait_for_timeout(2000)
+            
+        if "keystonejs" in comb:
+            username = ACCOUNTS["keystonejs"]["username"]
+            password = ACCOUNTS["keystonejs"]["password"]
+            page.goto(f"{KEYSTONEJS}/keystone/signin")
+            page.wait_for_timeout(1000)
+            page.fill('input[name="email"]', username)
+            page.fill('input[name="password"]', password)
+            page.click('button[type="submit"]')
             page.wait_for_timeout(2000)
 
         context.storage_state(path=f"{auth_folder}/{'.'.join(comb)}_state.json")

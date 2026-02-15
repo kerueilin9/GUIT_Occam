@@ -1,0 +1,27 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task02",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Navigate to Posts list",
+    "given": ["I am logged in as an administrator"],
+    "when": ["I click on Posts in the sidebar"],
+    "then": ["The page should navigate to Posts list"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Posts",
+      "gherkin_acceptance_criteria": [
+        "The page should display Posts list",
+        "The current URL should contain \"/posts\""
+      ]
+    }
+  }
+}

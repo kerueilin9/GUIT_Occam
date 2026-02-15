@@ -1,0 +1,35 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task12",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS User Management",
+    "scenario": "Edit user details",
+    "given": ["I am logged in as an administrator", "A user exists in the system"],
+    "when": [
+      "I navigate to Users list",
+      "I click on a user",
+      "I update the user's name to \"Updated User Name\"",
+      "I save the changes"
+    ],
+    "then": [
+      "The user details should be updated successfully",
+      "I should see a success message"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Updated User Name",
+      "gherkin_acceptance_criteria": [
+        "The user name should be \"Updated User Name\"",
+        "A success message should be displayed"
+      ]
+    }
+  }
+}

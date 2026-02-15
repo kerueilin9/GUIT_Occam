@@ -41,7 +41,7 @@ def parse_summary_csv_files(root_dir, site_list, mode="single_site"):
         for file in files:
             if file == 'summary.csv':
                 filepath = os.path.join(subdir, file)
-                with open(filepath, 'r') as csv_file:
+                with open(filepath, 'r', encoding='utf-8') as csv_file:
                     csv_reader = csv.DictReader(csv_file)
                     for row in csv_reader:
                         task_id = int(row['task_id'])

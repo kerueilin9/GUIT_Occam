@@ -1,0 +1,35 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task16",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Add tags to a post",
+    "given": ["I am logged in as an administrator", "A post exists"],
+    "when": [
+      "I navigate to Posts list",
+      "I click on a post",
+      "I add tags \"javascript, nodejs, cms\"",
+      "I save the changes"
+    ],
+    "then": [
+      "The tags should be added to the post successfully",
+      "The tags should be visible in the post details"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "javascript",
+      "gherkin_acceptance_criteria": [
+        "The post should display the tags \"javascript, nodejs, cms\"",
+        "A success message should be displayed"
+      ]
+    }
+  }
+}

@@ -4,6 +4,7 @@ Evaluates agent performance against Gherkin acceptance criteria
 """
 from typing import List, Dict, Any
 from playwright.sync_api import Page, CDPSession
+from AgentOccam.logger import logger
 from browser_env import Trajectory
 from evaluation_harness.helper_functions import (
     generate_from_llm_chat_completion,
@@ -189,8 +190,10 @@ Answer with just "YES" or "NO"."""
         elif "no" in response.lower():
             return 0.0
         else:
+            print(f"Warning: Unexpected LLM response for element check: {response[:100]}")
             return 0.5
-    except:
+    except Exception as e:
+        print(f"Error in element existence check: {e}")
         return 0.5
 
 
@@ -241,7 +244,9 @@ Respond with ONLY a number between 0.0 and 1.0."""
             score = float(match.group(1))
             return max(0.0, min(1.0, score))  # Clamp to [0, 1]
         else:
+            print(f"Warning: Could not extract score from LLM response: {response[:100]}")
             return 0.5
     except Exception as e:
         print(f"Error in LLM evaluation: {e}")
+        print(f"Criterion was: {criterion}")
         return 0.5

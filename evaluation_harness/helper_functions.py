@@ -60,7 +60,7 @@ def generate_from_llm_chat_completion(
     if model == "auto":
         if GEMINI_AVAILABLE and os.environ.get("GEMINI_API_KEY"):
             use_gemini = True
-            model = "gemini-2.0-flash-exp"
+            model = "gemini-2.0-flash"
         elif OPENAI_AVAILABLE and os.environ.get("OPENAI_API_KEY"):
             use_gemini = False
             model = "gpt-4-turbo"
@@ -86,7 +86,14 @@ def generate_from_llm_chat_completion(
             elif msg["role"] == "user":
                 user_content += msg["content"] + "\n"
         
-        # Call Gemini
+        # Call Gemini with relaxed safety settings
+        safety_settings = [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        ]
+        
         genai_model = genai.GenerativeModel(model)
         full_prompt = f"{system_prompt}\n\n{user_content}" if system_prompt else user_content
         
@@ -97,9 +104,26 @@ def generate_from_llm_chat_completion(
         
         response = genai_model.generate_content(
             full_prompt,
-            generation_config=generation_config
+            generation_config=generation_config,
+            safety_settings=safety_settings
         )
-        return response.text
+        
+        # Handle safety filters and other issues
+        try:
+            return response.text
+        except Exception as e:
+            # Check if response was blocked by safety filters
+            if hasattr(response, 'candidates') and response.candidates:
+                candidate = response.candidates[0]
+                if hasattr(candidate, 'finish_reason'):
+                    print(f"Warning: Gemini response blocked. Finish reason: {candidate.finish_reason}")
+            
+            # Try to extract partial content if available
+            if hasattr(response, 'parts') and response.parts:
+                return ''.join([part.text for part in response.parts if hasattr(part, 'text')])
+            
+            # If no content available, raise the original error
+            raise e
     else:
         # Use OpenAI
         if not OPENAI_AVAILABLE:

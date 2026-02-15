@@ -153,7 +153,7 @@ def traverse_task_configs(task_config_data_dir=EVALUATOR_DIR):
                 print(repr(k)+", ", end="")
 
 def load_json_obj_from_file(filepath):
-    with open(filepath, 'r') as f:
+    with open(filepath, 'r', encoding='utf-8') as f:
         data = json.load(f)
     return data
 
@@ -351,7 +351,7 @@ def get_avr_step_num_statistics(trajectory_list=[-1]):
 def compare_evaluators(dir1, dir2):
     def compare_evaluator(i, file1, file2):
         def load_json(file_path):
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
             
         def compare_json(json1, json2, path=""):

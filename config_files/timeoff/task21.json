@@ -1,0 +1,35 @@
+{
+  "sites": ["timeoff"],
+  "task_id": "timeoff_task21",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3100",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "TimeOff Staff Management",
+    "scenario": "Edit employee First Name to empty string",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+      "I navigate to the Staff page",
+      "I select the test employee",
+      "I clear the First Name field",
+      "I save the changes"
+    ],
+    "then": [
+      "The page should display 'Changes to employee record were saved'",
+      "The test employee's First Name should be empty"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "請填寫這個欄位",
+      "gherkin_acceptance_criteria": [
+        "The page should display '請填寫這個欄位'",
+        "The validation message should appear for the First Name field"
+      ]
+    }
+  }
+}

@@ -232,7 +232,7 @@ class RenderHelper(object):
     def __init__(
         self, config_file: str, result_dir: str, action_set_tag: str
     ) -> None:
-        with open(config_file, "r") as f:
+        with open(config_file, "r", encoding="utf-8") as f:
             _config = json.load(f)
             _config_str = ""
             for k, v in _config.items():

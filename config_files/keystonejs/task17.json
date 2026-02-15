@@ -1,0 +1,35 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task17",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Upload an image to a post",
+    "given": ["I am logged in as an administrator", "A post exists"],
+    "when": [
+      "I navigate to Posts list",
+      "I click on a post",
+      "I click on the image upload field",
+      "I select an image file",
+      "I save the changes"
+    ],
+    "then": [
+      "The image should be uploaded successfully",
+      "The image should be visible in the post"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "An image should be attached to the post",
+        "A success message should be displayed"
+      ]
+    }
+  }
+}

@@ -137,7 +137,7 @@ class ScriptBrowserEnv(Env[dict[str, Observation], Action]):
         )
 
         if config_file:
-            with open(config_file, "r") as f:
+            with open(config_file, "r", encoding="utf-8") as f:
                 instance_config = json.load(f)
         else:
             instance_config = {}
@@ -294,11 +294,17 @@ class ScriptBrowserEnv(Env[dict[str, Observation], Action]):
             pass
         
         suffix = getattr(self.global_config, "logname", "")
-        if suffix:
-            img_bytes = self.page.screenshot(path=f"output/screenshot-{suffix}.png", full_page=True)
-        else:
-            img_bytes = self.page.screenshot(path="output/screenshot_raw.png")
-        raw_image = base64.b64encode(img_bytes).decode()
+        try:
+            if suffix:
+                img_bytes = self.page.screenshot(path=f"output/screenshot-{suffix}.png", full_page=True, timeout=60000)
+            else:
+                img_bytes = self.page.screenshot(path="output/screenshot_raw.png", timeout=60000)
+            raw_image = base64.b64encode(img_bytes).decode()
+        except Exception as e:
+            print(f"Warning: Screenshot failed: {e}")
+            # Create a minimal placeholder image
+            img_bytes = b""
+            raw_image = ""
         
         self.page.evaluate(mix_marker_script)
         self.page.wait_for_timeout(100)

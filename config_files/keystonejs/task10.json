@@ -1,0 +1,36 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task10",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Category Management",
+    "scenario": "Create a new category",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+      "I navigate to Categories list",
+      "I click on Create Category button",
+      "I fill in the category name with \"Test Category\"",
+      "I save the category"
+    ],
+    "then": [
+      "The category should be created successfully",
+      "I should see a success message",
+      "The category \"Test Category\" should appear in the list"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Test Category",
+      "gherkin_acceptance_criteria": [
+        "The category \"Test Category\" should be created",
+        "A success message should be displayed"
+      ]
+    }
+  }
+}

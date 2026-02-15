@@ -9,6 +9,7 @@ WIKIPEDIA = os.environ.get("WIKIPEDIA", "http://localhost:8888/wikipedia_en_all_
 MAP = os.environ.get("MAP", "http://localhost:3000")
 HOMEPAGE = os.environ.get("HOMEPAGE", "http://localhost:4399")
 TIMEOFF = os.environ.get("TIMEOFF", "http://localhost:3100")
+KEYSTONEJS = os.environ.get("KEYSTONEJS", "http://localhost:3100")
 
 assert (
     REDDIT
@@ -19,6 +20,7 @@ assert (
     and MAP
     and HOMEPAGE
     and TIMEOFF
+    and KEYSTONEJS
 ), (
     f"Please setup the URLs to each site. Current: \n"
     + f"Reddit: {REDDIT}\n"
@@ -29,6 +31,7 @@ assert (
     + f"Map: {MAP}\n"
     + f"Homepage: {HOMEPAGE}\n"
     + f"TimeOff: {TIMEOFF}\n"
+    + f"KeystoneJS: {KEYSTONEJS}\n"
 )
 
 
@@ -42,6 +45,7 @@ ACCOUNTS = {
     "shopping_admin": {"username": "admin", "password": "admin1234"},
     "shopping_site_admin": {"username": "admin", "password": "admin1234"},
     "timeoff": {"username": "vector@selab.com", "password": "selab1623"},
+    "keystonejs": {"username": "vector@selab.com", "password": "password"},
 }
 
 URL_MAPPINGS = {
@@ -53,4 +57,5 @@ URL_MAPPINGS = {
     MAP: "http://openstreetmap.org",
     HOMEPAGE: "http://homepage.com",
     TIMEOFF: "http://timeoff.management",
+    KEYSTONEJS: "http://keystonejs.com",
 }

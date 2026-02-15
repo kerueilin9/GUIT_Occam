@@ -1,0 +1,27 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task01",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Admin Dashboard",
+    "scenario": "Navigate to admin dashboard home",
+    "given": ["I am logged in as an administrator"],
+    "when": ["I access the admin dashboard"],
+    "then": ["The admin dashboard home page should be displayed"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Dashboard",
+      "gherkin_acceptance_criteria": [
+        "The admin dashboard should be displayed",
+        "The current URL should contain \"/admin\""
+      ]
+    }
+  }
+}

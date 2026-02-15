@@ -1,0 +1,27 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task03",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Navigate to Users list",
+    "given": ["I am logged in as an administrator"],
+    "when": ["I click on Users in the sidebar"],
+    "then": ["The page should navigate to Users list"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Users",
+      "gherkin_acceptance_criteria": [
+        "The page should display Users list",
+        "The current URL should contain \"/users\""
+      ]
+    }
+  }
+}

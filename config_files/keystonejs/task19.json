@@ -1,0 +1,33 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task19",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS User Management",
+    "scenario": "View user profile",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+      "I click on the user menu",
+      "I click on My Profile or Settings"
+    ],
+    "then": [
+      "The page should navigate to user profile",
+      "User details should be displayed"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Profile",
+      "gherkin_acceptance_criteria": [
+        "The user profile page should be displayed",
+        "User information should be visible"
+      ]
+    }
+  }
+}

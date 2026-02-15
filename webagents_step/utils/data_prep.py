@@ -54,7 +54,7 @@ def examples_to_prompts(data_config, json_df, prompt_template, inference):
         try:
             # read samples
             json_filepath = os.path.join(data_config.basedir, str(row.logfile))
-            with open(json_filepath,'r') as json_file:
+            with open(json_filepath,'r', encoding='utf-8') as json_file:
                 example_json = json.load(json_file)
             all_prompt_strings.extend(convert_example_to_prompts(example_json, data_config, prompt_template, inference))
         except FileNotFoundError:
@@ -118,7 +118,7 @@ def log_run(log_file, log_data, summary_file=None, summary_data=None, json_inden
     Logs demo data to a JSON file and optionally updates a summary CSV file.
     """
     # Write log data to JSON file
-    with open(log_file, 'w') as json_file:
+    with open(log_file, 'w', encoding='utf-8') as json_file:
         json.dump(log_data, json_file, indent=json_indent)
     if verbose:
         print(f"Saved log to {log_file}")

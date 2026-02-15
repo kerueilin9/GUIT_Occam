@@ -1,0 +1,35 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task23",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS User Management",
+    "scenario": "Deactivate a user account",
+    "given": ["I am logged in as an administrator", "An active user exists"],
+    "when": [
+      "I navigate to Users list",
+      "I click on a user",
+      "I change the user status to Inactive or Disabled",
+      "I save the changes"
+    ],
+    "then": [
+      "The user account should be deactivated successfully",
+      "The user status should show as Inactive"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Inactive",
+      "gherkin_acceptance_criteria": [
+        "The user status should be \"Inactive\" or \"Disabled\"",
+        "A success message should be displayed"
+      ]
+    }
+  }
+}

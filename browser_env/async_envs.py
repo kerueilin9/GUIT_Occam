@@ -51,7 +51,7 @@ class AsyncScriptBrowserEnv(Env[npt.NDArray[np.uint8], Action]):
             headless=self.headless, slow_mo=self.slow_mo
         )
         if config_file:
-            with open(config_file, "r") as f:
+            with open(config_file, "r", encoding="utf-8") as f:
                 instance_config = json.load(f)
         else:
             instance_config = {}

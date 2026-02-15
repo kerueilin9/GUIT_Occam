@@ -1,0 +1,36 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task21",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Set post publish date",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+      "I navigate to Posts list",
+      "I create a new post",
+      "I fill in the post title with \"Scheduled Post\"",
+      "I set the publish date to a future date",
+      "I save the post"
+    ],
+    "then": [
+      "The post should be created with a future publish date",
+      "The post status should reflect scheduled publishing"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["string_match", "gherkin_criteria"],
+    "reference_answers": {
+      "fuzzy_match": "Scheduled Post",
+      "gherkin_acceptance_criteria": [
+        "The post \"Scheduled Post\" should be created",
+        "The publish date should be set to a future date"
+      ]
+    }
+  }
+}
