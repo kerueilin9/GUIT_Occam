@@ -328,9 +328,9 @@ class ScriptBrowserEnv(Env[dict[str, Observation], Action]):
         # mark our own labels and get the images
         items = self.page.evaluate(label_marker_script, items)
         if suffix:
-            img_bytes = self.page.screenshot(path=f"output/marked-{suffix}.png", full_page=True)
+            img_bytes = self.page.screenshot(path=f"output/marked-{suffix}.png", full_page=True, timeout=60000)
         else:
-            img_bytes = self.page.screenshot(path="output/marked.png")
+            img_bytes = self.page.screenshot(path="output/marked.png", timeout=60000)
         marked_image = base64.b64encode(img_bytes).decode()
         
         self.page.evaluate(remove_label_mark_script)
