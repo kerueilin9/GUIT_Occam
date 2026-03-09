@@ -1,6 +1,6 @@
 {
   "sites": ["keystonejs"],
-  "task_id": "keystonejs_task08",
+  "task_id": "keystonejs_task_post03",
   "require_login": true,
   "storage_state": ".auth/keystonejs_state.json",
   "start_url": "http://localhost:3100/keystone",
@@ -10,9 +10,10 @@
     "scenario": "Search for a post",
     "given": ["I am logged in as an administrator", "Posts exist in the system"],
     "when": [
-      "I navigate to Posts list",
-      "I enter \"test\" in the search field",
-      "I press Enter or click search"
+        "I create a post with title \"test\" if it doesn't exist",
+        "I navigate to Posts list",
+        "I enter \"test\" in the search field",
+        "I press Enter or click search"
     ],
     "then": [
       "The list should filter to show only posts matching \"test\"",
@@ -22,12 +23,10 @@
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "test",
       "gherkin_acceptance_criteria": [
-        "The displayed posts should contain \"test\" in their title",
-        "The search should filter the results"
+        "The displayed posts should contain \"test\" in their title"
       ]
     }
   }

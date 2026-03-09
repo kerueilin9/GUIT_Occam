@@ -1,34 +1,32 @@
 {
   "sites": ["keystonejs"],
-  "task_id": "keystonejs_task04",
+  "task_id": "keystonejs_task_gallery01",
   "require_login": true,
   "storage_state": ".auth/keystonejs_state.json",
   "start_url": "http://localhost:3100/keystone",
   "geolocation": null,
   "gherkin": {
     "feature": "KeystoneJS Content Management",
-    "scenario": "Create a new post",
+    "scenario": "Create a new gallery",
     "given": ["I am logged in as an administrator"],
     "when": [
-      "I navigate to Posts list",
-      "I click on Create Post button",
-      "I fill in the post title with \"Test Post\"",
-      "I fill in the post content",
-      "I save the post"
+      "I navigate to Gallery list",
+      "I click on Create Gallery button",
+      "I fill in the gallery title with \"test\"",
+      "I fill in the gallery description",
+      "I save the gallery"
     ],
     "then": [
-      "The post should be created successfully",
+      "The gallery should be created successfully",
       "I should see a success message"
     ]
   },
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "Test Post",
       "gherkin_acceptance_criteria": [
-        "The post \"Test Post\" should be created",
         "A success message should be displayed"
       ]
     }

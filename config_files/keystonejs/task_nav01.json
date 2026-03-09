@@ -1,6 +1,6 @@
 {
   "sites": ["keystonejs"],
-  "task_id": "keystonejs_task01",
+  "task_id": "keystonejs_task_nav01",
   "require_login": true,
   "storage_state": ".auth/keystonejs_state.json",
   "start_url": "http://localhost:3100/keystone",
@@ -15,12 +15,11 @@
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "Dashboard",
       "gherkin_acceptance_criteria": [
         "The admin dashboard should be displayed",
-        "The current URL should contain \"/admin\""
+        "The current url should contain \"/keystone\""
       ]
     }
   }

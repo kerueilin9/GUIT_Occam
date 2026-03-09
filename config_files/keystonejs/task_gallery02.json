@@ -1,24 +1,23 @@
 {
   "sites": ["keystonejs"],
-  "task_id": "keystonejs_task17",
+  "task_id": "keystonejs_task_gallery02",
   "require_login": true,
   "storage_state": ".auth/keystonejs_state.json",
   "start_url": "http://localhost:3100/keystone",
   "geolocation": null,
   "gherkin": {
     "feature": "KeystoneJS Content Management",
-    "scenario": "Upload an image to a post",
-    "given": ["I am logged in as an administrator", "A post exists"],
+    "scenario": "Edit a new gallery",
+    "given": ["I am logged in as an administrator"],
     "when": [
-      "I navigate to Posts list",
-      "I click on a post",
-      "I click on the image upload field",
-      "I select an image file",
+      "I navigate to Gallery list",
+      "I click on the first gallery in the list",
+      "I update the gallery title to \"Updated Gallery Title\"",
       "I save the changes"
     ],
     "then": [
-      "The image should be uploaded successfully",
-      "The image should be visible in the post"
+      "The gallery should be updated successfully",
+      "I should see a success message"
     ]
   },
   "intent_template_id": 0,
@@ -27,7 +26,6 @@
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "An image should be attached to the post",
         "A success message should be displayed"
       ]
     }

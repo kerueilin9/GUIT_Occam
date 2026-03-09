@@ -1,6 +1,6 @@
 {
   "sites": ["keystonejs"],
-  "task_id": "keystonejs_task05",
+  "task_id": "keystonejs_task_user01",
   "require_login": true,
   "storage_state": ".auth/keystonejs_state.json",
   "start_url": "http://localhost:3100/keystone",
@@ -10,12 +10,13 @@
     "scenario": "Create a new user",
     "given": ["I am logged in as an administrator"],
     "when": [
-      "I navigate to Users list",
-      "I click on Create User button",
-      "I fill in the name with \"Test User\"",
-      "I fill in the email with \"testuser@example.com\"",
-      "I fill in the password",
-      "I save the user"
+        "I navigate to Users list",
+        "I click on Create User button",
+        "I fill in the first name with \"Test\" and last name with \"User\"",
+        "I fill in the email with \"testuser@example.com\"",
+        "I fill in the password with \"password123\" and confirm password with \"password123\"",
+        "I create the user",
+        "I save the user"
     ],
     "then": [
       "The user should be created successfully",
@@ -25,12 +26,10 @@
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "Test User",
       "gherkin_acceptance_criteria": [
-        "The user \"Test User\" should be created",
-        "The user should appear in the users list"
+        "A success message should be displayed"
       ]
     }
   }

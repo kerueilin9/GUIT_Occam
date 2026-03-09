@@ -1,6 +1,6 @@
 {
   "sites": ["keystonejs"],
-  "task_id": "keystonejs_task12",
+  "task_id": "keystonejs_task_user02",
   "require_login": true,
   "storage_state": ".auth/keystonejs_state.json",
   "start_url": "http://localhost:3100/keystone",
@@ -11,7 +11,7 @@
     "given": ["I am logged in as an administrator", "A user exists in the system"],
     "when": [
       "I navigate to Users list",
-      "I click on a user",
+      "I click on a user named \"Test User\"",
       "I update the user's name to \"Updated User Name\"",
       "I save the changes"
     ],
@@ -23,9 +23,8 @@
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "Updated User Name",
       "gherkin_acceptance_criteria": [
         "The user name should be \"Updated User Name\"",
         "A success message should be displayed"

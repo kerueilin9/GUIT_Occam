@@ -1,21 +1,22 @@
 {
   "sites": ["keystonejs"],
-  "task_id": "keystonejs_task15",
+  "task_id": "keystonejs_task_cate97",
   "require_login": true,
   "storage_state": ".auth/keystonejs_state.json",
   "start_url": "http://localhost:3100/keystone",
   "geolocation": null,
   "gherkin": {
     "feature": "KeystoneJS Content Management",
-    "scenario": "Filter posts by status",
-    "given": ["I am logged in as an administrator", "Posts with different statuses exist"],
+    "scenario": "Delete a category",
+    "given": ["I am logged in as an administrator", "A category exists in the system"],
     "when": [
-      "I navigate to Posts list",
-      "I select \"Published\" from the status filter"
+      "I navigate to Categories list",
+      "I select the first category",
+      "I click on Delete button",
+      "I confirm the deletion"
     ],
     "then": [
-      "Only published posts should be displayed",
-      "Draft posts should be hidden"
+        "The category should no longer appear in the list"
     ]
   },
   "intent_template_id": 0,
@@ -24,8 +25,7 @@
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "Only posts with \"Published\" status should be visible",
-        "The filter should be applied to the list"
+        "The category should no longer appear in the list"
       ]
     }
   }

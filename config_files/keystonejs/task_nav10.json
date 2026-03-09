@@ -1,0 +1,28 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task_nav10",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Navigate to Contact page",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+        "I click on the home link (sixth button in the head bar)",
+        "I click on the Contact link in the head bar"
+    ],
+    "then": ["The page should navigate to the Contact page"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The page should display the Contact Us"
+      ]
+    }
+  }
+}

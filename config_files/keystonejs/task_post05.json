@@ -1,22 +1,21 @@
 {
   "sites": ["keystonejs"],
-  "task_id": "keystonejs_task25",
+  "task_id": "keystonejs_task_post05",
   "require_login": true,
   "storage_state": ".auth/keystonejs_state.json",
   "start_url": "http://localhost:3100/keystone",
   "geolocation": null,
   "gherkin": {
     "feature": "KeystoneJS Content Management",
-    "scenario": "View post preview",
-    "given": ["I am logged in as an administrator", "A post exists"],
+    "scenario": "Filter posts by status",
+    "given": ["I am logged in as an administrator", "Posts with different statuses exist"],
     "when": [
       "I navigate to Posts list",
-      "I click on a post",
-      "I click on the Preview button or link"
+      "I select \"Published\" from the status filter"
     ],
     "then": [
-      "A preview of the post should be displayed",
-      "The preview should show how the post will appear to readers"
+      "Only published posts should be displayed",
+      "Draft posts should be hidden"
     ]
   },
   "intent_template_id": 0,
@@ -25,8 +24,8 @@
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "A preview window or page should open",
-        "The post content should be displayed in reader view"
+        "Only posts with \"Published\" status should be visible",
+        "The filter should be applied to the list"
       ]
     }
   }

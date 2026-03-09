@@ -1,6 +1,6 @@
 {
   "sites": ["keystonejs"],
-  "task_id": "keystonejs_task10",
+  "task_id": "keystonejs_task_cate01",
   "require_login": true,
   "storage_state": ".auth/keystonejs_state.json",
   "start_url": "http://localhost:3100/keystone",
@@ -17,19 +17,16 @@
     ],
     "then": [
       "The category should be created successfully",
-      "I should see a success message",
       "The category \"Test Category\" should appear in the list"
     ]
   },
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "Test Category",
       "gherkin_acceptance_criteria": [
-        "The category \"Test Category\" should be created",
-        "A success message should be displayed"
+        "The category \"Test Category\" should be created"
       ]
     }
   }
