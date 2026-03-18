@@ -14,7 +14,8 @@ def call_gemini(prompt, model_id="gemini-1.5-flash", system_prompt=None):
         if num_attempts >= 10:
             raise ValueError("Gemini request failed.")
         try:
-            response = model.generate_content(system_prompt+"\n"+prompt)
+            content = ((system_prompt or "") + "\n" + prompt).strip()
+            response = model.generate_content(content)
             response_text = response.text
             return response_text
         except Exception as e:

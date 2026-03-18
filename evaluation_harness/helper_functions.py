@@ -60,7 +60,7 @@ def generate_from_llm_chat_completion(
     if model == "auto":
         if GEMINI_AVAILABLE and os.environ.get("GEMINI_API_KEY"):
             use_gemini = True
-            model = "gemini-2.0-flash"
+            model = "gemini-2.5-flash"
         elif OPENAI_AVAILABLE and os.environ.get("OPENAI_API_KEY"):
             use_gemini = False
             model = "gpt-4-turbo"

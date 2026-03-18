@@ -106,7 +106,43 @@ def run():
         
         agent = agent_init()
         objective = env.get_objective()
+
+        # ── ISP: monitor type actions during the discovery run ─────────────
+        _isp_enabled = (
+            isinstance(task_config.get("isp"), dict)
+            and task_config["isp"].get("enabled", False)
+        )
+        _isp_discoveries: list = []
+        if _isp_enabled:
+            _original_step = env.step
+            def _recording_step(action, _orig=_original_step):
+                if action:
+                    obs_text = AgentOccam._get_obs_text(env)
+                    for m in AgentOccam._TYPE_RE.finditer(action):
+                        _isp_discoveries.append({
+                            "element_id":     m.group(1),
+                            "original_value": m.group(2),
+                            "obs_text":       obs_text,
+                        })
+                return _orig(action)
+            env.step = _recording_step
+
         status = agent.act(objective=objective, env=env)
+
+        # ── ISP: restore env.step and generate task files ───────────────
+        if _isp_enabled:
+            env.step = _original_step
+            print(f"[ISP] Discovery: {len(_isp_discoveries)} type action(s) recorded.")
+            try:
+                generated = agent.generate_isp_task_files(
+                    discoveries=_isp_discoveries,
+                    task_config=task_config,
+                    config_file_path=config_file,
+                )
+                print(f"[ISP] Generated {len(generated)} task file(s).")
+            except Exception as _isp_exc:
+                print(f"[ISP] Task file generation error (non-fatal): {_isp_exc}")
+
         env.close()
 
         if config.logging:

@@ -3,8 +3,9 @@ Gherkin Parser for AgentOccam
 Parses Gherkin-style scenarios and converts them to agent objectives
 """
 import re
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
+from AgentOccam.logger import logger
 
 
 @dataclass
@@ -35,6 +36,8 @@ class GherkinScenario:
             expectations = " and ".join(self.then)
             parts.append(f"so that {expectations}")
         
+        logger.debug(f"Gherkin scenario converted to objective: {' '.join(parts)}")
+        
         return ", ".join(parts) + "."
     
     def get_acceptance_criteria(self) -> List[str]:
@@ -56,6 +59,51 @@ class GherkinScenario:
 
 class GherkinParser:
     """Parser for Gherkin-style scenarios"""
+
+    _WITH_VALUE_RE = re.compile(r"\bwith\s+['\"]", re.IGNORECASE)
+
+    @staticmethod
+    def _extract_isp_values(isp_test_case: Dict[str, Any]) -> List[str]:
+        """Extract ISP values in insertion order, skipping metadata keys."""
+        values: List[str] = []
+        if not isinstance(isp_test_case, dict):
+            return values
+
+        for key, payload in isp_test_case.items():
+            if key == "_expected":
+                continue
+            if isinstance(payload, dict):
+                values.append(str(payload.get("value", "")))
+            else:
+                values.append(str(payload))
+        return values
+
+    @classmethod
+    def _inject_isp_values_into_when(
+        cls,
+        when_steps: List[str],
+        isp_test_case: Dict[str, Any],
+    ) -> List[str]:
+        """Inject ISP values into fill-in steps by step order."""
+        values = cls._extract_isp_values(isp_test_case)
+        if not values:
+            return when_steps
+
+        injected: List[str] = []
+        value_idx = 0
+
+        for raw_step in when_steps:
+            step = str(raw_step)
+            is_fill_step = "fill in" in step.lower()
+
+            if is_fill_step and value_idx < len(values):
+                if not cls._WITH_VALUE_RE.search(step):
+                    step = f'{step} with "{values[value_idx]}"'
+                value_idx += 1
+
+            injected.append(step)
+
+        return injected
     
     @staticmethod
     def parse(gherkin_text: str) -> GherkinScenario:
@@ -153,24 +201,55 @@ class GherkinParser:
             # Check if gherkin is a string or dict
             if isinstance(gherkin_content, str):
                 # Parse from text
-                return GherkinParser.parse(gherkin_content)
+                scenario = GherkinParser.parse(gherkin_content)
+                scenario.when = GherkinParser._inject_isp_values_into_when(
+                    scenario.when,
+                    data.get("isp_test_case", {}),
+                )
+                return scenario
             elif isinstance(gherkin_content, dict):
                 # Parse from nested dict structure
+                given = gherkin_content.get("given", [])
+                when = gherkin_content.get("when", [])
+                then = gherkin_content.get("then", [])
+
+                given_list = given if isinstance(given, list) else [given]
+                when_list = when if isinstance(when, list) else [when]
+                then_list = then if isinstance(then, list) else [then]
+
+                when_list = GherkinParser._inject_isp_values_into_when(
+                    [str(step) for step in when_list],
+                    data.get("isp_test_case", {}),
+                )
+
                 return GherkinScenario(
                     feature=gherkin_content.get("feature", ""),
                     scenario=gherkin_content.get("scenario", ""),
-                    given=gherkin_content.get("given", []) if isinstance(gherkin_content.get("given"), list) else [gherkin_content.get("given", "")],
-                    when=gherkin_content.get("when", []) if isinstance(gherkin_content.get("when"), list) else [gherkin_content.get("when", "")],
-                    then=gherkin_content.get("then", []) if isinstance(gherkin_content.get("then"), list) else [gherkin_content.get("then", "")]
+                    given=[str(step) for step in given_list],
+                    when=when_list,
+                    then=[str(step) for step in then_list],
                 )
         elif all(k in data for k in ["feature", "scenario", "given", "when", "then"]):
             # Parse from structured format (direct fields)
+            given = data.get("given", [])
+            when = data.get("when", [])
+            then = data.get("then", [])
+
+            given_list = given if isinstance(given, list) else [given]
+            when_list = when if isinstance(when, list) else [when]
+            then_list = then if isinstance(then, list) else [then]
+
+            when_list = GherkinParser._inject_isp_values_into_when(
+                [str(step) for step in when_list],
+                data.get("isp_test_case", {}),
+            )
+
             return GherkinScenario(
                 feature=data.get("feature", ""),
                 scenario=data.get("scenario", ""),
-                given=data.get("given", []) if isinstance(data.get("given"), list) else [data.get("given", "")],
-                when=data.get("when", []) if isinstance(data.get("when"), list) else [data.get("when", "")],
-                then=data.get("then", []) if isinstance(data.get("then"), list) else [data.get("then", "")]
+                given=[str(step) for step in given_list],
+                when=when_list,
+                then=[str(step) for step in then_list],
             )
         else:
             raise ValueError("Invalid Gherkin data format. Must contain 'gherkin' field (string or dict) or structured fields (feature, scenario, given, when, then).")

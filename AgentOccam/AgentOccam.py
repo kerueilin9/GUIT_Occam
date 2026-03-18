@@ -1343,6 +1343,11 @@ class Judge(Agent):
             return action_element_list[0], judgement_elements
 
 class AgentOccam:
+    # ── regex for ISP type-action detection ──────────────────────────────────
+    _TYPE_RE = re.compile(
+        r'type \[(\d+)\] \[(.*?)\] \[(\d+)\]', re.DOTALL
+    )
+
     def __init__(self,
                  config = None,
                  prompt_dict: Dict = None,
@@ -1654,3 +1659,188 @@ class AgentOccam:
             except:
                 pass
         self.trajectory.append(data_to_log)
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # ISP – task file generation
+    # ══════════════════════════════════════════════════════════════════════════
+
+    @staticmethod
+    def _get_obs_text(env) -> str:
+        """Extract plain accessibility-tree text from env.obs (handles tuple/dict)."""
+        raw = env.obs
+        if isinstance(raw, dict):
+            text = raw.get("text", "")
+            if isinstance(text, (list, tuple)):
+                return text[0] if text else ""
+            return str(text)
+        return str(raw)
+
+    def generate_isp_task_files(
+        self,
+        discoveries: list,
+        task_config: dict,
+        config_file_path: str,
+    ) -> list:
+        """Generate ISP variant task JSON files from recorded ``type`` actions.
+
+        Called after a normal :meth:`act` run on a task with ``isp.enabled:
+        true``.  The *discoveries* list comes from monitoring ``env.step``
+        during that run.
+
+        For each LLM-selected combination of ISP partition values:
+
+        * Copies the original task JSON.
+        * Removes the ``isp`` block (not needed in child tasks).
+        * Embeds concrete values into ``gherkin.when`` steps.
+        * Adds an ``isp_test_case`` block with the partition values and
+          the inferred expected outcome.
+        * Writes the result to
+          ``<config_dir>/isp_tasks/<task_id>_isp_<NN>.json``.
+
+        Parameters
+        ----------
+        discoveries : list
+            ``[{"element_id", "original_value", "obs_text"}, ...]``
+        task_config : dict
+            Parsed original task JSON (must contain the ``isp`` block).
+        config_file_path : str
+            Filesystem path to the original task JSON (derives output dir).
+
+        Returns
+        -------
+        list of str
+            Paths to the generated task JSON files.
+        """
+        import copy
+        import os
+        from AgentOccam.isp_generator import FieldAnalyzer, ISPGenerator, select_isp_combinations
+
+        isp_cfg     = task_config.get("isp", {})
+        field_hints = isp_cfg.get("field_hints", [])
+        max_fields  = isp_cfg.get("max_fields", 10)
+        max_parts   = isp_cfg.get("max_partitions_per_field", 5)
+        max_combs   = max_fields * max_parts
+        isp_model   = isp_cfg.get("isp_model", "gemini-2.5-flash")
+
+        class _ISPCfg:
+            pass
+        merged_cfg = _ISPCfg()
+        merged_cfg.max_partitions_per_field = max_parts
+        merged_cfg.isp_model = isp_model
+
+        isp_gen = ISPGenerator(
+            isp_config=merged_cfg,
+            actor_config=self.config.actor,
+        )
+
+        # ── De-duplicate & cap fields ─────────────────────────────────────────
+        seen: set = set()
+        unique: list = []
+        for d in discoveries:
+            if d["element_id"] not in seen:
+                seen.add(d["element_id"])
+                unique.append(d)
+        unique = unique[:max_fields]
+
+        if not unique:
+            print("[ISP] No type actions recorded — skipping task file generation.")
+            return []
+
+        # ── Generate partitions per field ─────────────────────────────────────
+        field_partitions: dict = {}   # label -> List[ISPPartition]
+        field_label_map:  dict = {}   # label -> list of match keywords
+
+        for d in unique:
+            meta = FieldAnalyzer.extract(
+                d["element_id"], d["obs_text"], field_hints=field_hints
+            )
+            meta.original_value = d["original_value"]
+            label = meta.label or d["element_id"]
+            parts = isp_gen.generate(meta)
+            field_partitions[label] = parts
+
+            keywords = [label.lower()]
+            for hint in field_hints:
+                kws = [kw.lower() for kw in hint.get("label_keywords", [])]
+                if any(kw in label.lower() or label.lower() in kw for kw in kws):
+                    keywords = kws + keywords
+                    break
+            field_label_map[label] = list(dict.fromkeys(keywords))
+
+            print(f"[ISP] Field '{label}': {len(parts)} partition(s) generated")
+
+        # ── LLM combination selection ─────────────────────────────────────────
+        gherkin_ctx  = task_config.get("gherkin", {})
+        combinations = select_isp_combinations(
+            field_partitions=field_partitions,
+            gherkin_context=gherkin_ctx,
+            call_model=isp_gen._call_model,
+            max_combinations=max_combs,
+        )
+        print(f"[ISP] {len(combinations)} combination(s) selected.")
+
+        # ── Expected outcome helper ───────────────────────────────────────────
+        expected_map: dict = isp_cfg.get("expected_outcomes_by_category", {})
+        _PRIO = {"fail": 0, "unknown": 1, "pass": 2}
+
+        def _infer_expected(combo: dict) -> str:
+            outcome = "pass"
+            for part in combo.values():
+                cat = part.category if hasattr(part, "category") else part.get("category", "valid")
+                mapped = expected_map.get(cat, "unknown")
+                if _PRIO.get(mapped, 1) < _PRIO.get(outcome, 2):
+                    outcome = mapped
+            return outcome
+
+        # ── Output directory ──────────────────────────────────────────────────
+        config_dir       = os.path.dirname(os.path.abspath(config_file_path))
+        out_dir          = os.path.join(config_dir, "isp_tasks")
+        os.makedirs(out_dir, exist_ok=True)
+
+        original_task_id = task_config.get("task_id", "task")
+        gherkin_when     = list(gherkin_ctx.get("when", []))
+        generated_paths: list = []
+
+        for idx, combo in enumerate(combinations, start=1):
+            nn       = str(idx).zfill(2)
+            new_id   = f"{original_task_id}_isp_{nn}"
+            expected = _infer_expected(combo)
+
+            # Deep copy and strip ISP block
+            new_config = copy.deepcopy(task_config)
+            new_config["task_id"] = new_id
+            new_config.pop("isp", None)
+
+            # Embed concrete values into gherkin.when steps
+            new_when: list = []
+            for step in gherkin_when:
+                step_lower = step.lower()
+                modified   = step
+                for label, part in combo.items():
+                    kws        = field_label_map.get(label, [label.lower()])
+                    part_value = part.value if hasattr(part, "value") else part.get("value", "")
+                    if any(kw in step_lower for kw in kws):
+                        if ' with "' not in modified and " with '" not in modified:
+                            modified = f'{modified} with "{part_value}"'
+                        break
+                new_when.append(modified)
+            new_config["gherkin"]["when"] = new_when
+
+            # ISP test case metadata
+            isp_test_case: dict = {"_expected": expected}
+            for label, part in combo.items():
+                isp_test_case[label] = part.to_dict() if hasattr(part, "to_dict") else part
+            new_config["isp_test_case"] = isp_test_case
+
+            # Simplify eval block for child tasks
+            if "eval" in new_config:
+                new_config["eval"]["eval_types"] = ["gherkin_criteria"]
+
+            # Write file
+            out_path = os.path.join(out_dir, f"{new_id}.json")
+            with open(out_path, "w", encoding="utf-8") as f:
+                json.dump(new_config, f, ensure_ascii=False, indent=2)
+            print(f"[ISP] Written: {out_path}  (expected={expected})")
+            generated_paths.append(out_path)
+
+        return generated_paths
