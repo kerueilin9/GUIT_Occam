@@ -3,6 +3,7 @@ import json
 import os
 from typing import Any
 from urllib.parse import urlparse
+from AgentOccam.logger import logger
 
 import requests
 from playwright.sync_api import CDPSession, Page
@@ -42,101 +43,89 @@ def generate_from_llm_chat_completion(
     temperature: float = 0,
     max_tokens: int = 768,
 ) -> str:
-    """
-    Generate response from LLM with automatic provider selection.
-    Supports both OpenAI and Gemini.
-    
-    Args:
-        messages: List of message dicts with 'role' and 'content'
-        model: Model name or 'auto' to auto-detect based on available API keys
-        temperature: Sampling temperature
-        max_tokens: Maximum tokens to generate
-        
-    Returns:
-        Generated text response
-    """
-    # Auto-detect provider based on API keys
-    use_gemini = False
+    # 1. Decide Provider and Model
     if model == "auto":
-        if GEMINI_AVAILABLE and os.environ.get("GEMINI_API_KEY"):
-            use_gemini = True
-            model = "gemini-2.5-flash"
-        elif OPENAI_AVAILABLE and os.environ.get("OPENAI_API_KEY"):
-            use_gemini = False
-            model = "gpt-4-turbo"
+        if os.getenv("GEMINI_API_KEY") and GEMINI_AVAILABLE:
+            model, use_gemini = "gemini-2.5-flash", True
+        elif os.getenv("OPENAI_API_KEY") and OPENAI_AVAILABLE:
+            model, use_gemini = "gpt-4-turbo", False
         else:
-            raise ValueError(
-                "No LLM API key found. Please set GEMINI_API_KEY or OPENAI_API_KEY environment variable."
-            )
-    elif "gemini" in model.lower():
-        use_gemini = True
-    
+            raise ValueError("Missing API Keys for both Gemini and OpenAI.")
+    else:
+        use_gemini = "gemini" in model.lower()
+
+    # --- Gemini path ---
     if use_gemini:
-        # Use Gemini
         if not GEMINI_AVAILABLE:
             raise ValueError("Gemini not available. Please install google-generativeai and set GEMINI_API_KEY.")
-        
-        # Convert messages to Gemini format
-        system_prompt = ""
-        user_content = ""
-        
-        for msg in messages:
-            if msg["role"] == "system":
-                system_prompt = msg["content"]
-            elif msg["role"] == "user":
-                user_content += msg["content"] + "\n"
-        
-        # Call Gemini with relaxed safety settings
-        safety_settings = [
-            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+
+        # Split system prompt and chat history (multi-turn)
+        sys_msg = next((m["content"] for m in messages if m.get("role") == "system"), None)
+        history = [
+            {
+                "role": "user" if m.get("role") == "user" else "model",
+                "parts": [m.get("content", "")],
+            }
+            for m in messages
+            if m.get("role") != "system"
         ]
-        
-        genai_model = genai.GenerativeModel(model)
-        full_prompt = f"{system_prompt}\n\n{user_content}" if system_prompt else user_content
-        
-        generation_config = genai.GenerationConfig(
-            temperature=temperature,
-            max_output_tokens=max_tokens,
+
+        # Last message as current user prompt, previous turns as history
+        user_input = history.pop()["parts"][0] if history else ""
+        logger.debug(f"Gemini Chat - System: {sys_msg}, User Input: {user_input}, History Length: {len(history)}")  
+        genai_model = genai.GenerativeModel(
+            model_name=model,
+            system_instruction=sys_msg,
+            safety_settings={
+                cat: "BLOCK_NONE"
+                for cat in [
+                    "HARM_CATEGORY_HARASSMENT",
+                    "HARM_CATEGORY_HATE_SPEECH",
+                    "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    "HARM_CATEGORY_DANGEROUS_CONTENT",
+                ]
+            },
         )
-        
-        response = genai_model.generate_content(
-            full_prompt,
-            generation_config=generation_config,
-            safety_settings=safety_settings
+
+        chat = genai_model.start_chat(history=history)
+        response = chat.send_message(
+            user_input,
+            generation_config=genai.GenerationConfig(
+                temperature=temperature,
+                max_output_tokens=max_tokens,
+            ),
         )
-        
-        # Handle safety filters and other issues
+        logger.debug(f"Gemini Raw Response: {response}")
         try:
             return response.text
-        except Exception as e:
-            # Check if response was blocked by safety filters
-            if hasattr(response, 'candidates') and response.candidates:
+        except Exception:
+            if hasattr(response, "candidates") and response.candidates:
                 candidate = response.candidates[0]
-                if hasattr(candidate, 'finish_reason'):
-                    print(f"Warning: Gemini response blocked. Finish reason: {candidate.finish_reason}")
-            
-            # Try to extract partial content if available
-            if hasattr(response, 'parts') and response.parts:
-                return ''.join([part.text for part in response.parts if hasattr(part, 'text')])
-            
-            # If no content available, raise the original error
-            raise e
-    else:
-        # Use OpenAI
-        if not OPENAI_AVAILABLE:
-            raise ValueError("OpenAI not available. Please set OPENAI_API_KEY.")
-        
-        return generate_from_openai_chat_completion(
-            messages=messages,
-            model=model,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=1.0,
-            context_length=0,
-        )
+                if hasattr(candidate, "finish_reason"):
+                    print(
+                        f"Warning: Gemini response finished with reason={candidate.finish_reason}"
+                    )
+                if hasattr(candidate, "content") and candidate.content:
+                    parts = candidate.content.parts or []
+                    partial = "".join(
+                        p.text for p in parts if hasattr(p, "text") and p.text
+                    )
+                    if partial:
+                        return partial
+            raise
+
+    # --- OpenAI path ---
+    if not OPENAI_AVAILABLE:
+        raise ValueError("OpenAI not available. Please set OPENAI_API_KEY.")
+
+    return generate_from_openai_chat_completion(
+        messages=messages,
+        model=model,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        top_p=1.0,
+        context_length=0,
+    )
 
 
 def shopping_get_auth_token() -> str:

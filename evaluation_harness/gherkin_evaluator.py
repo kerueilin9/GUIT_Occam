@@ -18,6 +18,7 @@ def evaluate_gherkin_criteria(
     page: Page,
     trajectory: Trajectory,
     client: CDPSession = None,
+    comment: bool = True,
 ) -> float:
     """
     Evaluate if the agent met the Gherkin acceptance criteria
@@ -27,7 +28,7 @@ def evaluate_gherkin_criteria(
         page: Playwright page object
         trajectory: Agent's interaction trajectory
         client: CDP session (optional)
-    
+        comment: Whether to include comments in the evaluation
     Returns:
         Score between 0.0 and 1.0
     """
@@ -53,7 +54,8 @@ def evaluate_gherkin_criteria(
             url=current_url,
             title=page_title,
             content=page_content,
-            page=page
+            page=page,
+            return_comment=comment
         )
         scores.append(score)
     
@@ -66,8 +68,9 @@ def evaluate_single_criterion(
     url: str,
     title: str,
     content: str,
-    page: Page
-) -> float:
+    page: Page,
+    return_comment: bool = True,
+) -> float | tuple[float, str]:
     """
     Evaluate a single Gherkin acceptance criterion
     
@@ -79,7 +82,8 @@ def evaluate_single_criterion(
         page: Playwright page object
     
     Returns:
-        Score between 0.0 and 1.0
+        - if return_comment=False: score between 0.0 and 1.0
+        - if return_comment=True: (score, short comment)
     """
     # Extract the expected outcome from criterion
     # Common patterns:
@@ -127,6 +131,8 @@ def evaluate_single_criterion(
             return check_element_existence(element_desc, content, page)
     
     # Default: use LLM to evaluate criterion
+    if return_comment:
+        return llm_evaluate_criterion_with_comment(criterion, url, title, content)
     return llm_evaluate_criterion(criterion, url, title, content)
 
 
@@ -170,7 +176,7 @@ def check_element_existence(element_desc: str, content: str, page: Page) -> floa
     prompt = f"""Given the following page content, does it contain {element_desc}?
 
 Page content:
-{content[:1500]}
+{content[:1000]}
 
 Answer with just "YES" or "NO"."""
 
@@ -217,7 +223,7 @@ Acceptance Criterion: {criterion}
 Current Web Page:
 - URL: {url}
 - Title: {title}
-- Content (first 1500 chars): {content[:1500]}
+- Content (first 1000 chars): {content[:1000]}
 
 Does the web page satisfy this criterion? Rate from 0.0 to 1.0 where:
 - 1.0 = Fully satisfied
@@ -250,3 +256,71 @@ Respond with ONLY a number between 0.0 and 1.0."""
         print(f"Error in LLM evaluation: {e}")
         print(f"Criterion was: {criterion}")
         return 0.5
+
+def llm_evaluate_criterion_with_comment(
+    criterion: str,
+    url: str,
+    title: str,
+    content: str,
+) -> float:
+    """
+    Use LLM to evaluate if criterion is met and return a short rationale.
+
+    Returns:
+        (score, comment)
+        - score: 0.0 ~ 1.0
+        - comment: one short sentence explaining the score
+    """
+    prompt = f"""Evaluate the acceptance criterion and return JSON only.
+
+Acceptance Criterion: {criterion}
+
+Current Web Page:
+- URL: {url}
+- Title: {title}
+- Content (first 1000 chars): {content[:1000]}
+
+Return strict JSON with keys:
+{{"score": <0.0-1.0>, "comment": "<short reason in one sentence>"}}"""
+
+    try:
+        response = generate_from_llm_chat_completion(
+            messages=[
+                {"role": "system", "content": "You are an expert at evaluating web automation test results against acceptance criteria."},
+                {"role": "user", "content": prompt}
+            ],
+            model="auto",
+            temperature=0,
+            max_tokens=1000,
+        )
+
+        import re
+        import json
+        
+        # Try JSON parse first
+        text = response.strip()
+        match_json = re.search(r"\{.*\}", text, flags=re.DOTALL)
+        if match_json:
+            parsed = json.loads(match_json.group(0))
+            score = float(parsed.get("score", 0.5))
+            comment = str(parsed.get("comment", "No explanation provided."))
+            print(f"score: {score}, comment: {comment[:200]}")
+            # logger for debugging LLM evaluation responses
+            logger.debug(f"LLM evaluation response: {response[:200]}/n/n/n/n")
+            return max(0.0, min(1.0, score))
+
+        # Fallback parsing if model didn't return strict JSON
+        match_score = re.search(r"(\d+\.?\d*)", text)
+        score = float(match_score.group(1)) if match_score else 0.5
+        if "\n" in text:
+            comment = text.split("\n", 1)[1].strip()
+        else:
+            comment = "Scored based on criterion-page alignment."
+            
+        print(f"score: {score}, comment: {comment[:200]}")
+        return max(0.0, min(1.0, score))
+
+    except Exception as e:
+        print(f"Error in LLM evaluation with comment: {e}")
+        print(f"Criterion was: {criterion}")
+        return 0.5, "Evaluation fallback used due to LLM response/parsing error."

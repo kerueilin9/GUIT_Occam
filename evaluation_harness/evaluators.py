@@ -428,6 +428,7 @@ class GherkinCriteriaEvaluator(Evaluator):
         
         # Get acceptance criteria from config
         acceptance_criteria = configs["eval"]["reference_answers"].get("gherkin_acceptance_criteria", [])
+        comment = configs["eval"].get("comment", True)  # any additional comment or instruction for evaluation
         
         if not acceptance_criteria or not page:
             return 1.0  # No criteria or no page to evaluate
@@ -437,7 +438,8 @@ class GherkinCriteriaEvaluator(Evaluator):
             acceptance_criteria=acceptance_criteria,
             page=page,
             trajectory=trajectory,
-            client=client
+            client=client,
+            comment=comment,
         )
         
         return score
