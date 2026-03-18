@@ -1,0 +1,52 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task_user01_isp",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+
+  "isp": {
+    "enabled": true,
+    "max_partitions_per_field": 3,
+    "expected_outcomes_by_category": {
+      "original": "pass",
+      "valid": "pass",
+      "boundary": "unknown",
+      "invalid": "fail",
+      "empty": "fail"
+    },
+    "isp_model": "gemini-2.5-flash"
+  },
+
+  "gherkin": {
+    "feature": "KeystoneJS User Management",
+    "scenario": "Create a new user",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+        "I navigate to Users list",
+        "I click on Create User button",
+        "I fill in the first name",
+        "I fill in the last name",
+        "I fill in the email",
+        "I fill in the password",
+        "I fill in the confirm password",
+        "I create the user",
+        "I save the user"
+    ],
+    "then": [
+      "The user should be created successfully",
+      "I should see a success message"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "A success message should be displayed"
+      ]
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "sites": ["keystonejs"],
+  "task_id": "keystonejs_task_post01_isp",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+
+  "gherkin": {
+    "feature": "KeystoneJS Post Form – ISP Input Validation",
+    "scenario": "Create a new post with various input values",
+    "given": [
+      "I am logged in as an administrator"
+    ],
+    "when": [
+      "I navigate to Posts list",
+      "I click on Create Post button",
+      "I fill in the post title field",
+      "I fill in the post content field",
+      "I save the post"
+    ],
+    "then": [
+        "A success message should be displayed"
+    ]
+  },
+
+  "isp": {
+    "enabled": true,
+
+    "max_partitions_per_field": 3,
+
+    "expected_outcomes_by_category": {
+      "original" : "pass",
+      "valid"    : "pass",
+      "boundary" : "unknown",
+      "invalid"  : "fail",
+      "empty"    : "fail"
+    },
+
+    "isp_model": "gemini-2.5-flash"
+  },
+
+  "intent_template_id": 0,
+  "require_reset": false,
+
+  "eval": {
+    "eval_types": ["gherkin_criteria", "isp_report"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "A success message should be displayed"
+      ]
+    }
+  }
+}
