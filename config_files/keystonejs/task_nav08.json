@@ -10,7 +10,7 @@
     "scenario": "Navigate to Blog page",
     "given": ["I am logged in as an administrator"],
     "when": [
-        "I click on the home link (sixth button in the head bar)",
+        "I click on the Front page - keystone-starter",
         "I click on the Blog link in the head bar"
     ],
     "then": ["The page should navigate to the Blog page"]
