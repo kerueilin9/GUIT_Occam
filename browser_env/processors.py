@@ -1,6 +1,7 @@
 import json
 import lxml
 import re
+import unicodedata
 from collections import defaultdict
 from typing import Any, TypedDict, Union
 
@@ -293,6 +294,139 @@ class TextObervationProcessor(ObservationProcessor):
             return response
         except Exception as e:
             return {"result": {"subtype": "error"}}
+
+    @staticmethod
+    def _is_icon_like_name(name: str) -> bool:
+        if not isinstance(name, str):
+            return False
+        text = name.strip()
+        if not text or len(text) > 3:
+            return False
+        if any(char.isalnum() for char in text):
+            return False
+        has_private_use_char = any(0xE000 <= ord(char) <= 0xF8FF for char in text)
+        if has_private_use_char:
+            return True
+        return all(unicodedata.category(char).startswith("S") for char in text)
+
+    @staticmethod
+    def _derive_label_from_href(href: str) -> str:
+        if not href:
+            return ""
+        href = href.strip().strip("/")
+        if not href:
+            return ""
+        fragment = href.split("/")[-1].split("?")[0].split("#")[0]
+        if not fragment:
+            return ""
+        fragment = re.sub(r"[-_]+", " ", fragment).strip()
+        if not fragment:
+            return ""
+        return fragment[:40]
+
+    @staticmethod
+    def _extract_icon_class_hint(class_name: str) -> str:
+        if not class_name:
+            return ""
+        tokens = class_name.split()
+        for token in tokens:
+            lowered = token.lower()
+            if lowered.startswith("fa-") and len(token) > 3:
+                return token[3:].replace("-", " ")[:40]
+            if lowered.startswith("icon-") and len(token) > 5:
+                return token[5:].replace("-", " ")[:40]
+            if lowered.startswith("mdi-") and len(token) > 4:
+                return token[4:].replace("-", " ")[:40]
+        return ""
+
+    def _get_semantic_label_for_backend_node(
+        self,
+        client: CDPSession,
+        backend_node_id: str,
+    ) -> str:
+        try:
+            remote_object = client.send(
+                "DOM.resolveNode", {"backendNodeId": int(backend_node_id)}
+            )
+            remote_object_id = remote_object["object"]["objectId"]
+            response = client.send(
+                "Runtime.callFunctionOn",
+                {
+                    "objectId": remote_object_id,
+                    "functionDeclaration": """
+                        function() {
+                            if (!this || !this.getAttribute) {
+                                return {};
+                            }
+
+                            const getText = (el) => {
+                                if (!el) return "";
+                                return (el.innerText || el.textContent || "").trim();
+                            };
+
+                            let ariaLabelledbyText = "";
+                            const labelledby = this.getAttribute('aria-labelledby') || "";
+                            if (labelledby) {
+                                const ids = labelledby.split(/\s+/).filter(Boolean);
+                                const labels = ids
+                                    .map((id) => getText(document.getElementById(id)))
+                                    .filter(Boolean);
+                                ariaLabelledbyText = labels.join(' ').trim();
+                            }
+
+                            const className = typeof this.className === 'string'
+                                ? this.className
+                                : (this.className && this.className.baseVal) || "";
+
+                            return {
+                                ariaLabel: (this.getAttribute('aria-label') || "").trim(),
+                                ariaLabelledbyText: ariaLabelledbyText,
+                                title: (this.getAttribute('title') || "").trim(),
+                                alt: (this.getAttribute('alt') || "").trim(),
+                                dataLabel: (
+                                    this.getAttribute('data-label') ||
+                                    this.getAttribute('data-testid') ||
+                                    this.getAttribute('data-name') ||
+                                    this.getAttribute('data-qa') ||
+                                    ""
+                                ).trim(),
+                                href: (this.getAttribute('href') || "").trim(),
+                                className: className.trim(),
+                                text: getText(this).slice(0, 80),
+                            };
+                        }
+                    """,
+                    "returnByValue": True,
+                },
+            )
+
+            dom_meta = response.get("result", {}).get("value", {})
+            if not isinstance(dom_meta, dict):
+                return ""
+
+            for key in [
+                "ariaLabel",
+                "ariaLabelledbyText",
+                "title",
+                "alt",
+                "dataLabel",
+                "text",
+            ]:
+                value = dom_meta.get(key, "")
+                if isinstance(value, str) and value.strip():
+                    return value.strip()[:80]
+
+            href_hint = self._derive_label_from_href(dom_meta.get("href", ""))
+            if href_hint:
+                return href_hint
+
+            class_hint = self._extract_icon_class_hint(dom_meta.get("className", ""))
+            if class_hint:
+                return class_hint
+
+            return ""
+        except Exception:
+            return ""
 
     @staticmethod
     def get_element_in_viewport_ratio(
@@ -713,6 +847,7 @@ class TextObervationProcessor(ObservationProcessor):
                 seen_ids.add(node["nodeId"])
         accessibility_tree = _accessibility_tree
         nodeid_to_cursor = {}
+        semantic_label_cache: dict[str, str] = {}
         for cursor, node in enumerate(accessibility_tree):
             nodeid_to_cursor[node["nodeId"]] = cursor
             # usually because the node is not visible etc
@@ -720,6 +855,19 @@ class TextObervationProcessor(ObservationProcessor):
                 node["union_bound"] = None
                 continue
             backend_node_id = str(node["backendDOMNodeId"])
+
+            role = node.get("role", {}).get("value", "")
+            name = node.get("name", {}).get("value", "")
+            if role in {"link", "button", "menuitem"} and self._is_icon_like_name(name):
+                if backend_node_id not in semantic_label_cache:
+                    semantic_label_cache[backend_node_id] = self._get_semantic_label_for_backend_node(
+                        client,
+                        backend_node_id,
+                    )
+                semantic_label = semantic_label_cache[backend_node_id]
+                if semantic_label and "name" in node:
+                    node["name"]["value"] = semantic_label
+
             if node["role"]["value"] == "RootWebArea":
                 # always inside the viewport
                 node["union_bound"] = [0.0, 0.0, 10.0, 10.0]
