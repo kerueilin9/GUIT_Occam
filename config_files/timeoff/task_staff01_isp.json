@@ -1,0 +1,46 @@
+{
+  "sites": ["timeoff"],
+  "task_id": "timeoff_task_staff01_isp",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3100",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "TimeOff Staff Management",
+    "scenario": "Add a new employee account",
+    "given": ["I am logged in as an administrator"],
+    "when": [
+      "I navigate to the Staff page",
+      "I add a new employee",
+      "I fill in First Name",
+      "I fill in Last Name",
+      "I fill in Email Address",
+      "I fill in Password",
+      "I fill in Confirm Password",
+      "I save the new employee"
+    ],
+    "then": [
+      "The page should display 'New user account successfully added'"
+    ]
+  },
+    "isp": {
+    "enabled": true,
+    "max_partitions_per_field": 3,
+    "expected_outcomes_by_category": {
+      "valid": "pass",
+      "boundary": "unknown",
+      "invalid": "fail",
+      "empty": "fail"
+    },
+    "isp_model": "gemini-2.5-flash"
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The page should display 'New user account successfully added'"
+      ]
+    }
+  }
+}

@@ -1,6 +1,6 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task14",
+  "task_id": "timeoff_task_general03",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3100",
@@ -24,9 +24,8 @@
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "Changes to bank holidays were saved",
       "gherkin_acceptance_criteria": [
         "The page should display \"Changes to bank holidays were saved\"",
         "The bank holiday \"Ker\" should be visible in the holidays list"

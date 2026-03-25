@@ -1,38 +1,33 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task18",
+  "task_id": "timeoff_task_staff05",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3100",
   "geolocation": null,
   "gherkin": {
     "feature": "TimeOff Departments Management",
-    "scenario": "Modify Sales department properties",
+    "scenario": "Update Sales department manager",
     "given": ["I am logged in as an administrator"],
     "when": [
       "I navigate to the departments management page",
-      "I edit the Sales department",
-      "I change the department name to 'Sales1'",
-      "I set the Allowance to '15'",
-      "I check the 'Accrued allowance' checkbox",
+      "I edit the Sales1 department",
+      "I change the Manager to 'te st'",
       "I save the changes"
     ],
     "then": [
       "The page should display 'Department Sales1 was updated'",
-      "The department 'Sales1' should appear in the departments list",
-      "The department should show Allowance of 15",
-      "The department should have Accrued allowance enabled"
+      "The Sales1 department should show manager 'te st'"
     ]
   },
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "Department Sales1 was updated",
       "gherkin_acceptance_criteria": [
         "The page should display 'Department Sales1 was updated'",
-        "The department 'Sales1' should appear in the departments list with Allowance of 15"
+        "The Sales1 department should have manager 'te st'"
       ]
     }
   }

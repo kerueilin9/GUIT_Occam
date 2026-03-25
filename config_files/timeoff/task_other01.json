@@ -1,6 +1,6 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task20",
+  "task_id": "timeoff_task_other01",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3100",
@@ -23,9 +23,8 @@
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "Settings were saved",
       "gherkin_acceptance_criteria": [
         "The page should display 'Settings were saved'",
         "A new API token should be present"

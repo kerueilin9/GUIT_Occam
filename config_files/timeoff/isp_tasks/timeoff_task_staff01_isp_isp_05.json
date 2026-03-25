@@ -1,0 +1,69 @@
+{
+  "sites": [
+    "timeoff"
+  ],
+  "task_id": "timeoff_task_staff01_isp_isp_05",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3100",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "TimeOff Staff Management",
+    "scenario": "Add a new employee account",
+    "given": [
+      "I am logged in as an administrator"
+    ],
+    "when": [
+      "I navigate to the Staff page",
+      "I add a new employee",
+      "I fill in First Name with \"Robert\"",
+      "I fill in Last Name with \"O'Malley\"",
+      "I fill in Email Address with \"\"",
+      "I fill in Password",
+      "I fill in Confirm Password",
+      "I save the new employee"
+    ],
+    "then": [
+      "The page should display 'New user account successfully added'"
+    ]
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The page should display 'New user account successfully added'"
+      ]
+    }
+  },
+  "isp_test_case": {
+    "_expected": "fail",
+    "First Name": {
+      "value": "Robert",
+      "category": "valid",
+      "description": "A typical, valid first name (different from original) to confirm normal input acceptance."
+    },
+    "Last Name": {
+      "value": "O'Malley",
+      "category": "valid",
+      "description": "Valid name with an apostrophe, testing character set handling."
+    },
+    "Email Address": {
+      "value": "",
+      "category": "empty",
+      "description": "Empty string for a required email field, testing required validation."
+    },
+    "Password Confirm password": {
+      "value": "Password123",
+      "category": "original",
+      "description": "Original value from task specification"
+    },
+    "1307": {
+      "value": "Password123",
+      "category": "original",
+      "description": "Original value from task specification"
+    }
+  }
+}

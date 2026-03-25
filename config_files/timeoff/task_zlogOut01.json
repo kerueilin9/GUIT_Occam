@@ -18,9 +18,8 @@
   "intent_template_id": 0,
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "login",
       "gherkin_acceptance_criteria": [
         "The login form should be visible",
         "The current URL should contain \"/login\""

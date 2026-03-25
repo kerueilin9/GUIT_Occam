@@ -1,6 +1,6 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task10",
+  "task_id": "timeoff_task_nav05",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3100",
@@ -14,9 +14,8 @@
   },
   "require_reset": false,
   "eval": {
-    "eval_types": ["string_match", "gherkin_criteria"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
-      "fuzzy_match": "My feeds",
       "gherkin_acceptance_criteria": ["The page should display My feeds"]
     }
   }
