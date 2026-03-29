@@ -34,6 +34,43 @@ except ImportError:
 # Environment setup
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
 
+
+def _is_vertex_mode() -> bool:
+    """Return True when ADK should use Vertex AI instead of API-key mode."""
+    vertex_flag = os.environ.get("GOOGLE_GENAI_USE_VERTEXAI", "").strip().lower()
+    return vertex_flag in {"1", "true", "yes", "on"}
+
+
+def _validate_adk_runtime_env(model_id: str) -> None:
+    """Validate minimal env requirements for ADK runtime mode."""
+    if _is_vertex_mode():
+        missing_variables = []
+        if not os.environ.get("GOOGLE_CLOUD_PROJECT", "").strip():
+            missing_variables.append("GOOGLE_CLOUD_PROJECT")
+        if not os.environ.get("GOOGLE_CLOUD_LOCATION", "").strip():
+            missing_variables.append("GOOGLE_CLOUD_LOCATION")
+
+        credentials_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "").strip()
+        if credentials_path and not os.path.exists(credentials_path):
+            raise EnvironmentError(
+                "GOOGLE_APPLICATION_CREDENTIALS is set but file does not exist: "
+                f"{credentials_path}"
+            )
+
+        if missing_variables:
+            raise EnvironmentError(
+                "Vertex AI mode is enabled (GOOGLE_GENAI_USE_VERTEXAI=true), "
+                "but required variables are missing: "
+                f"{', '.join(missing_variables)}"
+            )
+    else:
+        if not GOOGLE_API_KEY:
+            raise EnvironmentError(
+                "ADK API-key mode requires GOOGLE_API_KEY or GEMINI_API_KEY. "
+                "Alternatively, enable Vertex AI mode with "
+                "GOOGLE_GENAI_USE_VERTEXAI=true and set GOOGLE_CLOUD_PROJECT/GOOGLE_CLOUD_LOCATION."
+            )
+
 # Session management constants
 APP_NAME = "AgentOccam"
 DEFAULT_USER_ID = "agent_occam_user"
@@ -64,6 +101,8 @@ async def call_adk_async(prompt: str, model_id: str = "adk-gemini-2.0-flash", sy
             "google-adk package is not installed. "
             "Please install it with: pip install google-adk"
         )
+
+    _validate_adk_runtime_env(model_id)
     
     # Strip "adk-" prefix if present (AgentOccam naming convention)
     actual_model_id = model_id.replace("adk-", "") if model_id.startswith("adk-") else model_id
@@ -212,15 +251,13 @@ def call_adk_with_messages(messages: str, model_id: str = "adk-gemini-2.0-flash"
 
 # Testing code
 if __name__ == "__main__":
-    if not GOOGLE_API_KEY:
-        print("Error: GOOGLE_API_KEY or GEMINI_API_KEY environment variable not set.")
-        print("Please set one of these variables to test the ADK provider.")
-    else:
+    try:
+        _validate_adk_runtime_env("adk-gemini-2.0-flash")
         print("Testing ADK Provider...")
         print("=" * 50)
-        
-        test_prompt = """You are a helpful web navigation agent. 
-        
+
+        test_prompt = """You are a helpful web navigation agent.
+
 Current webpage shows:
 - Link [123] "Home"
 - Link [456] "Products"
@@ -229,16 +266,15 @@ Current webpage shows:
 Task: Navigate to the Products page.
 
 What action should you take?"""
-        
-        try:
-            response = call_adk(
-                prompt=test_prompt,
-                model_id="adk-gemini-2.0-flash",
-                system_prompt="You are a web automation assistant. Provide concise, direct answers."
-            )
-            print("\nADK Response:")
-            print(response)
-            print("=" * 50)
-            print("✓ ADK provider test successful!")
-        except Exception as e:
-            print(f"\n✗ ADK provider test failed: {e}")
+
+        response = call_adk(
+            prompt=test_prompt,
+            model_id="adk-gemini-2.0-flash",
+            system_prompt="You are a web automation assistant. Provide concise, direct answers."
+        )
+        print("\nADK Response:")
+        print(response)
+        print("=" * 50)
+        print("✓ ADK provider test successful!")
+    except Exception as e:
+        print(f"\n✗ ADK provider test failed: {e}")

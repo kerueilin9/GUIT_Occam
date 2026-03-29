@@ -42,6 +42,19 @@ export WIKIPEDIA="http://<webarena_server_address>:8888/wikipedia_en_all_maxi_20
 export HOMEPAGE="http://<webarena_server_address>:4399"
 export OPENAI_API_KEY="<openai_api_key>"
 export GEMINI_API_KEY="<gemini_api_key>" # Optional, we provide several other agent base models, such as Claude and LLaMa.
+
+# Vertex AI (Google Cloud) via ADK (optional)
+# 1) Use ADK-prefixed model in YAML, e.g. "adk-gemini-2.5-flash"
+# 2) Enable Vertex mode and set project/location
+export GOOGLE_GENAI_USE_VERTEXAI=true
+export GOOGLE_CLOUD_PROJECT="<gcp_project_id>"
+export GOOGLE_CLOUD_LOCATION="us-central1"
+
+# 3) Authentication (choose one)
+# Option A: Service Account JSON key
+export GOOGLE_APPLICATION_CREDENTIALS="/absolute/path/to/service-account.json"
+# Option B: gcloud user credentials
+# gcloud auth application-default login
 ```
 * Login in:
 ```bash

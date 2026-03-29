@@ -323,4 +323,4 @@ Return strict JSON with keys:
     except Exception as e:
         print(f"Error in LLM evaluation with comment: {e}")
         print(f"Criterion was: {criterion}")
-        return 0.5, "Evaluation fallback used due to LLM response/parsing error."
+        return 0.5

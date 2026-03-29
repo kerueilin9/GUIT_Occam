@@ -36,6 +36,32 @@ try:
 except ImportError:
     GEMINI_AVAILABLE = False
 
+try:
+    from AgentOccam.llms.adk import call_adk
+    ADK_AVAILABLE = True
+except ImportError:
+    ADK_AVAILABLE = False
+
+
+def _is_vertex_mode() -> bool:
+    vertex_flag = os.environ.get("GOOGLE_GENAI_USE_VERTEXAI", "").strip().lower()
+    return vertex_flag in {"1", "true", "yes", "on"}
+
+
+def _build_prompt_from_messages(messages: list[dict[str, Any]]) -> tuple[str, str | None]:
+    system_prompt = None
+    turns = []
+    for message in messages:
+        role = (message.get("role") or "user").strip().lower()
+        content = (message.get("content") or "").strip()
+        if not content:
+            continue
+        if role == "system" and system_prompt is None:
+            system_prompt = content
+            continue
+        turns.append(f"{role.upper()}: {content}")
+    return "\n\n".join(turns), system_prompt
+
 
 def generate_from_llm_chat_completion(
     messages: list[dict[str, Any]],
@@ -45,14 +71,39 @@ def generate_from_llm_chat_completion(
 ) -> str:
     # 1. Decide Provider and Model
     if model == "auto":
-        if os.getenv("GEMINI_API_KEY") and GEMINI_AVAILABLE:
-            model, use_gemini = "gemini-2.5-flash", True
+        if _is_vertex_mode() and ADK_AVAILABLE:
+            model, use_gemini, use_adk = "adk-gemini-2.5-flash", False, True
+        elif os.getenv("GEMINI_API_KEY") and GEMINI_AVAILABLE:
+            model, use_gemini, use_adk = "gemini-2.5-flash", True, False
+        elif os.getenv("GOOGLE_API_KEY") and ADK_AVAILABLE:
+            model, use_gemini, use_adk = "adk-gemini-2.5-flash", False, True
         elif os.getenv("OPENAI_API_KEY") and OPENAI_AVAILABLE:
-            model, use_gemini = "gpt-4-turbo", False
+            model, use_gemini, use_adk = "gpt-4-turbo", False, False
         else:
-            raise ValueError("Missing API Keys for both Gemini and OpenAI.")
+            raise ValueError(
+                "Missing LLM credentials. Set one of: "
+                "(A) Vertex AI envs GOOGLE_GENAI_USE_VERTEXAI/GOOGLE_CLOUD_PROJECT/GOOGLE_CLOUD_LOCATION, "
+                "(B) GEMINI_API_KEY, (C) GOOGLE_API_KEY, or (D) OPENAI_API_KEY."
+            )
     else:
-        use_gemini = "gemini" in model.lower()
+        model_lower = model.lower()
+        use_adk = model_lower.startswith("adk-") or (_is_vertex_mode() and "gemini" in model_lower and ADK_AVAILABLE)
+        use_gemini = ("gemini" in model_lower) and not use_adk
+
+    # --- ADK / Vertex path ---
+    if use_adk:
+        if not ADK_AVAILABLE:
+            raise ValueError("ADK not available. Please install google-adk.")
+
+        prompt, system_prompt = _build_prompt_from_messages(messages)
+        if not prompt:
+            prompt = "Please evaluate the request based on prior context."
+
+        return call_adk(
+            prompt=prompt,
+            model_id=model,
+            system_prompt=system_prompt,
+        )
 
     # --- Gemini path ---
     if use_gemini:
@@ -72,7 +123,7 @@ def generate_from_llm_chat_completion(
 
         # Last message as current user prompt, previous turns as history
         user_input = history.pop()["parts"][0] if history else ""
-        logger.debug(f"Gemini Chat - System: {sys_msg}, User Input: {user_input}, History Length: {len(history)}")  
+        logger.debug(f"Gemini Chat - System: {sys_msg}, User Input: {user_input}, History Length: {len(history)}")
         genai_model = genai.GenerativeModel(
             model_name=model,
             system_instruction=sys_msg,
