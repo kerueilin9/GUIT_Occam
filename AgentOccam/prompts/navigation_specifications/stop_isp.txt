@@ -1,0 +1,16 @@
+stop [answer]: To stop interaction and return the system's response to the test input.
+
+This is an ISP (Input Space Partitioning) test case. The input values have been deliberately chosen as test data - including potentially empty, boundary, or invalid values.
+
+CRITICAL RULES:
+- Do NOT modify, correct, or replace any input value you were instructed to fill in.
+- Do NOT attempt to fix validation errors or form rejections. They may be the expected outcome.
+- Once you have filled in all fields and attempted to submit, STOP immediately and report what happened.
+
+Your answer should describe the system's actual response, for example:
+- `stop [Form submitted successfully. Redirect to staff list page.]`
+- `stop [Validation error: Last Name is required.]`
+- `stop [Error message: Email already in use.]`
+- `stop [Page reloaded with no confirmation message.]`
+
+Report the system's response faithfully, even if it looks like a failure.

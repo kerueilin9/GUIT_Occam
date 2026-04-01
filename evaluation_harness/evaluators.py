@@ -29,6 +29,7 @@ from evaluation_harness.helper_functions import (
     shopping_get_sku_latest_review_rating,
 )
 from evaluation_harness.gherkin_evaluator import evaluate_gherkin_criteria
+from evaluation_harness.llm_judge_evaluator import llm_judge_evaluate
 try:
     # Import gherkin_to_objective to support configs that use Gherkin instead of intent
     from AgentOccam.gherkin_parser import gherkin_to_objective
@@ -445,6 +446,55 @@ class GherkinCriteriaEvaluator(Evaluator):
         return score
 
 
+class LLMJudgeEvaluator(Evaluator):
+    """
+    Evaluator that delegates to an LLM to autonomously judge whether the
+    agent completed the task correctly.
+
+    The LLM reads the full Gherkin scenario (or intent text) along with the
+    current page state, and returns a score in [0.0, 1.0] plus a reason.
+
+    When the config contains ``isp_test_case``, the ISP input values are
+    injected into the Gherkin ``when`` steps before sending to the LLM.
+    The ``_expected`` field is forwarded as a reference hint only.
+
+    Config example
+    --------------
+    .. code-block:: json
+
+        {
+          "eval": {
+            "eval_types": ["llm_judge"]
+          }
+        }
+
+    No ``reference_answers`` block is required – the evaluator derives
+    everything from ``gherkin`` / ``intent`` / ``isp_test_case``.
+    """
+
+    @beartype
+    def __call__(
+        self,
+        trajectory: Trajectory,
+        config_file: Path | str,
+        page: Page | PseudoPage | None = None,
+        client: CDPSession | None = None,
+    ) -> float:
+        with open(config_file, "r", encoding="utf-8") as f:
+            configs = json.load(f)
+
+        if page is None:
+            print("[LLMJudge] WARNING: No page provided, cannot evaluate. Returning 0.5.")
+            return 0.5
+
+        score, _reason = llm_judge_evaluate(
+            config=configs,
+            page=page,
+            trajectory=trajectory,
+        )
+        return score
+
+
 @beartype
 def evaluator_router(config_file: Path | str) -> EvaluatorComb:
     """Router to get the evaluator class"""
@@ -463,6 +513,8 @@ def evaluator_router(config_file: Path | str) -> EvaluatorComb:
                 evaluators.append(HTMLContentEvaluator())
             case "gherkin_criteria":
                 evaluators.append(GherkinCriteriaEvaluator())
+            case "llm_judge":
+                evaluators.append(LLMJudgeEvaluator())
             case _:
                 raise ValueError(f"eval_type {eval_type} is not supported")
 

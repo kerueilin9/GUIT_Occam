@@ -263,6 +263,84 @@ class TextObervationProcessor(ObservationProcessor):
         return info
 
     @staticmethod
+    def _collect_form_validation_messages(page: Page) -> list[str]:
+        """Collect native browser form validation messages visible to users."""
+        try:
+            messages = page.evaluate(
+                """
+                () => {
+                    const controls = Array.from(
+                        document.querySelectorAll('input, select, textarea')
+                    );
+
+                    const cleanText = (value) => (value || '').replace(/\\s+/g, ' ').trim();
+
+                    const deriveLabel = (el) => {
+                        if (!el) return '';
+
+                        const fromLabels = el.labels && el.labels.length
+                            ? cleanText(Array.from(el.labels).map((n) => n.innerText || n.textContent || '').join(' '))
+                            : '';
+                        if (fromLabels) return fromLabels;
+
+                        const labelledby = cleanText(el.getAttribute('aria-labelledby') || '');
+                        if (labelledby) {
+                            const text = labelledby
+                                .split(/\\s+/)
+                                .map((id) => {
+                                    const ref = document.getElementById(id);
+                                    return ref ? cleanText(ref.innerText || ref.textContent || '') : '';
+                                })
+                                .filter(Boolean)
+                                .join(' ');
+                            if (text) return text;
+                        }
+
+                        return cleanText(
+                            el.getAttribute('aria-label') ||
+                            el.getAttribute('placeholder') ||
+                            el.getAttribute('name') ||
+                            el.id ||
+                            ''
+                        );
+                    };
+
+                    const entries = [];
+                    const seen = new Set();
+
+                    for (const el of controls) {
+                        if (!el || typeof el.checkValidity !== 'function') {
+                            continue;
+                        }
+
+                        if (el.checkValidity()) {
+                            continue;
+                        }
+
+                        const message = cleanText(el.validationMessage || '');
+                        if (!message) {
+                            continue;
+                        }
+
+                        const label = deriveLabel(el);
+                        const line = label ? `${label}: ${message}` : message;
+                        if (!seen.has(line)) {
+                            seen.add(line);
+                            entries.push(line);
+                        }
+                    }
+
+                    return entries.slice(0, 5);
+                }
+                """
+            )
+            if isinstance(messages, list):
+                return [m for m in messages if isinstance(m, str) and m.strip()]
+            return []
+        except Exception:
+            return []
+
+    @staticmethod
     def get_bounding_client_rect(
         client: CDPSession, backend_node_id: str
     ) -> dict[str, Any]:
@@ -367,7 +445,7 @@ class TextObervationProcessor(ObservationProcessor):
                             let ariaLabelledbyText = "";
                             const labelledby = this.getAttribute('aria-labelledby') || "";
                             if (labelledby) {
-                                const ids = labelledby.split(/\s+/).filter(Boolean);
+                                const ids = labelledby.split(/\\s+/).filter(Boolean);
                                 const labels = ids
                                     .map((id) => getText(document.getElementById(id)))
                                     .filter(Boolean);
@@ -1156,8 +1234,23 @@ class TextObervationProcessor(ObservationProcessor):
             page_dialog_message = getattr(page, "dialog_message", "")
             if page_dialog_message:
                 import copy
+                if node_root.properties is None:
+                    node_root.properties = {}
                 node_root.properties["page_dialog_message"] = copy.deepcopy(page_dialog_message) + " Retry."
                 page.dialog_message = None
+
+            validation_messages = self._collect_form_validation_messages(page)
+            if validation_messages:
+                if node_root.properties is None:
+                    node_root.properties = {}
+                node_root.properties["page_validation_messages"] = " | ".join(validation_messages)
+
+                validation_lines = [
+                    f"[BrowserValidation] {message}"
+                    for message in validation_messages
+                ]
+                content = f"{content}\n" + "\n".join(validation_lines)
+
             self.node_root = node_root
             self.meta_data["obs_nodes_info"] = obs_nodes_info
 

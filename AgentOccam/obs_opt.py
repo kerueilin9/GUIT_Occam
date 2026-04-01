@@ -3,7 +3,7 @@ from browser_env.processors import TreeNode
 from functools import partial
 from AgentOccam.logger import logger
 
-RETAINED_PROPERTIES = ["required", "disabled", "checked", "valuemin", "valuemax", "valuetext", "selected", "page_dialog_message"]
+RETAINED_PROPERTIES = ["required", "disabled", "checked", "valuemin", "valuemax", "valuetext", "selected", "page_dialog_message", "page_validation_messages"]
 UNWANTED_PROPERTIES = ["focused", "autocomplete", "hasPopup", "expanded", "multiselectable", "orientation", "controls"]
 UNINTERACTIVE_ROLES = ["StaticText", "LabelText", "main", "heading", "LayoutTable", "tabpanel", "LayoutTableRow", "LayoutTableCell", "time", "list", "contentinfo", "table", "row", "rowheader", "columnheader", "gridcell", "caption", "DescriptionList", "DescriptionListTerm", "DescriptionListDetail", "RootWebArea", "rowgroup", "alert"]
 ROLE_REPLACEMENT_DICT = {
