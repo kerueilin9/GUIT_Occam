@@ -1821,12 +1821,34 @@ class AgentOccam:
             for step in gherkin_when:
                 step_lower = step.lower()
                 modified   = step
+                fill_match = re.match(
+                    r'^\s*I\s+fill\s+in\s+(.+?)(?:\s+with\s+["\'].*)?\s*$',
+                    step,
+                    re.IGNORECASE,
+                )
+                step_field = (
+                    re.sub(r"\s+", " ", fill_match.group(1)).strip().lower()
+                    if fill_match
+                    else None
+                )
                 for label, part in combo.items():
                     kws        = field_label_map.get(label, [label.lower()])
                     part_value = part.value if hasattr(part, "value") else part.get("value", "")
-                    if any(kw in step_lower for kw in kws):
-                        if ' with "' not in modified and " with '" not in modified:
-                            modified = f'{modified} with "{part_value}"'
+                    label_norm = re.sub(r"\s+", " ", label).strip().lower()
+                    is_fill_field_match = step_field is not None and step_field == label_norm
+                    is_keyword_match = step_field is None and any(kw in step_lower for kw in kws)
+                    if is_fill_field_match or is_keyword_match:
+                        quoted_value = json.dumps(str(part_value), ensure_ascii=False)
+                        if re.search(r"\bwith\s+['\"]", modified, re.IGNORECASE):
+                            modified = re.sub(
+                                r"(\bwith\s+)(['\"]).*?\2",
+                                lambda m: f"{m.group(1)}{quoted_value}",
+                                modified,
+                                count=1,
+                                flags=re.IGNORECASE,
+                            )
+                        else:
+                            modified = f"{modified} with {quoted_value}"
                         break
                 new_when.append(modified)
             new_config["gherkin"]["when"] = new_when

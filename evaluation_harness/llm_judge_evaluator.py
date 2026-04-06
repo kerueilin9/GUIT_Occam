@@ -60,7 +60,7 @@ def llm_judge_evaluate(
     page:
         Live Playwright page at the end of the trajectory.
     trajectory:
-        Agent trajectory (currently unused, reserved for future use).
+        Agent trajectory used to extract the final accessibility-tree observation.
 
     Returns
     -------
@@ -70,7 +70,7 @@ def llm_judge_evaluate(
     """
     scenario_text = _build_scenario_text(config)
     expected_hint = _build_expected_hint(config)
-    page_snapshot = _get_page_snapshot(page)
+    page_snapshot = _get_page_snapshot(page, trajectory)
 
     prompt = _build_prompt(scenario_text, expected_hint, page_snapshot)
 
@@ -89,7 +89,7 @@ def llm_judge_evaluate(
             ],
             model="auto",
             temperature=0,
-            max_tokens=512,
+            max_tokens=1200,
         )
         score, reason = _parse_response(response)
     except Exception as exc:
@@ -244,12 +244,47 @@ def _build_expected_hint(config: dict[str, Any]) -> str | None:
 # Page snapshot
 # ---------------------------------------------------------------------------
 
-def _get_page_snapshot(page: Page) -> dict[str, str]:
-    """Capture the current page's URL, title and visible body text."""
+def _extract_accessibility_tree_text(trajectory: list | None) -> str:
+    """Extract the final accessibility-tree text from trajectory, if available."""
+    if not isinstance(trajectory, list):
+        return ""
+
+    for entry in reversed(trajectory):
+        if not isinstance(entry, dict) or "observation" not in entry:
+            continue
+
+        info = entry.get("info", {})
+        if isinstance(info, dict):
+            metadata = info.get("observation_metadata", {})
+            if isinstance(metadata, dict):
+                text_meta = metadata.get("text", {})
+                if isinstance(text_meta, dict):
+                    for key in ("accessibility_tree_text", "accessibility_tree"):
+                        value = text_meta.get(key)
+                        if isinstance(value, str) and value.strip():
+                            return value
+
+        observation = entry.get("observation", {})
+        if isinstance(observation, dict):
+            text_obs = observation.get("text")
+            if isinstance(text_obs, (list, tuple)) and text_obs:
+                candidate = text_obs[0]
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate
+            if isinstance(text_obs, str) and text_obs.strip():
+                return text_obs
+
+    return ""
+
+
+def _get_page_snapshot(page: Page, trajectory: list | None = None) -> dict[str, str]:
+    """Capture the current page state with accessibility-tree text as primary evidence."""
     snapshot: dict[str, str] = {
         "url": "",
         "title": "",
+        "accessibility_tree_text": "",
         "body_text": "",
+        "snapshot_source": "",
     }
     try:
         snapshot["url"] = page.url
@@ -259,10 +294,20 @@ def _get_page_snapshot(page: Page) -> dict[str, str]:
         snapshot["title"] = page.title()
     except Exception:
         pass
+
+    a11y_text = _extract_accessibility_tree_text(trajectory)
+    if a11y_text:
+        snapshot["accessibility_tree_text"] = a11y_text[:12000]
+        snapshot["snapshot_source"] = "accessibility_tree"
+
     try:
         snapshot["body_text"] = page.inner_text("body")[:3000]
     except Exception:
         pass
+
+    if not snapshot["snapshot_source"]:
+        snapshot["snapshot_source"] = "body_text"
+
     return snapshot
 
 
@@ -276,6 +321,9 @@ def _build_prompt(
     page_snapshot: dict[str, str],
 ) -> str:
     hint_section = f"\n\n{expected_hint}" if expected_hint else ""
+    a11y_section = page_snapshot.get("accessibility_tree_text", "")
+    if not a11y_section:
+        a11y_section = "(Accessibility tree not available for this run.)"
 
     return f"""You are evaluating whether a web automation agent successfully completed the following task.
 
@@ -285,7 +333,12 @@ def _build_prompt(
 --- CURRENT PAGE STATE (after agent finished) ---
 URL   : {page_snapshot['url']}
 Title : {page_snapshot['title']}
-Body text (first 3000 chars):
+Primary snapshot source: {page_snapshot.get('snapshot_source', 'unknown')}
+
+Accessibility tree text (first 12000 chars):
+{a11y_section}
+
+Fallback body text (first 3000 chars):
 {page_snapshot['body_text']}
 
 --- YOUR TASK ---
@@ -294,6 +347,7 @@ completed the task correctly. Consider:
 1. Did the agent perform the required actions (When steps)?
 2. Do the acceptance criteria (Then steps) appear to be satisfied on the page?
 3. For ISP scenarios: did the system respond appropriately (accept valid inputs / reject invalid ones)?
+4. Use accessibility-tree evidence as primary ground truth. Use body text only as fallback context.
 
 Respond with ONLY a JSON object in this exact format (no markdown, no extra text):
 {{"score": <float 0.0-1.0>, "reason": "<one or two sentences explaining your judgement>"}}"""
