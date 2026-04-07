@@ -26,16 +26,17 @@ HEADLESS = True
 SLOW_MO = 0
 
 
-SITES = ["gitlab", "shopping", "shopping_admin", "reddit", "timeoff"]
+SITES = ["gitlab", "shopping", "shopping_admin", "reddit", "timeoff", "keystonejs"]
 URLS = [
     f"{GITLAB}/-/profile",
     f"{SHOPPING}/wishlist/",
     f"{SHOPPING_ADMIN}/dashboard",
     f"{REDDIT}/user/{ACCOUNTS['reddit']['username']}/account",
     f"{TIMEOFF}/",
+    f"{KEYSTONEJS}/keystone",
 ]
-EXACT_MATCH = [True, True, True, True, False]
-KEYWORDS = ["", "", "Dashboard", "Delete", ""]
+EXACT_MATCH = [True, True, True, True, False, False]
+KEYWORDS = ["", "", "Dashboard", "Delete", "", ""]
 
 
 def is_expired(
@@ -68,6 +69,7 @@ def is_expired(
 
 
 def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
+    os.makedirs(auth_folder, exist_ok=True)
     for c in comb:
         context_manager = sync_playwright()
         playwright = context_manager.__enter__()
@@ -225,7 +227,7 @@ def main(auth_folder: str = "./.auth") -> None:
         for site in SITES:
             executor.submit(renew_comb, [site], auth_folder=auth_folder)
 
-    futures = []
+    validation_jobs = []
     cookie_files = list(glob.glob(f"{auth_folder}/*.json"))
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         for c_file in cookie_files:
@@ -237,10 +239,10 @@ def main(auth_folder: str = "./.auth") -> None:
                 future = executor.submit(
                     is_expired, Path(c_file), url, keyword, match
                 )
-                futures.append(future)
+                validation_jobs.append((future, c_file, cur_site))
 
-    for i, future in enumerate(futures):
-        assert not future.result(), f"Cookie {cookie_files[i]} expired."
+    for future, cookie_file, cur_site in validation_jobs:
+        assert not future.result(), f"Cookie {cookie_file} expired for site '{cur_site}'."
 
 
 if __name__ == "__main__":

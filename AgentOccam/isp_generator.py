@@ -16,54 +16,8 @@ from __future__ import annotations
 import re
 import json
 from dataclasses import dataclass, field
-from functools import partial
 from typing import List
-
-# ─────────────────────────── Model registry ──────────────────────────────────
-_MODEL_FAMILIES = [
-    "claude", "mistral", "cohere", "llama", "titan", "gpt", "adk", "gemini"
-]
-
-
-def _build_call_model(model_id: str):
-    """Return a ``call_model(prompt)`` callable for *model_id*.
-
-    If the provider's call function accepts a ``system_prompt`` parameter,
-    it is bound to ``""`` so that ISP prompts (which are self-contained) do
-    not accidentally inherit a ``None`` default that would crash on string
-    concatenation (as in ``call_gemini``).
-    """
-    from AgentOccam.llms.claude import call_claude
-    from AgentOccam.llms.gpt import call_gpt
-    from AgentOccam.llms.gemini import call_gemini
-    from AgentOccam.llms.mistral import call_mistral
-    from AgentOccam.llms.cohere import call_cohere
-    from AgentOccam.llms.llama import call_llama
-    from AgentOccam.llms.titan import call_titan
-    from AgentOccam.llms.adk import call_adk
-    import inspect
-
-    _map = {
-        "claude": call_claude,
-        "gpt": call_gpt,
-        "gemini": call_gemini,
-        "mistral": call_mistral,
-        "cohere": call_cohere,
-        "llama": call_llama,
-        "titan": call_titan,
-        "adk": call_adk,
-    }
-    family = next((f for f in _MODEL_FAMILIES if f in model_id), None)
-    if family is None:
-        raise ValueError(f"Cannot determine model family for '{model_id}'")
-
-    fn = _map[family]
-    # Bind system_prompt="" if the provider supports it, to avoid None
-    # default crashing on string concatenation (e.g. call_gemini).
-    if "system_prompt" in inspect.signature(fn).parameters:
-        return partial(fn, model_id=model_id, system_prompt="")
-    return partial(fn, model_id=model_id)
-
+from AgentOccam.model_registry import build_call_model
 
 # ───────────────────────── Data-classes ──────────────────────────────────────
 
@@ -236,7 +190,8 @@ class ISPGenerator:
         """
         self.n = getattr(isp_config, "max_partitions_per_field", 5)
         isp_model = getattr(isp_config, "isp_model", None) or actor_config.model
-        self._call_model = _build_call_model(isp_model)
+        # ISP prompts are self-contained; force empty system prompt for consistency.
+        self._call_model = build_call_model(isp_model, system_prompt="")
 
     # ── public API ────────────────────────────────────────────────────────────
 

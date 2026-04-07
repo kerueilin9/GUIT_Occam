@@ -4,6 +4,7 @@ import os
 from typing import Any
 from urllib.parse import urlparse
 from AgentOccam.logger import logger
+from AgentOccam.model_registry import build_call_model, detect_model_family
 
 import requests
 from playwright.sync_api import CDPSession, Page
@@ -69,6 +70,8 @@ def generate_from_llm_chat_completion(
     temperature: float = 0,
     max_tokens: int = 768,
 ) -> str:
+    prompt, system_prompt = _build_prompt_from_messages(messages)
+
     # 1. Decide Provider and Model
     if model == "auto":
         if _is_vertex_mode() and ADK_AVAILABLE:
@@ -90,12 +93,19 @@ def generate_from_llm_chat_completion(
         use_adk = model_lower.startswith("adk-") or (_is_vertex_mode() and "gemini" in model_lower and ADK_AVAILABLE)
         use_gemini = ("gemini" in model_lower) and not use_adk
 
+        # Reuse the shared provider registry for explicit non-GPT, non-Gemini, non-ADK models.
+        try:
+            family = detect_model_family(model_lower)
+            if family not in {"gpt", "gemini", "adk"}:
+                call_model = build_call_model(model, system_prompt=system_prompt or "")
+                return call_model(prompt=prompt or "Please evaluate the request based on prior context.")
+        except ValueError:
+            pass
+
     # --- ADK / Vertex path ---
     if use_adk:
         if not ADK_AVAILABLE:
             raise ValueError("ADK not available. Please install google-adk.")
-
-        prompt, system_prompt = _build_prompt_from_messages(messages)
         if not prompt:
             prompt = "Please evaluate the request based on prior context."
 

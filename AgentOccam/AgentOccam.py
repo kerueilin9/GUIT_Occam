@@ -6,7 +6,15 @@ from AgentOccam.llms.llama import call_llama, call_llama_with_messages, arrange_
 from AgentOccam.llms.titan import call_titan, call_titan_with_messages, arrange_message_for_titan
 from AgentOccam.llms.gpt import call_gpt, call_gpt_with_messages, arrange_message_for_gpt
 from AgentOccam.llms.gemini import call_gemini, call_gemini_with_messages, arrange_message_for_gemini
-from AgentOccam.llms.adk import call_adk, call_adk_with_messages, arrange_message_for_adk
+from AgentOccam.llms.adk import ADK_AVAILABLE, call_adk, call_adk_with_messages, arrange_message_for_adk
+from AgentOccam.action_parser import action_name, normalize_type_action, parse_element_id, parse_type
+from AgentOccam.model_registry import (
+    ARRANGE_MESSAGE_FOR_MODEL_MAP,
+    CALL_MODEL_MAP,
+    CALL_MODEL_WITH_MESSAGES_FUNCTION_MAP,
+    detect_model_family,
+)
+from AgentOccam.prompt_loader import build_bulleted_specifications, build_output_specifications
 from AgentOccam.utils import CURRENT_DIR, HOMEPAGE_URL
 from AgentOccam.logger import logger
 from browser_env.processors import TreeNode
@@ -25,37 +33,6 @@ warnings.filterwarnings("ignore")
 
 DEFAULT_DOCUMENTED_INTERACTION_ELEMENTS = ["observation", "action"]
 DEFAULT_ONLINE_INTERACTION_ELEMENTS = ["url", "observation"]
-MODEL_FAMILIES = ["claude", "mistral", "cohere", "llama", "titan", "gpt", "adk", "gemini"]
-CALL_MODEL_MAP = {
-    "claude": call_claude,
-    "mistral": call_mistral,
-    "cohere": call_cohere,
-    "llama": call_llama,
-    "titan": call_titan,
-    "gpt": call_gpt,
-    "gemini": call_gemini,
-    "adk": call_adk,
-}
-CALL_MODEL_WITH_MESSAGES_FUNCTION_MAP = {
-    "claude": call_claude_with_messages,
-    "mistral": call_mistral_with_messages,
-    "cohere": call_cohere_with_messages,
-    "llama": call_llama_with_messages,
-    "titan": call_titan_with_messages,
-    "gpt": call_gpt_with_messages,
-    "gemini": call_gemini_with_messages,
-    "adk": call_adk_with_messages,
-}
-ARRANGE_MESSAGE_FOR_MODEL_MAP = {
-    "claude": arrange_message_for_claude,
-    "mistral": arrange_message_for_mistral,
-    "cohere": arrange_message_for_cohere,
-    "llama": arrange_message_for_llama,
-    "titan": arrange_message_for_titan,
-    "gpt": arrange_message_for_gpt,
-    "gemini": arrange_message_for_gemini,
-    "adk": arrange_message_for_adk,
-}
 
 class Agent:
     def __init__(self, config, objective, prompt_template):
@@ -72,19 +49,43 @@ class Agent:
         else:
             self.online_interaction = {k: None for k in DEFAULT_ONLINE_INTERACTION_ELEMENTS}
 
-        self.model_family = [model_family for model_family in MODEL_FAMILIES if model_family in self.config.model][0]
+        self.model_family = detect_model_family(self.config.model)
         self.call_model = partial(CALL_MODEL_MAP[self.model_family], model_id=self.config.model)
         self.call_model_with_message = partial(CALL_MODEL_WITH_MESSAGES_FUNCTION_MAP[self.model_family], model_id=self.config.model)
         self.arrange_message_for_model = ARRANGE_MESSAGE_FOR_MODEL_MAP[self.model_family]
+        self.runtime_model_id = self.config.model
+        self._fallback_from_missing_adk_if_needed()
         
         # ADK orchestration support
         self.adk_tools = []
         self.adk_context = {}
         self.use_adk_orchestration = (
-            self.model_family == 'adk' and 
+            self.model_family == 'adk' and
+            ADK_AVAILABLE and
             hasattr(config, 'adk_config') and 
             getattr(config.adk_config, 'orchestration_mode', None) is not None
         )
+
+    def _fallback_from_missing_adk_if_needed(self):
+        if self.model_family != "adk" or ADK_AVAILABLE:
+            return
+
+        requested_model_id = getattr(self.config, "model", "")
+        if not isinstance(requested_model_id, str) or not requested_model_id.startswith("adk-"):
+            return
+
+        fallback_model_id = requested_model_id[len("adk-"):]
+        try:
+            self.shift_model(fallback_model_id)
+            print(
+                f"Warning: google-adk is not installed. "
+                f"Falling back from '{requested_model_id}' to '{fallback_model_id}'."
+            )
+        except Exception as exc:
+            print(
+                f"Warning: google-adk is not installed and fallback model "
+                f"'{fallback_model_id}' could not be initialized: {exc}"
+            )
     
     def register_adk_tool(self, tool_definition):
         """Register a single ADK tool for this agent."""
@@ -107,10 +108,11 @@ class Agent:
         return self.adk_tools if self.model_family == 'adk' else []
 
     def shift_model(self, model_id):
-        self.model_family = [model_family for model_family in MODEL_FAMILIES if model_family in model_id][0]
+        self.model_family = detect_model_family(model_id)
         self.call_model = partial(CALL_MODEL_MAP[self.model_family], model_id=model_id)
         self.call_model_with_message = partial(CALL_MODEL_WITH_MESSAGES_FUNCTION_MAP[self.model_family], model_id=model_id)
         self.arrange_message_for_model = ARRANGE_MESSAGE_FOR_MODEL_MAP[self.model_family]
+        self.runtime_model_id = model_id
 
     def prune_message_list(self, message_list):
         return self.merge_adjacent_text([m for m in message_list if not (m[0]=="text" and len(m[1])==0)])
@@ -166,8 +168,7 @@ class Agent:
         return element_dict
 
     def get_output_specifications(self):
-        output_specifications = "\n".join([f"{o.upper()}:\n" + "".join(open(os.path.join(CURRENT_DIR, "AgentOccam", "prompts", "output_specifications", "{}.txt".format(o.replace(" ", "_"))), "r").readlines()) for o in self.config.output])
-        return output_specifications
+        return build_output_specifications(self.config.output)
 
     def parse_stipulated_action_list(self, text: str, action: str, actions: list) -> str:
         pattern = rf'({re.escape(action)}\s*(.*?))(?=\n(?:{"|".join(map(re.escape, actions))})|$)'
@@ -384,6 +385,15 @@ class Actor(Agent):
                 identity_config = getattr(self.config.identities, f"identity_{i}")
                 self.identities.append(IDENTITY_CLASS_MAP[identity_config.name](identity_config, objective=objective, prompt_template=prompt_template[identity_config.name]))
                 i += 1
+
+    def _build_retry_exhausted_action(self, instruction, online_input, attempts):
+        failure_reason = f"Failed to produce a valid action after {attempts} attempts."
+        action_elements = {k: "" for k in self.config.output}
+        action_elements["reason"] = failure_reason
+        action_elements["action"] = f"stop [{failure_reason}]"
+        action_elements["instruction"] = instruction
+        action_elements["input"] = online_input
+        return action_elements
     
     def update_online_state(self, **online_states):
         super().update_online_state(**online_states)
@@ -404,38 +414,30 @@ class Actor(Agent):
         return False
     
     def is_valid_action(self, action_str):
-        action = (
-            action_str.split("[")[0].strip()
-            if "[" in action_str
-            else action_str.split()[0].strip()
-        )
+        action = action_name(action_str)
         match action:
             case "click":
-                match = re.search(r"click ?\[(\d+)\]", action_str)
-                if not match:
+                element_id = parse_element_id(action_str)
+                if element_id is None:
                     return False
-                element_id = match.group(1)
-                if element_id in self.get_observation_text():
+                if str(element_id) in self.get_observation_text():
+                    return True
+                return False
+            case "hover":
+                element_id = parse_element_id(action_str)
+                if element_id is None:
+                    return False
+                if str(element_id) in self.get_observation_text():
                     return True
                 return False
             case "type":
-                if not (action_str.endswith("[0]") or action_str.endswith("[1]")):
-                    action_str += " [1]"
-
-                match = re.search(
-                    r"type ?\[(\d+)\] ?\[(.*)\] ?\[(\d+)\]", action_str, re.DOTALL
-                )
-                if not match:
+                parsed = parse_type(action_str)
+                if not parsed:
                     return False
-                element_id, text, enter_flag = (
-                    match.group(1),
-                    match.group(2),
-                    match.group(3),
-                )
-                enter_flag = True if enter_flag == "1" else False
+                element_id, text, enter_flag = parsed
                 if enter_flag:
                     text += "\n"
-                if element_id in self.get_observation_text():
+                if str(element_id) in self.get_observation_text():
                     return True
             case "go_back":
                 return True
@@ -596,28 +598,25 @@ class Actor(Agent):
     def get_planning_specifications(self):
         if self.planning_specifications:
             return self.planning_specifications
-        self.planning_specifications = "\n".join(["- " + "".join(open(os.path.join(CURRENT_DIR, "AgentOccam", "prompts", "planning_specifications", f"{p}.txt"), "r").readlines()) for p in self.config.planning_command])
+        self.planning_specifications = build_bulleted_specifications("planning_specifications", self.config.planning_command)
         return self.planning_specifications
     
     def get_navigation_specifications(self):
         if self.navigation_specifications:
             return self.navigation_specifications
         
-        specs = []
+        spec_names = []
         for n in self.config.navigation_command:
             # Priority: ISP task → stop_isp.txt > Gherkin task → stop_gherkin.txt > default
             if n == "stop" and getattr(self, "is_isp_task", False):
-                file_name = "stop_isp.txt"
+                spec_name = "stop_isp"
             elif n == "stop" and self.is_gherkin_task:
-                file_name = "stop_gherkin.txt"
+                spec_name = "stop_gherkin"
             else:
-                file_name = f"{n}.txt"
-            
-            spec_path = os.path.join(CURRENT_DIR, "AgentOccam", "prompts", "navigation_specifications", file_name)
-            with open(spec_path, "r", encoding="utf-8") as f:
-                specs.append("- " + "".join(f.readlines()))
-        
-        self.navigation_specifications = "\n".join(specs)
+                spec_name = n
+            spec_names.append(spec_name)
+
+        self.navigation_specifications = build_bulleted_specifications("navigation_specifications", spec_names)
         return self.navigation_specifications
     
     def get_actor_instruction(self, examples=None):
@@ -762,41 +761,25 @@ class Actor(Agent):
         try:
             DOM_root_node = self.get_observation_node()
             action_str = action_str.strip()
-            action = (
-                action_str.split("[")[0].strip()
-                if "[" in action_str
-                else action_str.split()[0].strip()
-            )
+            action = action_name(action_str)
             match action:
                 case "click":
-                    match = re.search(r"click ?\[(\d+)\]", action_str)
-                    if not match:
+                    element_id = parse_element_id(action_str)
+                    if element_id is None:
                         raise ValueError(f"Invalid click action {action_str}")
-                    element_id = match.group(1)
                     node = DOM_root_node.search_node_by_id(element_id)
                     return f"click [{element_id}] ({node.role} {node.name})"
                 case "hover":
-                    match = re.search(r"hover ?\[(\d+)\]", action_str)
-                    if not match:
+                    element_id = parse_element_id(action_str)
+                    if element_id is None:
                         raise ValueError(f"Invalid hover action {action_str}")
-                    element_id = match.group(1)
                     node = DOM_root_node.search_node_by_id(element_id)
                     return f"hover [{element_id}] ({node.role} {node.name})"
                 case "type":
-                    if not (action_str.endswith("[0]") or action_str.endswith("[1]")):
-                        action_str += " [1]"
-
-                    match = re.search(
-                        r"type ?\[(\d+)\] ?\[(.+)\] ?\[(\d+)\]", action_str
-                    )
-                    if not match:
+                    parsed = parse_type(action_str)
+                    if not parsed:
                         raise ValueError(f"Invalid type action {action_str}")
-                    element_id, text, enter_flag = (
-                        match.group(1),
-                        match.group(2),
-                        match.group(3),
-                    )
-                    enter_flag = True if enter_flag == "1" else False
+                    element_id, text, enter_flag = parsed
                     if enter_flag:
                         text += "\n"
                     node = DOM_root_node.search_node_by_id(element_id)
@@ -826,41 +809,24 @@ class Actor(Agent):
         for action_str in action_str_list:
             try:
                 action_str = action_str.strip()
-                action = (
-                    action_str.split("[")[0].strip()
-                    if "[" in action_str
-                    else action_str.split()[0].strip()
-                )
+                action = action_name(action_str)
                 match action:
                     case "click":
-                        match = re.search(r"click ?\[(\d+)\]", action_str)
-                        if not match:
+                        element_id = parse_element_id(action_str)
+                        if element_id is None:
                             raise ValueError(f"Invalid click action {action_str}")
-                        element_id = match.group(1)
-                        element_id = int(element_id)
                         retained_element_ids.append(element_id)
                     case "hover":
-                        match = re.search(r"hover ?\[(\d+)\]", action_str)
-                        if not match:
+                        element_id = parse_element_id(action_str)
+                        if element_id is None:
                             raise ValueError(f"Invalid hover action {action_str}")
-                        element_id = match.group(1)
-                        element_id = int(element_id)
                         retained_element_ids.append(element_id)
                     case "type":
-                        if not (action_str.endswith("[0]") or action_str.endswith("[1]")):
-                            action_str += " [1]"
-
-                        match = re.search(
-                            r"type ?\[(\d+)\] ?\[(.+)\] ?\[(\d+)\]", action_str
-                        )
-                        if not match:
+                        action_str = normalize_type_action(action_str)
+                        parsed = parse_type(action_str)
+                        if not parsed:
                             raise ValueError(f"Invalid type action {action_str}")
-                        element_id, text, enter_flag = (
-                            match.group(1),
-                            match.group(2),
-                            match.group(3),
-                        )
-                        element_id = int(element_id)
+                        element_id, text, enter_flag = parsed
                         retained_element_ids.append(element_id)
                     case "scroll":
                         pass
@@ -876,8 +842,6 @@ class Actor(Agent):
                         pass
                     case "note":
                         pass
-
-                return retained_element_ids
             except:
                 continue
 
@@ -962,13 +926,21 @@ class Actor(Agent):
         self.pre_process_atomic_actions()
         instruction = self.get_actor_instruction()
         online_input = self.get_online_input(criticism_elements=criticism_elements)
+        max_generation_attempts = getattr(
+            self.config,
+            "max_generation_attempts",
+            getattr(self.config.others, "max_generation_attempts", 8),
+        )
+        max_generation_attempts = max(1, int(max_generation_attempts))
         model_response_list = []
         action_element_list = []
         for _ in range(self.config.number):
             get_valid_actions = False
             repetitive_note = False
             invalid_actions = False
-            while not get_valid_actions:
+            generation_attempts = 0
+            while not get_valid_actions and generation_attempts < max_generation_attempts:
+                generation_attempts += 1
                 if repetitive_note:
                     model_response = self.call_model_with_message(system_prompt=instruction+"\nGenerating the command `note [{}]` will be severely punished! Don't generate repetitive notes!".format(getattr(self, "note_buffer", "")), messages=self.arrange_message_for_model(online_input))
                 elif invalid_actions:
@@ -1021,6 +993,22 @@ class Actor(Agent):
                         action_element_list.append(action_elements)
                 else:
                     raise NotImplementedError("You have to generate either action or action candidates.")
+            if not get_valid_actions:
+                failure_reason = (
+                    f"Failed to produce a valid action after {generation_attempts} attempts."
+                )
+                print(
+                    f"Warning: Actor failed to produce a valid action after "
+                    f"{generation_attempts} attempts. Falling back to stop."
+                )
+                model_response_list.append(f"[fallback] {failure_reason}")
+                action_element_list.append(
+                    self._build_retry_exhausted_action(
+                        instruction=instruction,
+                        online_input=online_input,
+                        attempts=generation_attempts,
+                    )
+                )
         # if self.config.number != 1:
         if True:
             for identity in self.identities:
@@ -1028,7 +1016,9 @@ class Actor(Agent):
                 identity_online_input = identity.get_online_input() if identity.get_online_input() else online_input
                 get_valid_actions = False
                 invalid_actions = False
-                while not get_valid_actions:
+                generation_attempts = 0
+                while not get_valid_actions and generation_attempts < max_generation_attempts:
+                    generation_attempts += 1
                     if invalid_actions:
                         model_response, action_elements = identity.get_action(identity_instruction+"\nGenerating the command `{}` will be severely punished! Don't generate invalid actions! We don't have that element id in the current observation!".format(invalid_action_str), identity_online_input)
                     else:
@@ -1041,6 +1031,12 @@ class Actor(Agent):
                         invalid_action_str = action_elements["action"]
                         print(f"Invalid actions: {invalid_action_str}")
                         invalid_actions = True
+                if not get_valid_actions:
+                    identity_name = getattr(identity.config, "name", identity.__class__.__name__)
+                    print(
+                        f"Warning: Identity '{identity_name}' failed to produce a valid "
+                        f"action after {generation_attempts} attempts and will be skipped."
+                    )
         
         self.verbose(instruction=instruction, online_input=online_input, model_response_list=model_response_list, action_element_list=action_element_list)
 
@@ -1094,14 +1090,7 @@ class Critic(Agent):
         self.actor_basic_info_dict = actor_basic_info_dict
 
     def get_output_specifications(self):
-        output_specification_filepath_list = []
-        for o in self.config.output:
-            if os.path.exists(os.path.join(CURRENT_DIR, "AgentOccam", "prompts", "output_specifications", "{}_{}.txt".format(o.replace(" ", "_"), self.config.character))):
-                output_specification_filepath_list.append(os.path.join(CURRENT_DIR, "AgentOccam", "prompts", "output_specifications", "{}_{}.txt".format(o.replace(" ", "_"), self.config.character)))
-            else:
-                output_specification_filepath_list.append(os.path.join(CURRENT_DIR, "AgentOccam", "prompts", "output_specifications", "{}.txt".format(o.replace(" ", "_"))))
-        output_specifications = "\n".join([f"{o.upper()}:\n" + "".join(open(filepath, "r").readlines()) for o, filepath in zip(self.config.output, output_specification_filepath_list)])
-        return output_specifications
+        return build_output_specifications(self.config.output, character=getattr(self.config, "character", None))
 
     def get_critic_instruction(self):
         if self.instruction:
@@ -1412,7 +1401,10 @@ class AgentOccam:
         # Check if using ADK orchestration mode
         if self._should_use_adk_orchestration():
             return self._predict_action_with_adk()
-        
+
+        return self._predict_action_standard_flow()
+
+    def _predict_action_standard_flow(self):
         # Standard Actor-Critic-Judge flow
         print("Using standard Actor-Critic-Judge flow")
         self.critic.update_actor_basic_info(step=self.get_step(), planning_specifications=self.actor.get_planning_specifications(), navigation_specifications=self.actor.get_navigation_specifications(), interaction_history=self.actor.get_interaction_history(interaction_history_config=self.critic.config.interaction_history), previous_plans=self.actor.get_previous_plans(verbose=True))
@@ -1427,6 +1419,7 @@ class AgentOccam:
         """Check if ADK orchestration should be used."""
         return (
             self.actor.model_family == 'adk' and
+            ADK_AVAILABLE and
             hasattr(self.config.actor, 'adk_config') and
             getattr(self.config.actor.adk_config, 'orchestration_mode', None) is not None
         )
@@ -1443,7 +1436,7 @@ class AgentOccam:
             from google.genai import types
         except ImportError:
             print("Warning: google-adk not available, falling back to standard flow")
-            return self.predict_action()
+            return self._predict_action_standard_flow()
         
         # Get orchestration mode
         orchestration_mode = getattr(self.config.actor.adk_config, 'orchestration_mode', 'sequential')
