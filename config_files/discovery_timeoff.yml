@@ -1,0 +1,30 @@
+output_root: "output/discovery"
+
+sut:
+  name: "timeoff"
+  start_url: "http://localhost:3100"
+  storage_state: ".auth/timeoff_state.json"
+  allowed_domains:
+    - "localhost:3100"
+
+discovery:
+  max_steps: 150
+  max_depth: 4
+  strategy: "bfs"
+  safe_mode: true
+  screenshot_on_each_step: true
+  allow_form_fill: false
+  allow_form_submit: false
+
+task_generation:
+  max_tasks: 20
+  task_types:
+    - "navigation"
+  eval_mode: "llm_judge"
+  rewrite_with_llm: false
+  llm_model: "gemini-2.5-flash"
+
+validation:
+  enabled: false
+  replay_runs: 1
+  min_pass_rate: 1.0
