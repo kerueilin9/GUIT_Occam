@@ -8,21 +8,58 @@ sut:
     - "localhost:3100"
 
 discovery:
-  max_steps: 150
-  max_depth: 4
+  mode: "agentic_session"
+  max_steps: 220
+  max_depth: 5
+  time_budget_minutes: 60
   strategy: "bfs"
   safe_mode: true
   screenshot_on_each_step: true
   allow_form_fill: false
   allow_form_submit: false
+  max_candidate_actions_per_screen: 20
+  headless: false
+  slow_mo_ms: 0
+  observation_type: "accessibility_tree"
+  current_viewport_only: false
+  viewport_width: 1280
+  viewport_height: 720
+  sleep_after_execution_sec: 0.5
+
+llm:
+  enabled: true
+  use_for_action_ranking: true
+  use_for_screen_annotation: true
+  use_for_task_generation: true
+  use_for_next_action_decision: true
+  use_for_page_revisit_check: true
+  exploration_model: "gemini-2.5-flash"
+  annotation_model: "gemini-2.5-flash"
+  task_generation_model: "gemini-2.5-flash"
+  selected_actions_per_screen: 10
+  ranking_observation_chars: 0
+  annotation_observation_chars: 0
+  decision_observation_chars: 0
+  revisit_observation_chars: 0
+  revisit_candidate_limit: 6
+  task_generation_context_chars: 10000
+  max_task_ideas_per_screen: 4
+  tasks_per_seed: 1
+  memory_recent_events: 12
 
 task_generation:
-  max_tasks: 20
+  max_tasks: 50
   task_types:
     - "navigation"
-  eval_mode: "llm_judge"
-  rewrite_with_llm: false
+    - "workflow"
+  eval_mode: "gherkin_criteria"
+  rewrite_with_llm: true
   llm_model: "gemini-2.5-flash"
+  reference_task_path: "config_files/timeoff/task_absence01.json"
+  max_reference_examples: 4
+  max_tasks_per_screen: 2
+  max_tasks_per_family: 3
+  prefer_llm_judge_for_write_tasks: true
 
 validation:
   enabled: false
