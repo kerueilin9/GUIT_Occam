@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
+from AgentOccam.discovery.action_summary import summarize_transition_action
 from AgentOccam.discovery.models import FormField, PageFamily, PageFamilyEdge, TaskSeed
 
 if TYPE_CHECKING:
@@ -357,7 +358,7 @@ class DiscoveryDossierBuilder:
             bucket["count"] += 1
             if transition.action_label:
                 bucket["labels"][transition.action_label] += 1
-            bucket["actions"][transition.action] += 1
+            bucket["actions"][summarize_transition_action(transition)] += 1
             effect = str(transition.metadata.get("effect", "")).strip()
             if effect:
                 bucket["effects"][effect] += 1

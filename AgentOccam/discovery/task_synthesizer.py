@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+from AgentOccam.adk_discovery import ADKDiscoveryClient
 from AgentOccam.discovery.llm_helpers import (
     DiscoveryLLMCoordinator,
     extract_json_payload,
@@ -14,21 +15,28 @@ from AgentOccam.discovery.llm_helpers import (
     truncate_text,
 )
 from AgentOccam.discovery.models import CandidateTask, DiscoveryRunConfig, GeneratedTask, TaskSeed
+from AgentOccam.discovery.prompt_templates import render_discovery_prompt
 from AgentOccam.discovery.screen_graph import ScreenGraph
 from AgentOccam.logger import logger
 
 CLICK_RE = re.compile(r"click \[(?P<element_id>\d+)\]")
 TYPE_RE = re.compile(r"type \[(?P<element_id>\d+)\] \[(?P<value>.*)\] \[(?P<enter>[01])\]")
 GOTO_RE = re.compile(r"goto \[(?P<url>.*)\] \[(?P<new_tab>[01])\]")
+CLICK_SUMMARY_RE = re.compile(r'^Click "(?P<label>.+?)"(?: \((?P<zone>[^/()]+)\/(?P<role>[^)]+)\))?$')
 
 
 class TaskSynthesizer:
     """Creates task_absence-style tasks from discovery seeds."""
 
-    def __init__(self, config: DiscoveryRunConfig, graph: ScreenGraph) -> None:
+    def __init__(
+        self,
+        config: DiscoveryRunConfig,
+        graph: ScreenGraph,
+        adk_client: ADKDiscoveryClient | None = None,
+    ) -> None:
         self.config = config
         self.graph = graph
-        self.llm = DiscoveryLLMCoordinator(config)
+        self.llm = DiscoveryLLMCoordinator(config, adk_client=adk_client)
         self.reference_task_template = self._load_reference_task_template()
         self.reference_task_corpus = self._load_reference_task_corpus()
         self.page_families = {
@@ -145,82 +153,67 @@ class TaskSynthesizer:
         target_screen = self.graph.get_screen(seed.target_screen_id)
         target_family = self._get_family(seed)
         reference_examples = self._select_reference_examples(seed)
-        prompt = f"""You are generating executable web-agent tasks for a software-under-test exploration run.
-
-Generate up to {limit} realistic tasks that follow the JSON style of the reference examples.
-The tasks must be grounded in the page-family dossier and canonical evidence below.
-Prefer task ideas that meaningfully cover a distinct workflow in the SUT.
-Prioritize broad SUT coverage over generating near-duplicate tasks.
-Honor the seed priority:
-- navigation seeds should produce concise reach-and-verify tasks
-- crud_form seeds should focus on create/edit/delete/fill flows and may use llm_judge
-- dom_interaction seeds are lowest priority and should only be produced when they are clearly meaningful
-Do not invent pages, forms, or success messages that are not supported by the evidence.
-Treat this as a second-stage task generator. The exploration has already been consolidated into page families, so avoid tasks that only differ by minor filter or expanded-row variants.
-
-Return strict JSON:
-{{
-  "tasks": [
-    {{
-      "task_type": "navigation|workflow",
-      "feature": "<feature name>",
-      "scenario": "<scenario name>",
-      "given": ["..."],
-      "when": ["..."],
-      "then": ["..."],
-      "eval_type": "gherkin_criteria|llm_judge",
-      "reference_acceptance_criteria": ["..."],
-      "confidence": 0.0,
-      "review_notes": ["..."]
-    }}
-  ]
-}}
-
-SUT:
-- Name: {self.config.sut.name}
-- Start URL: {self.config.sut.start_url}
-- Requires login: {bool(self.config.sut.storage_state)}
-
-Seed:
-- Title: {seed.title}
-- Task idea: {seed.task_idea}
-- Task type: {seed.task_type}
-- Priority bucket: {seed.priority_bucket}
-- Operation type: {seed.operation_type or "unspecified"}
-- Preferred eval type: {seed.preferred_eval_type}
-- Coverage key: {seed.coverage_key}
-- Domain object: {seed.domain_object or "unknown"}
-- Rationale: {seed.rationale}
-- Canonical path actions observed during exploration: {seed.path_actions}
-- Planner notes: {seed.planner_notes}
-- Target page family: {seed.target_family_name or (target_family.name if target_family else seed.target_page_type)}
-- Target page type: {seed.target_page_type}
-- Target route patterns: {seed.target_route_patterns}
-- Target forms: {seed.target_forms}
-- Target summary: {seed.target_screen_summary}
-- Family supported operations: {seed.family_supported_operations}
-- Acceptance hints: {seed.acceptance_hints}
-
-Target page family dossier:
-{json.dumps(target_family.to_dict() if target_family else {}, ensure_ascii=False, indent=2)}
-
-Canonical screen evidence:
-- URL: {target_screen.url}
-- Title: {target_screen.title}
-- Summary: {target_screen.summary}
-- Form fields: {[{"label": field.label, "type": field.field_type, "required": field.required} for field in target_screen.form_fields[:12]]}
-- Visible task opportunities: {target_screen.task_opportunities}
-- Important DOM: {target_screen.important_dom}
-- Secondary DOM: {target_screen.secondary_dom}
-- Accessibility tree excerpt:
-{truncate_text(target_screen.observation_text, self.config.llm.task_generation_context_chars)}
-
-Reference task snippets from config_files/{self.config.sut.name}:
-{json.dumps(reference_examples, ensure_ascii=False, indent=2) if reference_examples else "No reference examples provided."}
-
-Canonical reference task example:
-{json.dumps(self.reference_task_template, ensure_ascii=False, indent=2) if self.reference_task_template else "No canonical reference example provided."}
-"""
+        prompt = render_discovery_prompt(
+            "task_generation",
+            limit=limit,
+            sut_name=self.config.sut.name,
+            start_url=self.config.sut.start_url,
+            requires_login=bool(self.config.sut.storage_state),
+            seed_title=seed.title,
+            seed_task_idea=seed.task_idea,
+            seed_task_type=seed.task_type,
+            seed_priority_bucket=seed.priority_bucket,
+            seed_operation_type=seed.operation_type or "unspecified",
+            seed_preferred_eval_type=seed.preferred_eval_type,
+            seed_coverage_key=seed.coverage_key,
+            seed_domain_object=seed.domain_object or "unknown",
+            seed_rationale=seed.rationale,
+            seed_path_actions=seed.path_actions,
+            seed_planner_notes=seed.planner_notes,
+            target_page_family=(
+                seed.target_family_name
+                or (target_family.name if target_family else seed.target_page_type)
+            ),
+            target_page_type=seed.target_page_type,
+            target_route_patterns=seed.target_route_patterns,
+            target_forms=seed.target_forms,
+            target_summary=seed.target_screen_summary,
+            family_supported_operations=seed.family_supported_operations,
+            acceptance_hints=seed.acceptance_hints,
+            target_family_dossier=json.dumps(
+                target_family.to_dict() if target_family else {},
+                ensure_ascii=False,
+                indent=2,
+            ),
+            target_url=target_screen.url,
+            target_title=target_screen.title,
+            target_screen_summary=target_screen.summary,
+            target_form_fields=[
+                {
+                    "label": field.label,
+                    "type": field.field_type,
+                    "required": field.required,
+                }
+                for field in target_screen.form_fields[:12]
+            ],
+            target_task_opportunities=target_screen.task_opportunities,
+            target_important_dom=target_screen.important_dom,
+            target_secondary_dom=target_screen.secondary_dom,
+            accessibility_tree_excerpt=truncate_text(
+                target_screen.observation_text,
+                self.config.llm.task_generation_context_chars,
+            ),
+            reference_examples=(
+                json.dumps(reference_examples, ensure_ascii=False, indent=2)
+                if reference_examples
+                else "No reference examples provided."
+            ),
+            reference_task_template=(
+                json.dumps(self.reference_task_template, ensure_ascii=False, indent=2)
+                if self.reference_task_template
+                else "No canonical reference example provided."
+            ),
+        )
         response = self.llm.task_call(prompt)
         payload = extract_json_payload(response)
         raw_tasks = payload.get("tasks", [])
@@ -343,6 +336,10 @@ Canonical reference task example:
         return steps
 
     def _describe_action(self, source_screen, action: str) -> str:
+        summary_match = CLICK_SUMMARY_RE.match(action)
+        if summary_match:
+            return f'I click on "{summary_match.group("label")}"'
+
         click_match = CLICK_RE.match(action)
         if click_match:
             element_id = click_match.group("element_id")
@@ -361,7 +358,7 @@ Canonical reference task example:
         if goto_match:
             return f'I navigate to "{goto_match.group("url")}"'
 
-        if action == "go_back":
+        if action in {"go_back", "Go back"}:
             return "I go back to the previous page"
 
         if action.startswith("scroll"):

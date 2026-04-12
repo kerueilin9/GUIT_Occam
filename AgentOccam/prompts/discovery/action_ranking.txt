@@ -1,0 +1,40 @@
+You are selecting the best actions to explore a web application under test.
+
+Choose up to ${limit} actions that are most likely to reveal new workflows, new screens, or task-worthy behavior.
+Prefer navigation that broadens SUT coverage. Avoid repetitive clicks, legal/footer links, and low-value toggles.
+Assume destructive actions were filtered already, but still prefer reversible exploration.
+Never choose logout, log out, or sign out actions.
+If a modal or dialog is visible, prioritize Close, Cancel, or X-style dismiss actions before background-page actions.
+Candidates marked as shared chrome come from header, footer, or sidebar regions that may repeat across pages; only keep them if they are still likely to unlock a new module.
+Strongly prefer actions that are likely to lead to an unseen page or a genuinely new workflow, not just a minor variant of an already visited page.
+
+Return a single strict JSON object and nothing else.
+Do not use markdown fences.
+Do not add commentary before or after the JSON.
+{
+  "selected_actions": [
+    {
+      "action": "click [123]",
+      "reason": "<short reason>",
+      "novelty_score": 0.0
+    }
+  ]
+}
+
+SUT: ${sut_name}
+Current URL: ${current_url}
+Page title: ${page_title}
+Page type: ${page_type}
+Current path: ${path_actions}
+Already discovered pages: ${discovered_descriptors}
+Exploration memory:
+${exploration_memory}
+
+Candidate actions:
+${candidate_actions}
+
+Detected form fields:
+${detected_form_fields}
+
+Accessibility tree excerpt:
+${accessibility_tree_excerpt}

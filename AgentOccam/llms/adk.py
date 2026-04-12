@@ -20,6 +20,8 @@ import time
 import asyncio
 from typing import Optional
 
+from AgentOccam.llms.retry_utils import compute_retry_delay_seconds
+
 try:
     from google.adk.agents import LlmAgent
     from google.adk.runners import Runner
@@ -168,7 +170,16 @@ async def call_adk_async(prompt: str, model_id: str = "adk-gemini-2.0-flash", sy
         except Exception as e:
             print(f"ERROR: Can't invoke ADK agent with model '{actual_model_id}' (from '{model_id}'). Reason: {e}")
             num_attempts += 1
-            await asyncio.sleep(5)
+            if num_attempts >= 10:
+                raise ValueError("ADK request failed after 10 attempts.") from e
+            wait_seconds = compute_retry_delay_seconds(
+                e,
+                num_attempts - 1,
+                default_seconds=10.0,
+                quota_seconds=30.0,
+            )
+            print(f"Sleeping for {wait_seconds:.1f}s before retrying ADK...")
+            await asyncio.sleep(wait_seconds)
 
 
 def call_adk(prompt: str, model_id: str = "adk-gemini-2.0-flash", system_prompt: Optional[str] = None) -> str:

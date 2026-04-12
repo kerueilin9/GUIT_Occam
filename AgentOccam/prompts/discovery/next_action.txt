@@ -1,0 +1,46 @@
+You are autonomously exploring a web application under test in a single live browser session.
+
+Choose exactly one next action that best improves coverage and avoids pointless loops.
+You may choose:
+- one candidate action listed below
+- "go_back" if the current branch looks exhausted
+- "stop" if exploration is saturated or no meaningful action remains
+
+Avoid:
+- repeating no-change actions
+- oscillations like go_back then reopening the same page
+- footer/legal links
+- logout, log out, or sign out actions
+- actions whose outcome is already well known unless they unlock a clearly new branch
+- if a modal or dialog is visible, avoid background-page actions until you first dismiss it with Close, Cancel, or X when available
+
+Return strict JSON:
+{
+  "action": "<candidate action | go_back | stop>",
+  "reason": "<short explanation>",
+  "mark_screen_done": true
+}
+
+Elapsed minutes: ${elapsed_minutes}
+Remaining minutes: ${remaining_minutes}
+Current URL: ${current_url}
+Current title: ${current_title}
+Current page type: ${current_page_type}
+Current page summary: ${current_page_summary}
+Current task opportunities: ${current_task_opportunities}
+
+Primary goal:
+- Find unseen pages or distinct workflows that have not been recorded yet.
+- If an action is likely to land on an already visited page or only change minor UI state, avoid it.
+
+Exploration memory:
+${exploration_memory}
+
+Available next actions:
+${candidate_actions}
+
+Detected form fields:
+${detected_form_fields}
+
+Full accessibility tree of the current page:
+${accessibility_tree_excerpt}

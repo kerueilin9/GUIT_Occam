@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from AgentOccam.adk_discovery import ADKDiscoveryClient
 from AgentOccam.discovery.models import DiscoveryRunConfig, ScreenRecord, TransitionRecord
 from AgentOccam.discovery.recorder import ScreenRecorder
 from AgentOccam.discovery.screen_graph import ScreenGraph
@@ -17,8 +18,13 @@ from AgentOccam.logger import logger
 class DiscoveryPipeline:
     """Owns discovery artifacts, graph building, and draft task generation."""
 
-    def __init__(self, config: DiscoveryRunConfig) -> None:
+    def __init__(
+        self,
+        config: DiscoveryRunConfig,
+        adk_client: ADKDiscoveryClient | None = None,
+    ) -> None:
         self.config = config
+        self.adk_client = adk_client
         self.recorder = ScreenRecorder()
         self.graph = ScreenGraph()
         self.last_task_seeds: list[dict[str, Any]] = []
@@ -137,13 +143,14 @@ class DiscoveryPipeline:
             max_tasks_per_screen=self.config.task_generation.max_tasks_per_family,
         )
         self.last_task_seeds = [seed.to_dict() for seed in seeds]
-        self.export_task_plan()
-        self.export_task_seeds()
         logger.info("Extracted %s task seeds for generation.", len(seeds))
-        synthesizer = TaskSynthesizer(config=self.config, graph=self.graph)
+        synthesizer = TaskSynthesizer(
+            config=self.config,
+            graph=self.graph,
+            adk_client=self.adk_client,
+        )
         generated = synthesizer.synthesize(seeds)
         self.last_task_dedup_report = synthesizer.last_dedup_report
-        self.export_task_dedup_report()
         task_paths: list[dict[str, Any]] = []
         for item in generated:
             target = self._require_prepared(self.tasks_dir) / f"{item.candidate.task_id}.json"
@@ -176,8 +183,15 @@ class DiscoveryPipeline:
 
     def export_task_plan(self) -> Path:
         target = self._require_prepared(self.run_dir) / "task_plan.json"
+        payload = {
+            "run_id": self.run_id,
+            "seed_count": len(self.last_task_seeds),
+            "max_tasks": self.config.task_generation.max_tasks,
+            "max_tasks_per_family": self.config.task_generation.max_tasks_per_family,
+            "seeds": self.last_task_seeds,
+        }
         target.write_text(
-            json.dumps(self.last_task_seeds, ensure_ascii=False, indent=2),
+            json.dumps(payload, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
         logger.info("Exported task plan: %s", target)
@@ -199,6 +213,7 @@ class DiscoveryPipeline:
             "run_id": self.run_id,
             "discovery": self.config.discovery.to_dict() if hasattr(self.config.discovery, "to_dict") else vars(self.config.discovery),
             "llm": self.config.llm.to_dict() if hasattr(self.config.llm, "to_dict") else vars(self.config.llm),
+            "adk": self.config.adk.to_dict() if hasattr(self.config.adk, "to_dict") else vars(self.config.adk),
             "task_generation": self.config.task_generation.to_dict() if hasattr(self.config.task_generation, "to_dict") else vars(self.config.task_generation),
             "validation": self.config.validation.to_dict() if hasattr(self.config.validation, "to_dict") else vars(self.config.validation),
         }

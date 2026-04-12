@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlparse
 
+from AgentOccam.discovery.action_summary import summarize_candidate_action
 from AgentOccam.discovery.models import ActionCandidate, DiscoveryRunConfig, ScreenRecord
 
 
@@ -113,6 +114,7 @@ class ExplorationMemory:
         effect: str,
         success: bool,
     ) -> None:
+        action_summary = summarize_candidate_action(candidate)
         if candidate.signature:
             self.signature_last_effect[candidate.signature] = effect
             if effect in {"no_change", "low_value", "known_page"}:
@@ -122,12 +124,12 @@ class ExplorationMemory:
                 self.known_page_signatures.add(candidate.signature)
 
         effect_summary = (
-            f'{candidate.action} from "{source_screen.title or source_screen.url}" '
+            f'{action_summary} from "{source_screen.title or source_screen.url}" '
             f'-> "{destination_screen.title or destination_screen.url}" ({effect})'
         )
         if not success:
             effect_summary = (
-                f'{candidate.action} from "{source_screen.title or source_screen.url}" failed'
+                f'{action_summary} from "{source_screen.title or source_screen.url}" failed'
             )
         self.events.append(
             ExplorationEvent(
@@ -136,7 +138,7 @@ class ExplorationMemory:
                 metadata={
                     "source_screen_id": source_screen.screen_id,
                     "destination_screen_id": destination_screen.screen_id,
-                    "action": candidate.action,
+                    "action_summary": action_summary,
                     "signature": candidate.signature,
                     "effect": effect,
                     "success": success,
@@ -201,6 +203,74 @@ class ExplorationMemory:
                 f"Semantic revisits collapsed: {self.semantic_revisit_count}",
             ]
         )
+
+    def build_compact_snapshot(self, current_screen: ScreenRecord | None = None) -> dict[str, Any]:
+        discovered = []
+        for screen_id in self.visited_screen_order[-8:]:
+            discovered.append(
+                {
+                    "screen_id": screen_id,
+                    "page_type": self.screen_page_types.get(screen_id, ""),
+                    "summary": self.screen_summaries.get(screen_id, ""),
+                    "task_opportunities": self.screen_task_opportunities.get(screen_id, [])[:2],
+                    "visit_count": self.screen_visit_count.get(screen_id, 0),
+                }
+            )
+
+        recent_events = [event.to_dict() for event in self.events[-self.config.llm.memory_recent_events :]]
+        frequent_routes = [
+            {
+                "route": route,
+                "visits": count,
+            }
+            for route, count in sorted(
+                self.route_visit_count.items(),
+                key=lambda item: (-item[1], item[0]),
+            )[:8]
+        ]
+        snapshot = {
+            "visited_screen_count": len(self.visited_screen_order),
+            "completed_screen_count": len(self.completed_screens),
+            "semantic_revisit_count": self.semantic_revisit_count,
+            "discovered_screens": discovered,
+            "recent_events": recent_events,
+            "known_low_value_signatures": sorted(self.low_value_signatures)[:12],
+            "no_change_signatures": sorted(self.no_change_signatures)[:12],
+            "known_page_signatures": sorted(self.known_page_signatures)[:12],
+            "frequently_revisited_routes": frequent_routes,
+            "recent_semantic_revisits": self.semantic_revisit_notes[-5:],
+        }
+        if current_screen is not None:
+            snapshot["current_screen"] = {
+                "screen_id": current_screen.screen_id,
+                "title": current_screen.title,
+                "url": current_screen.url,
+                "page_type": current_screen.page_type,
+                "summary": current_screen.summary,
+            }
+        return snapshot
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "events": [event.to_dict() for event in self.events],
+            "visited_screen_order": self.visited_screen_order[:],
+            "screen_visit_count": dict(self.screen_visit_count),
+            "screen_summaries": dict(self.screen_summaries),
+            "screen_page_types": dict(self.screen_page_types),
+            "screen_task_opportunities": {
+                screen_id: items[:]
+                for screen_id, items in self.screen_task_opportunities.items()
+            },
+            "completed_screens": sorted(self.completed_screens),
+            "low_value_signatures": sorted(self.low_value_signatures),
+            "no_change_signatures": sorted(self.no_change_signatures),
+            "known_page_signatures": sorted(self.known_page_signatures),
+            "signature_attempts": dict(self.signature_attempts),
+            "signature_last_effect": dict(self.signature_last_effect),
+            "route_visit_count": dict(self.route_visit_count),
+            "semantic_revisit_count": self.semantic_revisit_count,
+            "semantic_revisit_notes": self.semantic_revisit_notes[:],
+        }
 
     def _normalize_route(self, url: str) -> str:
         try:

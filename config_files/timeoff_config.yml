@@ -130,7 +130,7 @@ env:
   max_browser_rows: 2000
   headless: false
   relative_task_dir: "timeoff"
-  task_ids: ["all"]
+  task_ids: ["task_nav05"]
   viewport_size:
     width: 1280
     height: 720

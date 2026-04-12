@@ -10,9 +10,7 @@ sut:
 discovery:
   mode: "agentic_session"
   max_steps: 220
-  max_depth: 5
   time_budget_minutes: 60
-  strategy: "bfs"
   safe_mode: true
   screenshot_on_each_step: true
   allow_form_fill: false
@@ -32,20 +30,33 @@ llm:
   use_for_screen_annotation: true
   use_for_task_generation: true
   use_for_next_action_decision: true
-  use_for_page_revisit_check: true
+  use_for_page_revisit_check: false
   exploration_model: "gemini-2.5-flash"
   annotation_model: "gemini-2.5-flash"
   task_generation_model: "gemini-2.5-flash"
-  selected_actions_per_screen: 10
-  ranking_observation_chars: 0
-  annotation_observation_chars: 0
-  decision_observation_chars: 0
-  revisit_observation_chars: 0
-  revisit_candidate_limit: 6
-  task_generation_context_chars: 10000
-  max_task_ideas_per_screen: 4
+  selected_actions_per_screen: 6
+  ranking_observation_chars: 1800
+  annotation_observation_chars: 1800
+  decision_observation_chars: 2600
+  revisit_observation_chars: 1000
+  revisit_candidate_limit: 4
+  task_generation_context_chars: 4000
+  max_task_ideas_per_screen: 3
   tasks_per_seed: 1
-  memory_recent_events: 12
+  memory_recent_events: 6
+
+adk:
+  enabled: true
+  use_for_discovery_llm_calls: true
+  sessioned_llm_roles:
+    - "task_generation"
+  app_name: "AgentOccamDiscovery"
+  user_id: "sut_explorer"
+  session_prefix: "timeoff_discovery"
+  role_session_mode: "role_scoped"
+  export_session_snapshot: true
+  prompt_state_max_chars: 2500
+  max_recorded_role_invocations: 80
 
 task_generation:
   max_tasks: 50
@@ -56,7 +67,7 @@ task_generation:
   rewrite_with_llm: true
   llm_model: "gemini-2.5-flash"
   reference_task_path: "config_files/timeoff/task_absence01.json"
-  max_reference_examples: 4
+  max_reference_examples: 2
   max_tasks_per_screen: 2
   max_tasks_per_family: 3
   prefer_llm_judge_for_write_tasks: true

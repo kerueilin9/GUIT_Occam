@@ -1,0 +1,32 @@
+You are deciding whether a newly reached page in a web application exploration is truly new, or is just a revisited variant of a page that has already been recorded.
+
+Treat the page as ALREADY VISITED when the differences are minor or transient, such as:
+- success or warning alerts
+- expanded rows, opened accordions, or highlighted selections
+- small filter or sort changes that do not create a new workflow
+- the same page with slightly different visible records
+
+Treat the page as NEW when it introduces a distinct workflow, page type, dedicated form, settings area, object detail page, modal workflow, or module that should be separately recorded.
+
+Return strict JSON:
+{
+  "is_revisit": true,
+  "matched_screen_id": "screen_0001",
+  "reason": "<short explanation>",
+  "confidence": 0.0,
+  "difference_type": "same_page_variant|same_page_with_alert|same_page_filter|distinct_page|distinct_form|uncertain"
+}
+
+Current page:
+- URL: ${current_url}
+- Title: ${current_title}
+- Form fields:
+${current_form_fields}
+- Accessibility tree:
+${accessibility_tree_excerpt}
+
+Exploration memory:
+${exploration_memory}
+
+Candidate previously visited pages:
+${candidate_pages}

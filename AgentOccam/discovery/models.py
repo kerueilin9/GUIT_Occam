@@ -16,11 +16,9 @@ class SUTConfig:
 
 @dataclass
 class DiscoverySettings:
-    mode: str = "guided_bfs"
+    mode: str = "agentic_session"
     max_steps: int = 100
-    max_depth: int = 3
     time_budget_minutes: int = 60
-    strategy: str = "bfs"
     safe_mode: bool = True
     screenshot_on_each_step: bool = True
     allow_form_fill: bool = False
@@ -33,6 +31,12 @@ class DiscoverySettings:
     viewport_width: int = 1280
     viewport_height: int = 720
     sleep_after_execution_sec: float = 0.5
+
+    def __post_init__(self) -> None:
+        if self.mode != "agentic_session":
+            raise ValueError(
+                "Discovery only supports mode='agentic_session'. guided_bfs has been removed."
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -71,6 +75,23 @@ class LLMSettings:
 
 
 @dataclass
+class ADKSettings:
+    enabled: bool = False
+    use_for_discovery_llm_calls: bool = True
+    sessioned_llm_roles: list[str] = field(default_factory=lambda: ["task_generation"])
+    app_name: str = "AgentOccamDiscovery"
+    user_id: str = "sut_explorer"
+    session_prefix: str = "discovery"
+    role_session_mode: str = "role_scoped"
+    export_session_snapshot: bool = True
+    prompt_state_max_chars: int = 4000
+    max_recorded_role_invocations: int = 80
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
 class TaskGenerationSettings:
     max_tasks: int = 50
     task_types: list[str] = field(default_factory=lambda: ["navigation", "workflow"])
@@ -102,6 +123,7 @@ class DiscoveryRunConfig:
     sut: SUTConfig
     discovery: DiscoverySettings = field(default_factory=DiscoverySettings)
     llm: LLMSettings = field(default_factory=LLMSettings)
+    adk: ADKSettings = field(default_factory=ADKSettings)
     task_generation: TaskGenerationSettings = field(default_factory=TaskGenerationSettings)
     validation: ValidationSettings = field(default_factory=ValidationSettings)
     output_root: str = "output/discovery"
@@ -112,6 +134,7 @@ class DiscoveryRunConfig:
             sut=SUTConfig(**data["sut"]),
             discovery=DiscoverySettings(**data.get("discovery", {})),
             llm=LLMSettings(**data.get("llm", {})),
+            adk=ADKSettings(**data.get("adk", {})),
             task_generation=TaskGenerationSettings(**data.get("task_generation", {})),
             validation=ValidationSettings(**data.get("validation", {})),
             output_root=data.get("output_root", "output/discovery"),

@@ -1,0 +1,34 @@
+You are annotating one discovered page from a web application under test.
+
+Your goal is to summarize the page and suggest realistic user tasks that this page can support.
+Focus on concrete workflows, not abstract descriptions.
+
+Return strict JSON with keys:
+{
+  "page_type": "<short label>",
+  "summary": "<2-3 sentence summary>",
+  "key_entities": ["..."],
+  "domain_objects": ["..."],
+  "forms_detected": ["..."],
+  "task_opportunities": ["..."],
+  "important_dom": ["..."],
+  "secondary_dom": ["..."],
+  "write_risk": "low|medium|high"
+}
+
+SUT: ${sut_name}
+Current URL: ${current_url}
+Page title: ${page_title}
+Path from start: ${path_actions}
+Previously discovered pages: ${visited_page_descriptors}
+Exploration memory:
+${exploration_memory}
+
+Candidate actions on this page:
+${candidate_actions}
+
+Detected form fields:
+${detected_form_fields}
+
+Accessibility tree excerpt:
+${accessibility_tree_excerpt}

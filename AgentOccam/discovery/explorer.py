@@ -4,15 +4,51 @@ from __future__ import annotations
 
 import re
 from typing import Any
+from urllib.parse import parse_qsl, urlparse
 
 from AgentOccam.discovery.models import ActionCandidate, ScreenRecord
 
 DESTRUCTIVE_LABEL_RE = re.compile(
-    r"\b(delete|remove|destroy|logout|sign out|submit|save|confirm|archive|cancel|revoke|approve|reject|deny|reset|restore)\b",
+    r"\b(delete|remove|destroy|log[\s-]?out|sign[\s-]?out|submit|save|confirm|archive|revoke|approve|reject|deny|reset|restore)\b",
+    re.IGNORECASE,
+)
+TEMPORAL_SCREEN_RE = re.compile(
+    r"\b(calendar|month|week|day|date)\b",
+    re.IGNORECASE,
+)
+TEMPORAL_PREVIOUS_RE = re.compile(
+    r"\b(prev(?:ious)?|back)\b.*\b(month|week|day|year|calendar|period)\b|\b(month|week|day|year)\b.*\b(prev(?:ious)?|back)\b",
+    re.IGNORECASE,
+)
+TEMPORAL_NEXT_RE = re.compile(
+    r"\bnext\b.*\b(month|week|day|year|calendar|period)\b|\b(month|week|day|year)\b.*\bnext\b",
+    re.IGNORECASE,
+)
+MONTH_LABEL_RE = re.compile(
+    r"^(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:,\s*\d{4})?(?:\s+.+)?$",
+    re.IGNORECASE,
+)
+MONTH_PICKER_RE = re.compile(
+    r"^(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?),?\s+\d{4}(?:\s+.+)?$",
     re.IGNORECASE,
 )
 
-SAFE_ROLES = {"link", "button", "tab", "menuitem"}
+ACTIONABLE_ROLES = {
+    "button",
+    "checkbox",
+    "combobox",
+    "link",
+    "listbox",
+    "menuitem",
+    "radio",
+    "radiobutton",
+    "searchbox",
+    "spinbutton",
+    "switch",
+    "tab",
+    "textbox",
+    "textarea",
+}
 FOOTER_LABEL_RE = re.compile(
     r"\b(privacy|cookie|search terms|contact us|report all bugs|application|mailto:|copyright|help us keep)\b",
     re.IGNORECASE,
@@ -31,7 +67,7 @@ class ExplorerPolicy:
 
 
 class SafeBFSExplorerPolicy(ExplorerPolicy):
-    """Conservative action policy for V1 discovery."""
+    """Thin action adapter from accessibility-tree elements to executable actions."""
 
     def __init__(self, max_candidate_actions_per_screen: int = 12, include_go_back: bool = False) -> None:
         self.max_candidate_actions_per_screen = max(1, int(max_candidate_actions_per_screen))
@@ -39,11 +75,16 @@ class SafeBFSExplorerPolicy(ExplorerPolicy):
 
     def enumerate_actions(self, screen: ScreenRecord) -> list[ActionCandidate]:
         actions: list[ActionCandidate] = []
+        seen_actions: set[str] = set()
         page_bottom = self._estimate_page_bottom(screen)
+        temporal_signature_map = self._build_temporal_signature_map(screen)
         for element in screen.interactive_elements:
-            if element.role not in SAFE_ROLES:
+            if element.role not in ACTIONABLE_ROLES:
                 continue
-            if element.label and DESTRUCTIVE_LABEL_RE.search(element.label):
+            if self._should_skip_terminal_element(element.label, element.raw_text):
+                continue
+            action = f"click [{element.element_id}]"
+            if action in seen_actions:
                 continue
             zone = self._infer_zone(
                 screen=screen,
@@ -51,14 +92,14 @@ class SafeBFSExplorerPolicy(ExplorerPolicy):
                 label=element.label,
                 page_bottom=page_bottom,
             )
-            signature = self._build_signature(
+            signature = temporal_signature_map.get(element.element_id) or self._build_signature(
                 role=element.role,
                 label=element.label,
                 zone=zone,
             )
             actions.append(
                 ActionCandidate(
-                    action=f"click [{element.element_id}]",
+                    action=action,
                     element_id=element.element_id,
                     role=element.role,
                     label=element.label,
@@ -67,11 +108,10 @@ class SafeBFSExplorerPolicy(ExplorerPolicy):
                     zone=zone,
                     signature=signature,
                     is_shared_chrome=(zone != "main"),
-                    selected_by="policy",
+                    selected_by="adapter",
                 )
             )
-            if len(actions) >= self.max_candidate_actions_per_screen:
-                break
+            seen_actions.add(action)
         if self.include_go_back and screen.metadata.get("can_go_back", True):
             actions.append(
                 ActionCandidate(
@@ -81,10 +121,14 @@ class SafeBFSExplorerPolicy(ExplorerPolicy):
                     source="navigation",
                     zone="navigation",
                     signature="navigation:go_back",
-                    selected_by="policy",
+                    selected_by="adapter",
                 )
             )
-        return actions
+        if len(actions) <= self.max_candidate_actions_per_screen:
+            return actions
+        main_actions = [item for item in actions if item.zone == "main"]
+        secondary_actions = [item for item in actions if item.zone != "main"]
+        return (main_actions + secondary_actions)[: self.max_candidate_actions_per_screen]
 
     def _infer_zone(
         self,
@@ -157,7 +201,116 @@ class SafeBFSExplorerPolicy(ExplorerPolicy):
         normalized_label = self._normalize_label(label) or "unlabeled"
         return f"{zone}:{role}:{normalized_label}"
 
+    def _build_temporal_signature_map(self, screen: ScreenRecord) -> dict[str, str]:
+        if not self._screen_looks_temporal(screen):
+            return {}
+
+        actionable_elements = [
+            element
+            for element in screen.interactive_elements
+            if element.role in ACTIONABLE_ROLES
+        ]
+        signature_map: dict[str, str] = {}
+
+        for element in actionable_elements:
+            explicit_signature = self._explicit_temporal_signature(
+                label=element.label,
+                raw_text=element.raw_text,
+            )
+            if explicit_signature:
+                signature_map[element.element_id] = explicit_signature
+
+        for index, element in enumerate(actionable_elements):
+            if element.element_id in signature_map:
+                continue
+            if not self._is_month_picker_label(element.label):
+                continue
+            signature_map[element.element_id] = "temporal:period_picker"
+            previous_element = self._find_adjacent_month_control(actionable_elements, index, direction=-1)
+            next_element = self._find_adjacent_month_control(actionable_elements, index, direction=1)
+            if previous_element is not None and previous_element.element_id not in signature_map:
+                signature_map[previous_element.element_id] = "temporal:previous_period"
+            if next_element is not None and next_element.element_id not in signature_map:
+                signature_map[next_element.element_id] = "temporal:next_period"
+
+        return signature_map
+
+    def _screen_looks_temporal(self, screen: ScreenRecord) -> bool:
+        try:
+            parsed = urlparse(screen.url)
+        except Exception:
+            parsed = None
+        if parsed is not None:
+            path = (parsed.path or "").lower()
+            if "calendar" in path or "schedule" in path:
+                return True
+            query_keys = {
+                key.lower()
+                for key, _value in parse_qsl(parsed.query, keep_blank_values=True)
+            }
+            if query_keys & {"date", "month", "year", "week", "day"}:
+                return True
+
+        if TEMPORAL_SCREEN_RE.search(screen.title or ""):
+            return True
+
+        temporal_controls = 0
+        for element in screen.interactive_elements[:64]:
+            if self._explicit_temporal_signature(element.label, element.raw_text):
+                temporal_controls += 1
+                continue
+            if self._is_month_picker_label(element.label) or self._looks_like_month_control(element.label):
+                temporal_controls += 1
+        return temporal_controls >= 2
+
+    def _explicit_temporal_signature(self, label: str, raw_text: str) -> str:
+        combined = " ".join(
+            part.strip()
+            for part in (label or "", raw_text or "")
+            if part and part.strip()
+        )
+        normalized = self._normalize_label(combined)
+        if not normalized:
+            return ""
+        if TEMPORAL_PREVIOUS_RE.search(normalized):
+            return "temporal:previous_period"
+        if TEMPORAL_NEXT_RE.search(normalized):
+            return "temporal:next_period"
+        if "today" in normalized or "current period" in normalized:
+            return "temporal:current_period"
+        return ""
+
+    def _find_adjacent_month_control(
+        self,
+        elements: list[Any],
+        start_index: int,
+        direction: int,
+    ):
+        index = start_index + direction
+        steps = 0
+        while 0 <= index < len(elements) and steps < 4:
+            candidate = elements[index]
+            if self._looks_like_month_control(candidate.label):
+                return candidate
+            index += direction
+            steps += 1
+        return None
+
+    def _is_month_picker_label(self, label: str) -> bool:
+        return bool(MONTH_PICKER_RE.match((label or "").strip()))
+
+    def _looks_like_month_control(self, label: str) -> bool:
+        return bool(MONTH_LABEL_RE.match((label or "").strip()))
+
     def _normalize_label(self, label: str) -> str:
         cleaned = re.sub(r"\s+", " ", (label or "").strip().lower())
         cleaned = re.sub(r"[^\w\s/-]+", "", cleaned)
         return cleaned.strip()
+
+    def _should_skip_terminal_element(self, label: str, raw_text: str) -> bool:
+        combined_text = " ".join(
+            part.strip()
+            for part in (label or "", raw_text or "")
+            if part and part.strip()
+        )
+        return bool(combined_text and DESTRUCTIVE_LABEL_RE.search(combined_text))

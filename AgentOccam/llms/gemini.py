@@ -2,6 +2,8 @@ import google.generativeai as genai
 import os
 import time
 
+from AgentOccam.llms.retry_utils import compute_retry_delay_seconds
+
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -12,15 +14,27 @@ def call_gemini(prompt, model_id="gemini-1.5-flash", system_prompt=None):
     num_attempts = 0
     while True:
         if num_attempts >= 10:
-            raise ValueError("Gemini request failed.")
+            raise ValueError(f"Gemini request failed after {num_attempts} attempts.")
         try:
             content = ((system_prompt or "") + "\n" + prompt).strip()
             response = model.generate_content(content)
             response_text = response.text
             return response_text
         except Exception as e:
-            print(f"ERROR: Can't invoke '{model_id}'. Reason: {e}")
-            time.sleep(30)
+            wait_seconds = compute_retry_delay_seconds(
+                e,
+                num_attempts,
+                default_seconds=10.0,
+                quota_seconds=30.0,
+            )
+            num_attempts += 1
+            print(
+                f"ERROR: Can't invoke '{model_id}'. Attempt {num_attempts}/10. "
+                f"Waiting {wait_seconds:.1f}s. Reason: {e}"
+            )
+            if num_attempts >= 10:
+                raise ValueError(f"Gemini request failed after {num_attempts} attempts.") from e
+            time.sleep(wait_seconds)
 
 
 def arrange_message_for_gemini(item_list):

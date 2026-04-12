@@ -11,6 +11,7 @@ _LAZY_EXPORTS = {
     "DiscoveryPipeline": ("AgentOccam.discovery.pipeline", "DiscoveryPipeline"),
     "DiscoveryRunConfig": ("AgentOccam.discovery.models", "DiscoveryRunConfig"),
     "DiscoverySettings": ("AgentOccam.discovery.models", "DiscoverySettings"),
+    "ADKSettings": ("AgentOccam.discovery.models", "ADKSettings"),
     "FormField": ("AgentOccam.discovery.models", "FormField"),
     "GeneratedTask": ("AgentOccam.discovery.models", "GeneratedTask"),
     "InteractiveElement": ("AgentOccam.discovery.models", "InteractiveElement"),

@@ -6,6 +6,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Any
 
+from AgentOccam.discovery.action_summary import summarize_transition_action
 from AgentOccam.discovery.dossier import DiscoveryDossierBuilder, PageFamilyBundle
 from AgentOccam.discovery.models import PageFamily, ScreenRecord, TaskSeed, TransitionRecord
 from AgentOccam.logger import logger
@@ -51,7 +52,7 @@ class ScreenGraph:
         ):
             self.parent_by_screen_id[transition.to_screen_id] = ParentLink(
                 from_screen_id=transition.from_screen_id,
-                action=transition.action,
+                action=summarize_transition_action(transition),
             )
 
     def get_screen(self, screen_id: str) -> ScreenRecord:

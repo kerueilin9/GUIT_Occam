@@ -2,22 +2,64 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlparse
 
+from AgentOccam.adk_discovery import ADKDiscoveryClient
+from AgentOccam.discovery.action_summary import summarize_candidate_action
 from AgentOccam.discovery.models import (
     ActionCandidate,
     DiscoveryRunConfig,
     ScreenRecord,
+)
+from AgentOccam.discovery.prompt_templates import (
+    get_discovery_role_instruction,
+    render_discovery_prompt,
 )
 from AgentOccam.logger import logger
 
 JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL | re.IGNORECASE)
 ACTION_VERB_RE = re.compile(r"\b(new|create|add|request|submit|edit|update|view|manage|open)\b", re.IGNORECASE)
 FORM_HINT_RE = re.compile(r"\b(new|create|request|submit|form|edit|details|settings|profile|employee|calendar|team)\b", re.IGNORECASE)
+TRAILING_COMMA_RE = re.compile(r",(\s*[}\]])")
+RECOVERABLE_ACTION_RE = re.compile(r"(?P<action>click \[\d+\]|go_back)", re.IGNORECASE)
+NOVELTY_SCORE_RE = re.compile(r"novelty(?:_score)?\s*[:=]\s*(?P<score>-?\d+(?:\.\d+)?)", re.IGNORECASE)
+TEMPORAL_TERM_RE = re.compile(
+    r"\b(calendar|month|week|day|date|today|tomorrow|yesterday|schedule)\b",
+    re.IGNORECASE,
+)
+MONTH_NAME_RE = re.compile(
+    r"\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b",
+    re.IGNORECASE,
+)
+WEEKDAY_RE = re.compile(
+    r"\b(mon|monday|tue|tues|tuesday|wed|wednesday|thu|thur|thurs|thursday|fri|friday|sat|saturday|sun|sunday)\b",
+    re.IGNORECASE,
+)
+DATE_RE = re.compile(
+    r"\b\d{4}[-/]\d{1,2}(?:[-/]\d{1,2})?\b|\b\d{1,2}[-/]\d{1,2}(?:[-/]\d{2,4})?\b",
+    re.IGNORECASE,
+)
+YEAR_RE = re.compile(r"\b20\d{2}\b")
+STANDALONE_NUMBER_RE = re.compile(r"\b\d{1,2}\b")
+OBSERVATION_NODE_RE = re.compile(
+    r"^\s*\[(?P<element_id>\d+)\]\s+(?P<role>[A-Za-z_]+)(?:\s+['\"](?P<label>[^'\"]*)['\"])?",
+)
+TEMPORAL_QUERY_KEYS = {
+    "date",
+    "month",
+    "year",
+    "week",
+    "day",
+    "start",
+    "end",
+    "from",
+    "to",
+}
 
 
 def truncate_text(text: str, max_chars: int) -> str:
@@ -32,36 +74,68 @@ def extract_json_payload(text: str) -> Any:
     if not text:
         raise ValueError("Empty LLM response.")
 
+    for snippet in _iter_json_snippets(text):
+        parsed = _parse_json_like_snippet(snippet)
+        if parsed is not None:
+            return parsed
+
+    raise ValueError("Could not parse JSON payload from LLM response.")
+
+
+def _iter_json_snippets(text: str) -> list[str]:
     stripped = text.strip()
-    try:
-        return json.loads(stripped)
-    except json.JSONDecodeError:
-        pass
+    snippets: list[str] = [stripped]
 
     fenced = JSON_BLOCK_RE.findall(text)
-    for block in fenced:
-        try:
-            return json.loads(block.strip())
-        except json.JSONDecodeError:
-            continue
+    snippets.extend(block.strip() for block in fenced if block.strip())
 
     first_object = stripped.find("{")
     last_object = stripped.rfind("}")
     if first_object != -1 and last_object != -1 and last_object > first_object:
-        try:
-            return json.loads(stripped[first_object : last_object + 1])
-        except json.JSONDecodeError:
-            pass
+        snippets.append(stripped[first_object : last_object + 1])
 
     first_array = stripped.find("[")
     last_array = stripped.rfind("]")
     if first_array != -1 and last_array != -1 and last_array > first_array:
-        try:
-            return json.loads(stripped[first_array : last_array + 1])
-        except json.JSONDecodeError:
-            pass
+        snippets.append(stripped[first_array : last_array + 1])
 
-    raise ValueError("Could not parse JSON payload from LLM response.")
+    unique: list[str] = []
+    seen: set[str] = set()
+    for snippet in snippets:
+        candidate = snippet.strip()
+        if not candidate or candidate in seen:
+            continue
+        seen.add(candidate)
+        unique.append(candidate)
+    return unique
+
+
+def _parse_json_like_snippet(snippet: str) -> Any | None:
+    normalized = (
+        snippet.strip()
+        .replace("\u201c", '"')
+        .replace("\u201d", '"')
+        .replace("\u2018", "'")
+        .replace("\u2019", "'")
+    )
+    attempts = [normalized]
+    trimmed_trailing_commas = TRAILING_COMMA_RE.sub(r"\1", normalized)
+    if trimmed_trailing_commas != normalized:
+        attempts.append(trimmed_trailing_commas)
+
+    for attempt in attempts:
+        try:
+            return json.loads(attempt)
+        except json.JSONDecodeError:
+            continue
+
+    for attempt in attempts:
+        try:
+            return ast.literal_eval(attempt)
+        except Exception:
+            continue
+
+    return None
 
 
 def load_json_if_exists(path: str | None) -> dict[str, Any] | None:
@@ -79,12 +153,19 @@ def load_json_if_exists(path: str | None) -> dict[str, Any] | None:
 class DiscoveryLLMCoordinator:
     """Owns LLM-backed action ranking and screen annotation with safe fallbacks."""
 
-    def __init__(self, config: DiscoveryRunConfig) -> None:
+    def __init__(
+        self,
+        config: DiscoveryRunConfig,
+        adk_client: ADKDiscoveryClient | None = None,
+    ) -> None:
         self.config = config
+        self.adk_client = adk_client
         self._ranking_call = None
         self._annotation_call = None
         self._task_call = None
         self._revisit_call = None
+        self._decision_call = None
+        self._build_call_model = None
         self._availability_error = ""
 
         if not config.llm.enabled:
@@ -96,28 +177,144 @@ class DiscoveryLLMCoordinator:
             self._availability_error = str(exc)
             return
 
+        self._build_call_model = build_call_model
         try:
-            if config.llm.use_for_action_ranking:
-                self._ranking_call = build_call_model(config.llm.exploration_model, system_prompt="")
-            if config.llm.use_for_screen_annotation:
-                self._annotation_call = build_call_model(config.llm.resolved_annotation_model(), system_prompt="")
-            if config.llm.use_for_page_revisit_check:
-                self._revisit_call = build_call_model(config.llm.resolved_annotation_model(), system_prompt="")
-            if config.llm.use_for_task_generation:
-                model_id = config.task_generation.llm_model or config.llm.resolved_task_generation_model()
-                self._task_call = build_call_model(model_id, system_prompt="")
+            self._initialize_role_calls()
         except Exception as exc:
             self._availability_error = str(exc)
             self._ranking_call = None
             self._annotation_call = None
             self._task_call = None
             self._revisit_call = None
+            self._decision_call = None
+
+    def _initialize_role_calls(self) -> None:
+        if self.config.llm.use_for_action_ranking:
+            self._ranking_call = self._build_role_call(
+                role="action_ranking",
+                model_id=self.config.llm.exploration_model,
+            )
+        if self.config.llm.use_for_next_action_decision:
+            self._decision_call = self._build_role_call(
+                role="next_action",
+                model_id=self.config.llm.exploration_model,
+            )
+        if self.config.llm.use_for_screen_annotation:
+            self._annotation_call = self._build_role_call(
+                role="screen_annotation",
+                model_id=self.config.llm.resolved_annotation_model(),
+            )
+        if self.config.llm.use_for_page_revisit_check:
+            self._revisit_call = self._build_role_call(
+                role="page_revisit",
+                model_id=self.config.llm.resolved_annotation_model(),
+            )
+        if self.config.llm.use_for_task_generation:
+            self._task_call = self._build_role_call(
+                role="task_generation",
+                model_id=(
+                    self.config.task_generation.llm_model
+                    or self.config.llm.resolved_task_generation_model()
+                ),
+            )
+
+    def _build_role_call(self, role: str, model_id: str):
+        system_prompt = get_discovery_role_instruction(role)
+        if self._should_use_sessioned_adk(role):
+            return self._build_adk_role_call(
+                role=role,
+                model_id=model_id,
+                system_prompt=system_prompt,
+            )
+        return self._build_direct_role_call(
+            model_id=model_id,
+            system_prompt=system_prompt,
+        )
+
+    def _should_use_sessioned_adk(self, role: str) -> bool:
+        sessioned_roles = {
+            str(configured_role).strip()
+            for configured_role in (self.config.adk.sessioned_llm_roles or [])
+            if str(configured_role).strip()
+        }
+        return bool(
+            self.adk_client is not None
+            and self.adk_client.use_for_llm_calls
+            and role in sessioned_roles
+        )
+
+    def _build_direct_role_call(self, model_id: str, system_prompt: str):
+        if self._build_call_model is None:
+            raise RuntimeError("Direct model registry is not configured.")
+        call_model = self._build_call_model(model_id, system_prompt=system_prompt)
+
+        def _call(*, prompt: str) -> str:
+            return call_model(prompt=prompt)
+
+        _call._agentoccam_provider = "direct"  # type: ignore[attr-defined]
+        _call._agentoccam_system_prompt = system_prompt  # type: ignore[attr-defined]
+        return _call
+
+    def _build_adk_role_call(self, role: str, model_id: str, system_prompt: str):
+        def _call(*, prompt: str) -> str:
+            assert self.adk_client is not None
+            return self.adk_client.call_role(
+                role=role,
+                prompt=prompt,
+                model_id=model_id,
+                system_prompt=system_prompt,
+            )
+
+        _call._agentoccam_provider = "adk"  # type: ignore[attr-defined]
+        _call._agentoccam_system_prompt = system_prompt  # type: ignore[attr-defined]
+        return _call
+
+    def _invoke_role_call(
+        self,
+        *,
+        role: str,
+        model_id: str,
+        prompt: str,
+        call_model,
+        system_prompt: str = "",
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        provider = getattr(call_model, "_agentoccam_provider", "direct")
+        logged_system_prompt = getattr(
+            call_model,
+            "_agentoccam_system_prompt",
+            system_prompt,
+        )
+        if self.adk_client is not None:
+            prompt_path = self.adk_client.log_role_prompt(
+                role=role,
+                model_id=model_id,
+                prompt=prompt,
+                system_prompt=logged_system_prompt,
+                metadata=metadata,
+                provider=provider,
+            )
+            if prompt_path is not None:
+                logger.debug(
+                    "Logged discovery prompt: role=%s model=%s provider=%s path=%s",
+                    role,
+                    model_id,
+                    provider,
+                    prompt_path,
+                )
+        return call_model(prompt=prompt)
 
     @property
     def is_available(self) -> bool:
         return any(
             call is not None
-            for call in (self._ranking_call, self._annotation_call, self._task_call, self._revisit_call)
+            for call in (
+                self._ranking_call,
+                self._annotation_call,
+                self._task_call,
+                self._revisit_call,
+                self._decision_call,
+            )
         )
 
     @property
@@ -135,47 +332,43 @@ class DiscoveryLLMCoordinator:
         if self._annotation_call is None:
             return self._heuristic_annotate_screen(screen, candidate_actions)
 
+        augmented_memory = self._merge_memory_context(memory_summary, screen)
         visited_page_descriptors = [
             f"{item.title or item.url} ({item.page_type or 'unknown'})"
             for item in discovered_screens[:12]
         ]
-        prompt = f"""You are annotating one discovered page from a web application under test.
-
-Your goal is to summarize the page and suggest realistic user tasks that this page can support.
-Focus on concrete workflows, not abstract descriptions.
-
-Return strict JSON with keys:
-{{
-  "page_type": "<short label>",
-  "summary": "<2-3 sentence summary>",
-  "key_entities": ["..."],
-  "domain_objects": ["..."],
-  "forms_detected": ["..."],
-  "task_opportunities": ["..."],
-  "important_dom": ["..."],
-  "secondary_dom": ["..."],
-  "write_risk": "low|medium|high"
-}}
-
-SUT: {self.config.sut.name}
-Current URL: {screen.url}
-Page title: {screen.title}
-Path from start: {path_actions}
-Previously discovered pages: {visited_page_descriptors}
-Exploration memory:
-{memory_summary or "- None"}
-
-Candidate actions on this page:
-{self._format_candidates(candidate_actions, max_items=18)}
-
-Detected form fields:
-{self._format_form_fields(screen)}
-
-Accessibility tree excerpt:
-{truncate_text(screen.observation_text, self.config.llm.annotation_observation_chars)}
-"""
+        prompt = render_discovery_prompt(
+            "screen_annotation",
+            sut_name=self.config.sut.name,
+            current_url=screen.url,
+            page_title=screen.title,
+            path_actions=path_actions,
+            visited_page_descriptors=visited_page_descriptors,
+            exploration_memory=augmented_memory or "- None",
+            candidate_actions=self._format_candidates(candidate_actions, max_items=18),
+            detected_form_fields=self._format_form_fields(screen),
+            accessibility_tree_excerpt=truncate_text(
+                screen.observation_text,
+                self.config.llm.annotation_observation_chars,
+            ),
+        )
         try:
-            response = self._annotation_call(prompt=prompt)
+            response = self._invoke_role_call(
+                role="screen_annotation",
+                model_id=self.config.llm.resolved_annotation_model(),
+                prompt=prompt,
+                call_model=self._annotation_call,
+                system_prompt=(
+                    get_discovery_role_instruction("screen_annotation")
+                    if self.adk_client is not None and self.adk_client.use_for_llm_calls
+                    else ""
+                ),
+                metadata={
+                    "screen_id": screen.screen_id,
+                    "url": screen.url,
+                    "path_actions": path_actions,
+                },
+            )
             payload = extract_json_payload(response)
             screen.page_type = str(payload.get("page_type", "")).strip()
             screen.summary = str(payload.get("summary", "")).strip()
@@ -215,83 +408,73 @@ Accessibility tree excerpt:
         if self._ranking_call is None:
             return self._heuristic_rank_actions(candidate_actions, limit=limit)
 
+        augmented_memory = self._merge_memory_context(memory_summary, screen)
         discovered_descriptors = [
             f"{item.title or item.url} ({item.page_type or 'unknown'})"
             for item in discovered_screens[:18]
         ]
-        prompt = f"""You are selecting the best actions to explore a web application under test.
-
-Choose up to {limit} actions that are most likely to reveal new workflows, new screens, or task-worthy behavior.
-Prefer navigation that broadens SUT coverage. Avoid repetitive clicks, legal/footer links, and low-value toggles.
-Assume destructive actions were filtered already, but still prefer reversible exploration.
-Candidates marked as shared chrome come from header, footer, or sidebar regions that may repeat across pages; only keep them if they are still likely to unlock a new module.
-Strongly prefer actions that are likely to lead to an unseen page or a genuinely new workflow, not just a minor variant of an already visited page.
-
-Return strict JSON:
-{{
-  "selected_actions": [
-    {{
-      "action": "click [123]",
-      "reason": "<short reason>",
-      "novelty_score": 0.0
-    }}
-  ]
-}}
-
-SUT: {self.config.sut.name}
-Current URL: {screen.url}
-Page title: {screen.title}
-Page type: {screen.page_type or 'unknown'}
-Current path: {path_actions}
-Already discovered pages: {discovered_descriptors}
-Exploration memory:
-{memory_summary or "- None"}
-
-Candidate actions:
-{self._format_candidates(candidate_actions, max_items=32)}
-
-Detected form fields:
-{self._format_form_fields(screen)}
-
-Accessibility tree excerpt:
-{truncate_text(screen.observation_text, self.config.llm.ranking_observation_chars)}
-"""
+        prompt = render_discovery_prompt(
+            "action_ranking",
+            limit=limit,
+            sut_name=self.config.sut.name,
+            current_url=screen.url,
+            page_title=screen.title,
+            page_type=screen.page_type or "unknown",
+            path_actions=path_actions,
+            discovered_descriptors=discovered_descriptors,
+            exploration_memory=augmented_memory or "- None",
+            candidate_actions=self._format_candidates(candidate_actions, max_items=32),
+            detected_form_fields=self._format_form_fields(screen),
+            accessibility_tree_excerpt=truncate_text(
+                screen.observation_text,
+                self.config.llm.ranking_observation_chars,
+            ),
+        )
         try:
-            response = self._ranking_call(prompt=prompt)
+            response = self._invoke_role_call(
+                role="action_ranking",
+                model_id=self.config.llm.exploration_model,
+                prompt=prompt,
+                call_model=self._ranking_call,
+                system_prompt=(
+                    get_discovery_role_instruction("action_ranking")
+                    if self.adk_client is not None and self.adk_client.use_for_llm_calls
+                    else ""
+                ),
+                metadata={
+                    "screen_id": screen.screen_id,
+                    "url": screen.url,
+                    "path_actions": path_actions,
+                },
+            )
             payload = extract_json_payload(response)
-            selected_payload = payload.get("selected_actions", [])
-            selected_by_action = {
-                item.action: item for item in candidate_actions
-            }
-            ranked: list[ActionCandidate] = []
-            for raw in selected_payload:
-                action = str(raw.get("action", "")).strip()
-                if action not in selected_by_action:
-                    continue
-                base = selected_by_action[action]
-                ranked.append(
-                    ActionCandidate(
-                        action=base.action,
-                        element_id=base.element_id,
-                        role=base.role,
-                        label=base.label,
-                        raw_text=base.raw_text,
-                        source=base.source,
-                        zone=base.zone,
-                        signature=base.signature,
-                        is_shared_chrome=base.is_shared_chrome,
-                        seen_count=base.seen_count,
-                        reason=str(raw.get("reason", "")).strip(),
-                        novelty_score=self._coerce_float(raw.get("novelty_score", 0.0)),
-                        selected_by="llm",
-                    )
-                )
-                if len(ranked) >= limit:
-                    break
+            ranked = self._materialize_ranked_actions(
+                payload=payload,
+                candidate_actions=candidate_actions,
+                limit=limit,
+                selected_by="llm",
+            )
             if ranked:
                 return ranked
         except Exception as exc:
             screen.metadata["ranking_error"] = str(exc)
+            screen.metadata["ranking_response_excerpt"] = truncate_text(response, 2000) if "response" in locals() else ""
+            recovered = self._recover_ranked_actions_from_text(
+                response if "response" in locals() else "",
+                candidate_actions=candidate_actions,
+                limit=limit,
+            )
+            if recovered:
+                screen.metadata["ranking_error"] = (
+                    f"{exc} (recovered {len(recovered)} action(s) from non-JSON response)"
+                )
+                logger.warning(
+                    "Action ranking recovered from non-JSON response for url=%s recovered=%s error=%s",
+                    screen.url,
+                    len(recovered),
+                    exc,
+                )
+                return recovered
             logger.warning(
                 "Action ranking fallback to heuristic for url=%s error=%s",
                 screen.url,
@@ -306,7 +489,18 @@ Accessibility tree excerpt:
     def task_call(self, prompt: str) -> str:
         if self._task_call is None:
             raise RuntimeError("Task-generation LLM is not configured.")
-        return self._task_call(prompt=prompt)
+        model_id = self.config.task_generation.llm_model or self.config.llm.resolved_task_generation_model()
+        return self._invoke_role_call(
+            role="task_generation",
+            model_id=model_id,
+            prompt=prompt,
+            call_model=self._task_call,
+            system_prompt=(
+                get_discovery_role_instruction("task_generation")
+                if self.adk_client is not None and self.adk_client.use_for_llm_calls
+                else ""
+            ),
+        )
 
     def judge_screen_revisit(
         self,
@@ -323,44 +517,43 @@ Accessibility tree excerpt:
                 "difference_type": "distinct_page",
             }
 
+        heuristic_result = self._heuristic_screen_revisit(current_screen, candidate_screens)
+        if heuristic_result.get("is_revisit") and float(heuristic_result.get("confidence", 0.0)) >= 0.85:
+            return heuristic_result
+
         if self._revisit_call is None:
-            return self._heuristic_screen_revisit(current_screen, candidate_screens)
+            return heuristic_result
 
-        prompt = f"""You are deciding whether a newly reached page in a web application exploration is truly new, or is just a revisited variant of a page that has already been recorded.
-
-Treat the page as ALREADY VISITED when the differences are minor or transient, such as:
-- success or warning alerts
-- expanded rows, opened accordions, or highlighted selections
-- small filter or sort changes that do not create a new workflow
-- the same page with slightly different visible records
-
-Treat the page as NEW when it introduces a distinct workflow, page type, dedicated form, settings area, object detail page, modal workflow, or module that should be separately recorded.
-
-Return strict JSON:
-{{
-  "is_revisit": true,
-  "matched_screen_id": "screen_0001",
-  "reason": "<short explanation>",
-  "confidence": 0.0,
-  "difference_type": "same_page_variant|same_page_with_alert|same_page_filter|distinct_page|distinct_form|uncertain"
-}}
-
-Current page:
-- URL: {current_screen.url}
-- Title: {current_screen.title}
-- Form fields:
-{self._format_form_fields(current_screen)}
-- Accessibility tree:
-{truncate_text(current_screen.observation_text, self.config.llm.revisit_observation_chars)}
-
-Exploration memory:
-{memory_summary or "- None"}
-
-Candidate previously visited pages:
-{self._format_screen_candidates(candidate_screens)}
-"""
+        augmented_memory = self._merge_memory_context(memory_summary, current_screen)
+        prompt = render_discovery_prompt(
+            "page_revisit",
+            current_url=current_screen.url,
+            current_title=current_screen.title,
+            current_form_fields=self._format_form_fields(current_screen),
+            accessibility_tree_excerpt=truncate_text(
+                current_screen.observation_text,
+                self.config.llm.revisit_observation_chars,
+            ),
+            exploration_memory=augmented_memory or "- None",
+            candidate_pages=self._format_screen_candidates(candidate_screens),
+        )
         try:
-            response = self._revisit_call(prompt=prompt)
+            response = self._invoke_role_call(
+                role="page_revisit",
+                model_id=self.config.llm.resolved_annotation_model(),
+                prompt=prompt,
+                call_model=self._revisit_call,
+                system_prompt=(
+                    get_discovery_role_instruction("page_revisit")
+                    if self.adk_client is not None and self.adk_client.use_for_llm_calls
+                    else ""
+                ),
+                metadata={
+                    "screen_id": current_screen.screen_id,
+                    "url": current_screen.url,
+                    "candidate_screen_ids": [item.screen_id for item in candidate_screens],
+                },
+            )
             payload = extract_json_payload(response)
             matched_screen_id = str(payload.get("matched_screen_id", "")).strip()
             is_revisit = bool(payload.get("is_revisit", False))
@@ -379,7 +572,7 @@ Candidate previously visited pages:
                 exc,
             )
 
-        return self._heuristic_screen_revisit(current_screen, candidate_screens)
+        return heuristic_result
 
     def decide_next_action(
         self,
@@ -389,56 +582,45 @@ Candidate previously visited pages:
         elapsed_minutes: float,
         remaining_minutes: float,
     ) -> dict[str, str]:
-        if self._ranking_call is None or not self.config.llm.use_for_next_action_decision:
+        if self._decision_call is None or not self.config.llm.use_for_next_action_decision:
             return self._heuristic_next_action(candidate_actions)
 
-        prompt = f"""You are autonomously exploring a web application under test in a single live browser session.
-
-Choose exactly one next action that best improves coverage and avoids pointless loops.
-You may choose:
-- one candidate action listed below
-- "go_back" if the current branch looks exhausted
-- "stop" if exploration is saturated or no meaningful action remains
-
-Avoid:
-- repeating no-change actions
-- oscillations like go_back then reopening the same page
-- footer/legal links
-- actions whose outcome is already well known unless they unlock a clearly new branch
-
-Return strict JSON:
-{{
-  "action": "<candidate action | go_back | stop>",
-  "reason": "<short explanation>",
-  "mark_screen_done": true
-}}
-
-Elapsed minutes: {elapsed_minutes:.2f}
-Remaining minutes: {remaining_minutes:.2f}
-Current URL: {screen.url}
-Current title: {screen.title}
-Current page type: {screen.page_type or 'unknown'}
-Current page summary: {screen.summary or 'None'}
-Current task opportunities: {screen.task_opportunities}
-
-Primary goal:
-- Find unseen pages or distinct workflows that have not been recorded yet.
-- If an action is likely to land on an already visited page or only change minor UI state, avoid it.
-
-Exploration memory:
-{memory_summary}
-
-Available next actions:
-{self._format_candidates(candidate_actions, max_items=40)}
-
-Detected form fields:
-{self._format_form_fields(screen)}
-
-Full accessibility tree of the current page:
-{truncate_text(screen.observation_text, self.config.llm.decision_observation_chars)}
-"""
+        augmented_memory = self._merge_memory_context(memory_summary, screen)
+        prompt = render_discovery_prompt(
+            "next_action",
+            elapsed_minutes=f"{elapsed_minutes:.2f}",
+            remaining_minutes=f"{remaining_minutes:.2f}",
+            current_url=screen.url,
+            current_title=screen.title,
+            current_page_type=screen.page_type or "unknown",
+            current_page_summary=screen.summary or "None",
+            current_task_opportunities=screen.task_opportunities,
+            exploration_memory=augmented_memory or "- None",
+            candidate_actions=self._format_candidates(candidate_actions, max_items=40),
+            detected_form_fields=self._format_form_fields(screen),
+            accessibility_tree_excerpt=truncate_text(
+                screen.observation_text,
+                self.config.llm.decision_observation_chars,
+            ),
+        )
         try:
-            response = self._ranking_call(prompt=prompt)
+            response = self._invoke_role_call(
+                role="next_action",
+                model_id=self.config.llm.exploration_model,
+                prompt=prompt,
+                call_model=self._decision_call,
+                system_prompt=(
+                    get_discovery_role_instruction("next_action")
+                    if self.adk_client is not None and self.adk_client.use_for_llm_calls
+                    else ""
+                ),
+                metadata={
+                    "screen_id": screen.screen_id,
+                    "url": screen.url,
+                    "elapsed_minutes": round(elapsed_minutes, 3),
+                    "remaining_minutes": round(remaining_minutes, 3),
+                },
+            )
             payload = extract_json_payload(response)
             action = str(payload.get("action", "")).strip()
             reason = str(payload.get("reason", "")).strip()
@@ -455,6 +637,127 @@ Full accessibility tree of the current page:
                 screen.url,
             )
             return self._heuristic_next_action(candidate_actions)
+
+    def _merge_memory_context(
+        self,
+        memory_summary: str,
+        current_screen: ScreenRecord,
+    ) -> str:
+        if self.adk_client is not None and self.adk_client.use_for_llm_calls:
+            return (
+                "ADK session snapshot:\n"
+                + self.adk_client.build_prompt_state_block(current_screen=current_screen)
+            ).strip()
+
+        summary = memory_summary.strip()
+        if not summary:
+            return ""
+
+        max_chars = 4000
+        if self.adk_client is not None:
+            configured = int(self.adk_client.config.adk.prompt_state_max_chars)
+            if configured > 0:
+                max_chars = configured
+        return truncate_text(summary, max_chars)
+
+    def _materialize_ranked_actions(
+        self,
+        payload: Any,
+        candidate_actions: list[ActionCandidate],
+        limit: int,
+        selected_by: str,
+    ) -> list[ActionCandidate]:
+        if not isinstance(payload, dict):
+            return []
+        selected_payload = payload.get("selected_actions", [])
+        if not isinstance(selected_payload, list):
+            return []
+        selected_by_action = {
+            item.action: item for item in candidate_actions
+        }
+        ranked: list[ActionCandidate] = []
+        for raw in selected_payload:
+            if not isinstance(raw, dict):
+                continue
+            action = str(raw.get("action", "")).strip()
+            if action not in selected_by_action:
+                continue
+            base = selected_by_action[action]
+            ranked.append(
+                ActionCandidate(
+                    action=base.action,
+                    element_id=base.element_id,
+                    role=base.role,
+                    label=base.label,
+                    raw_text=base.raw_text,
+                    source=base.source,
+                    zone=base.zone,
+                    signature=base.signature,
+                    is_shared_chrome=base.is_shared_chrome,
+                    seen_count=base.seen_count,
+                    reason=str(raw.get("reason", "")).strip(),
+                    novelty_score=self._coerce_float(raw.get("novelty_score", 0.0)),
+                    selected_by=selected_by,
+                )
+            )
+            if len(ranked) >= limit:
+                break
+        return ranked
+
+    def _recover_ranked_actions_from_text(
+        self,
+        response_text: str,
+        candidate_actions: list[ActionCandidate],
+        limit: int,
+    ) -> list[ActionCandidate]:
+        if not response_text.strip():
+            return []
+        selected_by_action = {
+            item.action: item for item in candidate_actions
+        }
+        recovered: list[ActionCandidate] = []
+        seen_actions: set[str] = set()
+        for raw_line in response_text.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            match = RECOVERABLE_ACTION_RE.search(line)
+            if match is None:
+                continue
+            action = match.group("action").strip()
+            if action not in selected_by_action or action in seen_actions:
+                continue
+            base = selected_by_action[action]
+            novelty_match = NOVELTY_SCORE_RE.search(line)
+            novelty = (
+                self._coerce_float(novelty_match.group("score"))
+                if novelty_match is not None
+                else (base.novelty_score or 0.5)
+            )
+            reason = line.replace(action, "", 1).strip(" -:\t")
+            reason = NOVELTY_SCORE_RE.sub("", reason).strip(" -:\t,")
+            reason = re.sub(r"^\d+[.)]?\s*", "", reason).strip(" -:\t,")
+            recovered.append(
+                ActionCandidate(
+                    action=base.action,
+                    element_id=base.element_id,
+                    role=base.role,
+                    label=base.label,
+                    raw_text=base.raw_text,
+                    source=base.source,
+                    zone=base.zone,
+                    signature=base.signature,
+                    is_shared_chrome=base.is_shared_chrome,
+                    seen_count=base.seen_count,
+                    reason=reason or "Recovered from non-JSON ranking response.",
+                    novelty_score=novelty,
+                    selected_by="llm_recovered",
+                )
+            )
+            seen_actions.add(action)
+            if len(recovered) >= limit:
+                break
+        return recovered
 
     def _heuristic_annotate_screen(
         self,
@@ -673,7 +976,10 @@ Full accessibility tree of the current page:
         return self._unique_non_empty(secondary[:8])
 
     def _candidate_label(self, candidate: ActionCandidate) -> str:
-        return (candidate.label or candidate.raw_text or candidate.action).strip()
+        label = (candidate.label or candidate.raw_text).strip()
+        if label:
+            return label
+        return summarize_candidate_action(candidate).strip()
 
     def _format_candidates(
         self,
@@ -698,9 +1004,7 @@ Full accessibility tree of the current page:
         for field in screen.form_fields[:20]:
             required = "required" if field.required else "optional"
             label = field.label or "(unlabeled)"
-            lines.append(
-                f'- [{field.element_id}] {field.field_type} "{label}" ({required})'
-            )
+            lines.append(f'- {field.field_type} "{label}" ({required})')
         return "\n".join(lines)
 
     def _format_screen_candidates(self, screens: list[ScreenRecord]) -> str:
@@ -729,37 +1033,100 @@ Full accessibility tree of the current page:
         current_screen: ScreenRecord,
         candidate_screens: list[ScreenRecord],
     ) -> dict[str, Any]:
-        current_route = self._normalized_route(current_screen.url)
-        current_title = (current_screen.title or "").strip().lower()
-        current_form_signature = self._form_signature(current_screen)
-        current_tokens = self._screen_tokens(current_screen)
+        current_profile = self._screen_revisit_profile(current_screen)
         best_screen = None
         best_score = -1
+        best_reason = "Heuristic did not find a strong enough existing page match."
+        best_confidence = 0.0
         for candidate in candidate_screens:
+            candidate_profile = self._screen_revisit_profile(candidate)
             score = 0
-            if self._normalized_route(candidate.url) == current_route:
+            reasons: list[str] = []
+            same_route = current_profile["route"] == candidate_profile["route"]
+            same_query_template = current_profile["query_template"] == candidate_profile["query_template"]
+            if same_route:
                 score += 5
-            if current_title and current_title == (candidate.title or "").strip().lower():
+                reasons.append("same route")
+            if same_route and same_query_template:
+                score += 2
+                reasons.append("same non-temporal query state")
+            if (
+                current_profile["normalized_title"]
+                and current_profile["normalized_title"] == candidate_profile["normalized_title"]
+            ):
                 score += 3
-            if current_form_signature and current_form_signature == self._form_signature(candidate):
+                reasons.append("normalized title match")
+            if (
+                current_profile["form_signature"]
+                and current_profile["form_signature"] == candidate_profile["form_signature"]
+            ):
                 score += 4
-            overlap = len(current_tokens & self._screen_tokens(candidate))
-            score += min(overlap, 4)
+                reasons.append("same form signature")
+
+            action_overlap = self._jaccard_similarity(
+                current_profile["action_templates"],
+                candidate_profile["action_templates"],
+            )
+            if action_overlap >= 0.75:
+                score += 5
+                reasons.append("very high action-template overlap")
+            elif action_overlap >= 0.55:
+                score += 4
+                reasons.append("high action-template overlap")
+            elif action_overlap >= 0.35:
+                score += 2
+                reasons.append("moderate action-template overlap")
+
+            structure_overlap = self._jaccard_similarity(
+                current_profile["structure_tokens"],
+                candidate_profile["structure_tokens"],
+            )
+            if structure_overlap >= 0.75:
+                score += 4
+                reasons.append("very high structural overlap")
+            elif structure_overlap >= 0.55:
+                score += 3
+                reasons.append("high structural overlap")
+            elif structure_overlap >= 0.35:
+                score += 2
+                reasons.append("moderate structural overlap")
+
+            temporal_variant = (
+                same_route
+                and same_query_template
+                and current_profile["temporal_like"]
+                and candidate_profile["temporal_like"]
+            )
+            if temporal_variant:
+                score += 2
+                reasons.append("temporal page family")
+                if action_overlap >= 0.45:
+                    score += 2
+                    reasons.append("temporal navigation pattern overlap")
+
+            confidence = min(1.0, score / 18.0)
             if score > best_score:
                 best_score = score
                 best_screen = candidate
-        if best_screen is not None and best_score >= 8:
+                best_confidence = confidence
+                best_reason = "; ".join(reasons) or best_reason
+
+        if best_screen is not None and self._is_revisit_score_sufficient(
+            score=best_score,
+            current_profile=current_profile,
+            candidate_profile=self._screen_revisit_profile(best_screen),
+        ):
             return {
                 "is_revisit": True,
                 "matched_screen_id": best_screen.screen_id,
-                "reason": "Heuristic matched route/title/form signature overlap with an existing screen.",
-                "confidence": min(1.0, best_score / 12.0),
+                "reason": best_reason,
+                "confidence": best_confidence,
                 "difference_type": "same_page_variant",
             }
         return {
             "is_revisit": False,
             "matched_screen_id": "",
-            "reason": "Heuristic did not find a strong enough existing page match.",
+            "reason": best_reason,
             "confidence": 0.0,
             "difference_type": "distinct_page",
         }
@@ -779,6 +1146,152 @@ Full accessibility tree of the current page:
                 if len(token) >= 3:
                     tokens.add(token)
         return tokens
+
+    def _screen_revisit_profile(self, screen: ScreenRecord) -> dict[str, Any]:
+        candidates = screen.action_candidates or screen.recommended_actions
+        return {
+            "route": self._normalized_route(screen.url),
+            "query_template": self._normalized_query_template(screen.url),
+            "normalized_title": self._normalize_temporal_text(screen.title),
+            "form_signature": self._form_signature(screen),
+            "action_templates": self._action_template_set(candidates),
+            "structure_tokens": self._screen_structure_tokens(screen),
+            "temporal_like": self._screen_looks_temporal(screen, candidates),
+        }
+
+    def _is_revisit_score_sufficient(
+        self,
+        *,
+        score: int,
+        current_profile: dict[str, Any],
+        candidate_profile: dict[str, Any],
+    ) -> bool:
+        action_overlap = self._jaccard_similarity(
+            current_profile["action_templates"],
+            candidate_profile["action_templates"],
+        )
+        structure_overlap = self._jaccard_similarity(
+            current_profile["structure_tokens"],
+            candidate_profile["structure_tokens"],
+        )
+        same_route = current_profile["route"] == candidate_profile["route"]
+        same_query_template = current_profile["query_template"] == candidate_profile["query_template"]
+        temporal_variant = (
+            same_route
+            and same_query_template
+            and current_profile["temporal_like"]
+            and candidate_profile["temporal_like"]
+        )
+        if same_query_template and score >= 10:
+            return True
+        if same_route and same_query_template and action_overlap >= 0.6 and structure_overlap >= 0.35:
+            return True
+        if temporal_variant and action_overlap >= 0.45 and structure_overlap >= 0.2:
+            return True
+        if (
+            same_route
+            and not same_query_template
+            and current_profile["normalized_title"]
+            and current_profile["normalized_title"] == candidate_profile["normalized_title"]
+            and score >= 14
+            and action_overlap >= 0.75
+            and structure_overlap >= 0.75
+        ):
+            return True
+        return False
+
+    def _action_template_set(self, candidates: list[ActionCandidate]) -> set[str]:
+        templates: set[str] = set()
+        for candidate in candidates[:24]:
+            if candidate.signature and candidate.signature.startswith("temporal:"):
+                templates.add(candidate.signature)
+                continue
+            label = self._normalize_temporal_text(candidate.label or candidate.raw_text)
+            if not label or label in {"<day>", "<month>", "<year>", "<date>"}:
+                continue
+            templates.add(f'{candidate.role or "action"}:{label}')
+        return templates
+
+    def _screen_structure_tokens(self, screen: ScreenRecord) -> set[str]:
+        tokens: set[str] = set()
+        for raw_line in screen.observation_text.splitlines()[:180]:
+            match = OBSERVATION_NODE_RE.match(raw_line)
+            if match is None:
+                continue
+            role = str(match.group("role") or "").strip().lower()
+            if role in {"statictext", "text", "row", "gridcell"}:
+                continue
+            label = self._normalize_temporal_text(match.group("label") or "")
+            if not label:
+                tokens.add(role)
+                continue
+            tokens.add(f"{role}:{label}")
+        if not tokens:
+            return self._screen_tokens(screen)
+        return tokens
+
+    def _screen_looks_temporal(
+        self,
+        screen: ScreenRecord,
+        candidates: list[ActionCandidate],
+    ) -> bool:
+        parsed = urlparse(screen.url)
+        path = (parsed.path or "").lower()
+        if "calendar" in path or "schedule" in path:
+            return True
+        query_keys = {
+            key.lower()
+            for key, _value in parse_qsl(parsed.query, keep_blank_values=True)
+        }
+        if query_keys & TEMPORAL_QUERY_KEYS:
+            return True
+        if TEMPORAL_TERM_RE.search(screen.title or ""):
+            return True
+        if any(candidate.signature.startswith("temporal:") for candidate in candidates[:24] if candidate.signature):
+            return True
+        important_text = " ".join(screen.important_dom[:8])
+        return bool(
+            (MONTH_NAME_RE.search(important_text) or DATE_RE.search(important_text))
+            and TEMPORAL_TERM_RE.search(important_text)
+        )
+
+    def _normalized_query_template(self, url: str) -> str:
+        parsed = urlparse(url)
+        retained = []
+        for key, value in parse_qsl(parsed.query, keep_blank_values=True):
+            normalized_key = (key or "").strip().lower()
+            if normalized_key in TEMPORAL_QUERY_KEYS:
+                continue
+            normalized_value = re.sub(r"\s+", " ", str(value or "").strip().lower())
+            retained.append((normalized_key, normalized_value))
+        retained.sort()
+        return "&".join(
+            f"{key}={value}"
+            for key, value in retained
+        )
+
+    def _normalize_temporal_text(self, text: str) -> str:
+        normalized = str(text or "").strip().lower()
+        if not normalized:
+            return ""
+        normalized = DATE_RE.sub(" <date> ", normalized)
+        normalized = MONTH_NAME_RE.sub(" <month> ", normalized)
+        normalized = WEEKDAY_RE.sub(" <weekday> ", normalized)
+        normalized = YEAR_RE.sub(" <year> ", normalized)
+        normalized = STANDALONE_NUMBER_RE.sub(" <day> ", normalized)
+        normalized = re.sub(r"[^\w\s<>/-]+", " ", normalized)
+        normalized = re.sub(r"\s+", " ", normalized).strip()
+        normalized = normalized.replace("<day> <day>", "<day>")
+        return normalized
+
+    def _jaccard_similarity(self, left: set[str], right: set[str]) -> float:
+        if not left or not right:
+            return 0.0
+        intersection = len(left & right)
+        union = len(left | right)
+        if union <= 0:
+            return 0.0
+        return intersection / union
 
     def _form_signature(self, screen: ScreenRecord) -> str:
         labels = []
