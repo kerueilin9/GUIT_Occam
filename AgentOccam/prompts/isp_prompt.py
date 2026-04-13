@@ -1,6 +1,4 @@
-"""
-Prompt-building utilities for ISP (Input Space Partitioning) value generation.
-"""
+"""Prompt-building utilities for ISP testcase generation."""
 
 ISP_SYSTEM_PROMPT = """You are a software testing expert specialising in \
 Input Space Partitioning (ISP).
@@ -9,19 +7,9 @@ classes and boundary conditions for web form fields, helping identify potential 
 bugs and edge cases in web applications."""
 
 
-def build_isp_generation_prompt(field_meta, n: int) -> str:
-    """Return a prompt that asks the LLM to produce *n* ISP partitions.
-
-    Parameters
-    ----------
-    field_meta : FieldMetadata
-        Metadata about the target field (label, type, required, context, …).
-    n : int
-        Number of partition values to generate (excluding the original value,
-        which the caller already adds separately).
-    """
-    field_info = (
-        f"Field Information:\n"
+def _format_field_info(field_name: str, field_meta) -> str:
+    return (
+        f'Field "{field_name}":\n'
         f"- Label: {field_meta.label or '(unknown)'}\n"
         f"- Input Type: {field_meta.input_type}\n"
         f"- Required: {field_meta.required}\n"
@@ -29,95 +17,87 @@ def build_isp_generation_prompt(field_meta, n: int) -> str:
         f"- Surrounding Context (from accessibility tree):\n"
         f"  {field_meta.surrounding_context[:300]}"
     )
+def build_isp_testcase_generation_prompt(
+    field_metas: dict,
+    max_cases: int,
+    gherkin_context: dict | None = None,
+) -> str:
+    """Return a prompt that asks the LLM to produce complete ISP testcases."""
+    gherkin_context = gherkin_context or {}
+    fields_info = "\n\n".join(
+        _format_field_info(field_name, field_meta)
+        for field_name, field_meta in field_metas.items()
+    )
+    field_keys = ", ".join(f'"{field_name}"' for field_name in field_metas.keys())
+
+    scenario_parts: list[str] = []
+    if gherkin_context.get("feature"):
+        scenario_parts.append(f'Feature: {gherkin_context.get("feature", "")}')
+    if gherkin_context.get("scenario"):
+        scenario_parts.append(f'Scenario: {gherkin_context.get("scenario", "")}')
+    when_steps = gherkin_context.get("when", [])
+    if when_steps:
+        scenario_parts.append(
+            "Scenario Steps:\n" + "\n".join(f"- {step}" for step in when_steps)
+        )
+    scenario_text = "\n".join(scenario_parts).strip()
 
     prompt = f"""{ISP_SYSTEM_PROMPT}
 
-{field_info}
+You are generating complete ISP test cases for a single web form.
+{scenario_text}
 
-Using Input Space Partitioning (ISP) principles, generate exactly {n} test \
-input values for this field.
-The values should cover different equivalence classes, for example:
-1. A **valid** normal input (different length or wording from the original)
-2. **Boundary** values (empty string, minimum/maximum length, edge-case lengths)
-3. **Invalid** inputs (wrong format, special characters, SQL/XSS injection)
-4. **Empty** input (empty string — useful for required-field validation)
+Fields to cover:
+{fields_info}
+
+Generate a compact set of distinct test cases, with at most {max_cases} test cases total.
+Each test case must be a JSON object with exactly these keys:
+- "name": a short descriptive name
+- "expected": one of "pass", "fail", or "unknown"
+- "inputs": a JSON object containing exactly these field keys: {field_keys}
 
 Rules:
-- Do NOT include the original value "{field_meta.original_value}" in your output.
 - Return ONLY a valid JSON array — no prose, no markdown fences.
-- Each element must have exactly three string keys: "value", "category", "description".
-- "category" must be one of: "valid", "boundary", "invalid", "empty".
+- The top-level JSON array must contain between 1 and {max_cases} test case objects.
+- Every "inputs" object must contain exactly these keys: {field_keys}
+- Keep values concrete and ready to type into the form.
+- Use each field's original value as the baseline unless the testcase intentionally changes it.
+- Include at least one fully valid baseline case.
+- For uniqueness-sensitive fields such as email, phone, mobile number, username, employee ID, or other record-unique identifiers:
+  use a fresh replacement value in almost every testcase instead of reusing the original value.
+- Reserve at most one deliberate duplicate-existing testcase for those uniqueness-sensitive fields,
+  where the value stays the same as the original input to test whether the system rejects duplicates.
+- If the scenario is clearly about creating or adding a new record, that duplicate-existing testcase should usually have "expected": "fail".
+- Include obvious cross-field dependency cases when labels imply them, such as password confirmation mismatches.
+- Do NOT add explanations, rationales, or extra keys.
 - All JSON string values must be properly escaped.
 
-Example output (5 items):
+Example output:
 [
-  {{"value": "Sample Title", "category": "valid", "description": "Normal short text"}},
-  {{"value": "", "category": "empty", "description": "Empty string — tests required-field validation"}},
-  {{"value": "a", "category": "boundary", "description": "Single character — minimum length boundary"}},
-  {{"value": "{('x' * 300)}", "category": "boundary", "description": "300-char string — exceeds typical field length"}},
-  {{"value": "<script>alert(1)</script>", "category": "invalid", "description": "XSS injection attempt"}}
+  {{
+    "name": "baseline valid",
+    "expected": "pass",
+    "inputs": {{
+      "First Name": "John",
+      "Last Name": "Doe",
+      "Email Address": "john.doe@example.com",
+      "Password": "SecurePass!23",
+      "Confirm Password": "SecurePass!23"
+    }}
+  }},
+  {{
+    "name": "password mismatch",
+    "expected": "fail",
+    "inputs": {{
+      "First Name": "John",
+      "Last Name": "Doe",
+      "Email Address": "john.doe1@example.com",
+      "Password": "SecurePass!23",
+      "Confirm Password": "MismatchPass"
+    }}
+  }}
 ]
 
-Generate exactly {n} partition values for this specific field.  \
 Return only the JSON array:"""
-
-    return prompt
-
-
-def build_isp_combination_prompt(
-    field_partitions: dict,
-    gherkin_context: dict,
-    max_combinations: int,
-) -> str:
-    """Build a prompt that asks the LLM to select representative ISP combinations.
-
-    Parameters
-    ----------
-    field_partitions : dict
-        ``{field_label: [ISPPartition, ...]}`` — all generated partitions.
-    gherkin_context : dict
-        The ``gherkin`` block from the task config (feature / scenario / when).
-    max_combinations : int
-        Suggested upper bound on how many combinations to return.
-    """
-    scenario_text = ""
-    if gherkin_context:
-        scenario_text = (
-            f"Task Scenario: {gherkin_context.get('scenario', '')}\n"
-            f"Steps: {'; '.join(gherkin_context.get('when', []))}\n"
-        )
-
-    fields_text = ""
-    for label, partitions in field_partitions.items():
-        fields_text += f'\nField "{label}":\n'
-        for i, p in enumerate(partitions):
-            fields_text += (
-                f"  [{i}] value={repr(p.value)}  "
-                f"category={p.category}  desc={p.description}\n"
-            )
-
-    prompt = f"""{ISP_SYSTEM_PROMPT}
-
-{scenario_text}
-You are generating ISP (Input Space Partitioning) test cases for a web form.
-Below are the input fields and their candidate test values:
-{fields_text}
-
-Select a representative set of test combinations (at most {max_combinations}).
-Good coverage includes: all-valid runs, one-field-empty/invalid while others are valid, boundary conditions.
-Avoid redundant combinations that test the same behaviour.
-
-Return ONLY a valid JSON array — no prose, no markdown fences.
-Each element is an object mapping field label to a partition object.
-Each partition object must have keys: "value", "category", "description".
-
-Example (2 fields, 3 combinations):
-[
-  {{"title": {{"value": "My Post", "category": "valid", "description": "Normal input"}}, "content": {{"value": "Hello world", "category": "valid", "description": "Normal body"}}}},
-  {{"title": {{"value": "", "category": "empty", "description": "Empty — required validation"}}, "content": {{"value": "Hello world", "category": "valid", "description": "Normal body"}}}},
-  {{"title": {{"value": "My Post", "category": "valid", "description": "Normal input"}}, "content": {{"value": "<script>alert(1)</script>", "category": "invalid", "description": "XSS attempt"}}}}
-]
-
-Return the JSON array of up to {max_combinations} combinations:"""
 
     return prompt

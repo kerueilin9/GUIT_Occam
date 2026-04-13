@@ -61,22 +61,63 @@ class GherkinParser:
     """Parser for Gherkin-style scenarios"""
 
     _WITH_VALUE_RE = re.compile(r"\bwith\s+['\"]", re.IGNORECASE)
+    _FILL_STEP_RE = re.compile(
+        r"^\s*I\s+(?:fill\s+in|enter)\s+(?P<label>.+?)(?:\s+(?:with|as)\s+['\"].*)?\s*$",
+        re.IGNORECASE,
+    )
 
     @staticmethod
-    def _extract_isp_values(isp_test_case: Dict[str, Any]) -> List[str]:
-        """Extract ISP values in insertion order, skipping metadata keys."""
-        values: List[str] = []
+    def _normalize_field_reference(label: str) -> str:
+        text = re.sub(r"\s+", " ", str(label or "")).strip().strip("'\"")
+        text = re.sub(r"^\s*(?:the|a|an)\s+", "", text, flags=re.IGNORECASE)
+        text = re.sub(
+            r"\s+(?:field|textbox|input|box)\s*$",
+            "",
+            text,
+            flags=re.IGNORECASE,
+        )
+        return text.strip(" :")
+
+    @classmethod
+    def _extract_isp_entries(cls, isp_test_case: Dict[str, Any]) -> List[tuple[str, str]]:
+        entries: List[tuple[str, str]] = []
         if not isinstance(isp_test_case, dict):
-            return values
+            return entries
 
         for key, payload in isp_test_case.items():
-            if key == "_expected":
+            if str(key).startswith("_"):
                 continue
             if isinstance(payload, dict):
-                values.append(str(payload.get("value", "")))
+                value = str(payload.get("value", ""))
             else:
-                values.append(str(payload))
-        return values
+                value = str(payload)
+            entries.append((cls._normalize_field_reference(key).lower(), value))
+        return entries
+
+    @classmethod
+    def _find_matching_isp_value(
+        cls,
+        step_field: str,
+        entries: List[tuple[str, str]],
+    ) -> tuple[Optional[str], Optional[int]]:
+        exact_match: Optional[tuple[str, int]] = None
+        fuzzy_matches: List[tuple[int, int, str]] = []
+
+        for idx, (label, value) in enumerate(entries):
+            if not label:
+                continue
+            if label == step_field:
+                exact_match = (value, idx)
+                break
+            if step_field and (label in step_field or step_field in label):
+                fuzzy_matches.append((abs(len(label) - len(step_field)), idx, value))
+
+        if exact_match is not None:
+            return exact_match[0], exact_match[1]
+        if fuzzy_matches:
+            _, idx, value = min(fuzzy_matches, key=lambda item: (item[0], item[1]))
+            return value, idx
+        return None, None
 
     @classmethod
     def _inject_isp_values_into_when(
@@ -84,8 +125,9 @@ class GherkinParser:
         when_steps: List[str],
         isp_test_case: Dict[str, Any],
     ) -> List[str]:
-        """Inject ISP values into fill-in steps by step order."""
-        values = cls._extract_isp_values(isp_test_case)
+        """Inject ISP values into fill-in steps by field label, then by order."""
+        entries = cls._extract_isp_entries(isp_test_case)
+        values = [value for _, value in entries]
         if not values:
             return when_steps
 
@@ -94,12 +136,25 @@ class GherkinParser:
 
         for raw_step in when_steps:
             step = str(raw_step)
-            is_fill_step = "fill in" in step.lower()
+            fill_match = cls._FILL_STEP_RE.match(step)
+            is_fill_step = fill_match is not None
 
-            if is_fill_step and value_idx < len(values):
-                if not cls._WITH_VALUE_RE.search(step):
-                    step = f'{step} with "{values[value_idx]}"'
-                value_idx += 1
+            if is_fill_step:
+                matched_value: Optional[str] = None
+                matched_idx: Optional[int] = None
+                step_field = cls._normalize_field_reference(fill_match.group("label")).lower()
+                if step_field:
+                    matched_value, matched_idx = cls._find_matching_isp_value(step_field, entries)
+
+                if matched_value is None and value_idx < len(values):
+                    matched_value = values[value_idx]
+                    matched_idx = value_idx
+
+                if matched_value is not None:
+                    if not cls._WITH_VALUE_RE.search(step):
+                        step = f'{step} with "{matched_value}"'
+                    if matched_idx is not None:
+                        value_idx = max(value_idx, matched_idx + 1)
 
             injected.append(step)
 

@@ -1339,6 +1339,10 @@ class AgentOccam:
     _TYPE_RE = re.compile(
         r'type \[(\d+)\] \[(.*?)\] \[(\d+)\]', re.DOTALL
     )
+    _GHERKIN_FILL_RE = re.compile(
+        r"^\s*I\s+(?:fill\s+in|enter)\s+(?P<label>.+?)(?:\s+(?:with|as)\s+['\"].*)?\s*$",
+        re.IGNORECASE,
+    )
 
     def __init__(self,
                  config = None,
@@ -1673,6 +1677,105 @@ class AgentOccam:
             return str(text)
         return str(raw)
 
+    @classmethod
+    def _to_plain_data(cls, value):
+        if isinstance(value, dict):
+            return {k: cls._to_plain_data(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [cls._to_plain_data(v) for v in value]
+        if hasattr(value, "to_dict") and callable(value.to_dict):
+            return cls._to_plain_data(value.to_dict())
+        if hasattr(value, "__dict__") and not isinstance(value, (str, bytes)):
+            return {k: cls._to_plain_data(v) for k, v in vars(value).items()}
+        return value
+
+    @staticmethod
+    def _normalize_field_reference(label: str) -> str:
+        text = re.sub(r"\s+", " ", str(label or "")).strip().strip("'\"")
+        text = re.sub(r"^\s*(?:the|a|an)\s+", "", text, flags=re.IGNORECASE)
+        text = re.sub(
+            r"\s+(?:field|textbox|input|box)\s*$",
+            "",
+            text,
+            flags=re.IGNORECASE,
+        )
+        return text.strip(" :")
+
+    @classmethod
+    def _extract_fill_step_labels(cls, when_steps: list) -> list:
+        fields: list = []
+        for raw_step in when_steps or []:
+            step = str(raw_step)
+            match = cls._GHERKIN_FILL_RE.match(step)
+            if not match:
+                continue
+
+            raw_label = re.sub(r"\s+", " ", match.group("label")).strip()
+            normalized = cls._normalize_field_reference(raw_label)
+            display = normalized or raw_label
+            keywords = [display.lower()]
+            raw_lower = raw_label.lower()
+            if raw_lower and raw_lower not in keywords:
+                keywords.append(raw_lower)
+
+            fields.append({
+                "display": display,
+                "keywords": keywords,
+            })
+        return fields
+
+    @staticmethod
+    def _dedupe_field_label(label: str, counts: dict, fallback: str) -> str:
+        base = str(label or fallback).strip() or str(fallback)
+        count = counts.get(base, 0) + 1
+        counts[base] = count
+        if count == 1:
+            return base
+        return f"{base} ({count})"
+
+    @classmethod
+    def _find_best_testcase_label_match(
+        cls,
+        step_field: str,
+        case_inputs: dict,
+        field_label_map: dict,
+    ) -> str | None:
+        if not step_field:
+            return None
+
+        exact_matches: list[tuple[int, str]] = []
+        fuzzy_matches: list[tuple[int, int, str]] = []
+
+        for index, label in enumerate(case_inputs.keys()):
+            keywords = field_label_map.get(label, [label.lower()])
+            candidates = [cls._normalize_field_reference(label).lower()]
+            candidates.extend(
+                cls._normalize_field_reference(keyword).lower()
+                for keyword in keywords
+                if keyword
+            )
+            candidates = [candidate for candidate in dict.fromkeys(candidates) if candidate]
+
+            if any(candidate == step_field for candidate in candidates):
+                exact_priority = 0 if cls._normalize_field_reference(label).lower() == step_field else 1
+                exact_matches.append((exact_priority, label))
+                continue
+
+            for candidate in candidates:
+                if candidate in step_field or step_field in candidate:
+                    fuzzy_matches.append((abs(len(candidate) - len(step_field)), index, label))
+                    break
+
+        if exact_matches:
+            exact_matches.sort(key=lambda item: (item[0], item[1]))
+            return exact_matches[0][1]
+
+        if fuzzy_matches:
+            fuzzy_matches.sort(key=lambda item: (item[0], item[1], item[2]))
+            return fuzzy_matches[0][2]
+
+        return None
+
     def generate_isp_task_files(
         self,
         discoveries: list,
@@ -1685,13 +1788,13 @@ class AgentOccam:
         true``.  The *discoveries* list comes from monitoring ``env.step``
         during that run.
 
-        For each LLM-selected combination of ISP partition values:
+        For each generated ISP testcase:
 
         * Copies the original task JSON.
         * Removes the ``isp`` block (not needed in child tasks).
         * Embeds concrete values into ``gherkin.when`` steps.
-        * Adds an ``isp_test_case`` block with the partition values and
-          the inferred expected outcome.
+        * Adds an ``isp_test_case`` block with the concrete input values and
+          the testcase expected outcome.
         * Writes the result to
           ``<config_dir>/isp_tasks/<task_id>_isp_<NN>.json``.
 
@@ -1711,20 +1814,37 @@ class AgentOccam:
         """
         import copy
         import os
-        from AgentOccam.isp_generator import FieldAnalyzer, ISPGenerator, select_isp_combinations
+        from AgentOccam.isp_generator import FieldAnalyzer, ISPGenerator
 
-        isp_cfg     = task_config.get("isp", {})
+        global_isp_cfg = self._to_plain_data(getattr(self.config, "isp", {}))
+        task_isp_cfg = task_config.get("isp", {})
+        isp_cfg = {}
+        if isinstance(global_isp_cfg, dict):
+            isp_cfg.update(global_isp_cfg)
+        if isinstance(task_isp_cfg, dict):
+            isp_cfg.update(task_isp_cfg)
+
         field_hints = isp_cfg.get("field_hints", [])
-        max_fields  = isp_cfg.get("max_fields", 10)
-        max_parts   = isp_cfg.get("max_partitions_per_field", 5)
-        max_combs   = max_fields * max_parts
-        isp_model   = isp_cfg.get("isp_model", "gemini-2.5-flash")
+        max_fields = int(isp_cfg.get("max_fields") or 10)
+        max_cases = int(
+            isp_cfg.get("max_test_cases")
+            or isp_cfg.get("max_combinations")
+            or isp_cfg.get("max_partitions_per_field")
+            or 5
+        )
+        isp_model = isp_cfg.get("isp_model", "gemini-2.5-flash")
+        gherkin_ctx = task_config.get("gherkin", {})
+        gherkin_when = list(gherkin_ctx.get("when", []))
+        fill_steps = self._extract_fill_step_labels(gherkin_when)
 
         class _ISPCfg:
             pass
         merged_cfg = _ISPCfg()
-        merged_cfg.max_partitions_per_field = max_parts
+        merged_cfg.max_test_cases = max_cases
         merged_cfg.isp_model = isp_model
+        merged_cfg.expected_outcomes_by_category = (
+            isp_cfg.get("expected_outcomes_by_category", {})
+        )
 
         isp_gen = ISPGenerator(
             isp_config=merged_cfg,
@@ -1744,51 +1864,65 @@ class AgentOccam:
             print("[ISP] No type actions recorded — skipping task file generation.")
             return []
 
-        # ── Generate partitions per field ─────────────────────────────────────
-        field_partitions: dict = {}   # label -> List[ISPPartition]
+        # ── Prepare field metadata and labels ─────────────────────────────────
         field_label_map:  dict = {}   # label -> list of match keywords
+        label_counts: dict = {}
+        prepared_fields: list = []
 
-        for d in unique:
+        for idx, d in enumerate(unique):
             meta = FieldAnalyzer.extract(
                 d["element_id"], d["obs_text"], field_hints=field_hints
             )
             meta.original_value = d["original_value"]
-            label = meta.label or d["element_id"]
-            parts = isp_gen.generate(meta)
-            field_partitions[label] = parts
+            task_field = fill_steps[idx] if idx < len(fill_steps) else None
+            if task_field and task_field.get("display"):
+                meta.label = task_field["display"]
+                normalized_task_label = task_field["display"].lower()
+                if "password" in normalized_task_label:
+                    meta.input_type = "password"
+                elif "email" in normalized_task_label:
+                    meta.input_type = "email"
+                elif any(token in normalized_task_label for token in ["number", "amount", "count", "qty", "quantity"]):
+                    meta.input_type = "number"
 
-            keywords = [label.lower()]
+            label = self._dedupe_field_label(
+                task_field["display"] if task_field else meta.label or d["element_id"],
+                label_counts,
+                fallback=d["element_id"],
+            )
+
+            keywords = []
+            if task_field:
+                keywords.extend(task_field.get("keywords", []))
+            if meta.label:
+                keywords.append(meta.label.lower())
+                keywords.append(self._normalize_field_reference(meta.label).lower())
+            keywords.append(label.lower())
+            keywords.append(self._normalize_field_reference(label).lower())
             for hint in field_hints:
                 kws = [kw.lower() for kw in hint.get("label_keywords", [])]
-                if any(kw in label.lower() or label.lower() in kw for kw in kws):
+                if any(
+                    kw in label.lower()
+                    or label.lower() in kw
+                    or (meta.label and (kw in meta.label.lower() or meta.label.lower() in kw))
+                for kw in kws):
                     keywords = kws + keywords
                     break
-            field_label_map[label] = list(dict.fromkeys(keywords))
+            field_label_map[label] = list(dict.fromkeys([kw for kw in keywords if kw]))
+            prepared_fields.append((label, meta))
 
-            print(f"[ISP] Field '{label}': {len(parts)} partition(s) generated")
-
-        # ── LLM combination selection ─────────────────────────────────────────
-        gherkin_ctx  = task_config.get("gherkin", {})
-        combinations = select_isp_combinations(
-            field_partitions=field_partitions,
+        ordered_labels = [label for label, _ in prepared_fields]
+        generated_test_cases = isp_gen.generate_test_cases({
+            label: meta
+            for label, meta in prepared_fields
+        },
             gherkin_context=gherkin_ctx,
-            call_model=isp_gen._call_model,
-            max_combinations=max_combs,
+            max_cases=max_cases,
         )
-        print(f"[ISP] {len(combinations)} combination(s) selected.")
-
-        # ── Expected outcome helper ───────────────────────────────────────────
-        expected_map: dict = isp_cfg.get("expected_outcomes_by_category", {})
-        _PRIO = {"fail": 0, "unknown": 1, "pass": 2}
-
-        def _infer_expected(combo: dict) -> str:
-            outcome = "pass"
-            for part in combo.values():
-                cat = part.category if hasattr(part, "category") else part.get("category", "valid")
-                mapped = expected_map.get(cat, "unknown")
-                if _PRIO.get(mapped, 1) < _PRIO.get(outcome, 2):
-                    outcome = mapped
-            return outcome
+        print(f"[ISP] {len(generated_test_cases)} testcase(s) generated.")
+        if not generated_test_cases:
+            print("[ISP] No ISP testcases generated — skipping task file generation.")
+            return []
 
         # ── Output directory ──────────────────────────────────────────────────
         config_dir       = os.path.dirname(os.path.abspath(config_file_path))
@@ -1796,13 +1930,24 @@ class AgentOccam:
         os.makedirs(out_dir, exist_ok=True)
 
         original_task_id = task_config.get("task_id", "task")
-        gherkin_when     = list(gherkin_ctx.get("when", []))
         generated_paths: list = []
 
-        for idx, combo in enumerate(combinations, start=1):
+        def _extract_case_value(payload) -> str:
+            if isinstance(payload, dict):
+                return str(payload.get("value", ""))
+            return str(payload or "")
+
+        for idx, test_case in enumerate(generated_test_cases, start=1):
             nn       = str(idx).zfill(2)
             new_id   = f"{original_task_id}_isp_{nn}"
-            expected = _infer_expected(combo)
+            case_name = str(getattr(test_case, "name", "") or f"case {idx}")
+            expected = str(getattr(test_case, "expected", "unknown") or "unknown").lower()
+            if expected not in {"pass", "fail", "unknown"}:
+                expected = "unknown"
+            case_inputs = {
+                label: str(value)
+                for label, value in dict(getattr(test_case, "inputs", {}) or {}).items()
+            }
 
             # Deep copy and strip ISP block
             new_config = copy.deepcopy(task_config)
@@ -1814,23 +1959,37 @@ class AgentOccam:
             for step in gherkin_when:
                 step_lower = step.lower()
                 modified   = step
-                fill_match = re.match(
-                    r'^\s*I\s+fill\s+in\s+(.+?)(?:\s+with\s+["\'].*)?\s*$',
-                    step,
-                    re.IGNORECASE,
-                )
+                fill_match = self._GHERKIN_FILL_RE.match(step)
                 step_field = (
-                    re.sub(r"\s+", " ", fill_match.group(1)).strip().lower()
+                    self._normalize_field_reference(fill_match.group("label")).lower()
                     if fill_match
                     else None
                 )
-                for label, part in combo.items():
-                    kws        = field_label_map.get(label, [label.lower()])
-                    part_value = part.value if hasattr(part, "value") else part.get("value", "")
-                    label_norm = re.sub(r"\s+", " ", label).strip().lower()
-                    is_fill_field_match = step_field is not None and step_field == label_norm
-                    is_keyword_match = step_field is None and any(kw in step_lower for kw in kws)
-                    if is_fill_field_match or is_keyword_match:
+                matched_label = (
+                    self._find_best_testcase_label_match(step_field, case_inputs, field_label_map)
+                    if step_field is not None
+                    else None
+                )
+                if matched_label is not None:
+                    part_value = _extract_case_value(case_inputs[matched_label])
+                    quoted_value = json.dumps(str(part_value), ensure_ascii=False)
+                    if re.search(r"\bwith\s+['\"]", modified, re.IGNORECASE):
+                        modified = re.sub(
+                            r"(\bwith\s+)(['\"]).*?\2",
+                            lambda m: f"{m.group(1)}{quoted_value}",
+                            modified,
+                            count=1,
+                            flags=re.IGNORECASE,
+                        )
+                    else:
+                        modified = f"{modified} with {quoted_value}"
+                else:
+                    for label, payload in case_inputs.items():
+                        kws = field_label_map.get(label, [label.lower()])
+                        is_keyword_match = any(kw in step_lower for kw in kws if kw)
+                        if not is_keyword_match:
+                            continue
+                        part_value = _extract_case_value(payload)
                         quoted_value = json.dumps(str(part_value), ensure_ascii=False)
                         if re.search(r"\bwith\s+['\"]", modified, re.IGNORECASE):
                             modified = re.sub(
@@ -1851,9 +2010,12 @@ class AgentOccam:
                 new_config["gherkin"].pop("then", None)
 
             # ISP test case metadata
-            isp_test_case: dict = {"_expected": expected}
-            for label, part in combo.items():
-                isp_test_case[label] = part.to_dict() if hasattr(part, "to_dict") else part
+            isp_test_case: dict = {
+                "_case_name": case_name,
+                "_expected": expected,
+            }
+            for label in ordered_labels:
+                isp_test_case[label] = {"value": _extract_case_value(case_inputs.get(label, ""))}
             new_config["isp_test_case"] = isp_test_case
 
             # ISP child tasks use llm_judge so the LLM can autonomously
@@ -1867,7 +2029,7 @@ class AgentOccam:
             out_path = os.path.join(out_dir, f"{new_id}.json")
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(new_config, f, ensure_ascii=False, indent=2)
-            print(f"[ISP] Written: {out_path}  (expected={expected})")
+            print(f"[ISP] Written: {out_path}  (expected={expected}; case={case_name})")
             generated_paths.append(out_path)
 
         return generated_paths
