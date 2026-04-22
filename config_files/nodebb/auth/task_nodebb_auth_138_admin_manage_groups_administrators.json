@@ -1,0 +1,46 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_auth_138_admin_manage_groups_administrators",
+  "require_login": true,
+  "storage_state": ".auth/nodebb_state.json",
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to Edit",
+    "given": [
+      "I am logged in to the site"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"Groups\" link to reach \"/groups\"",
+      "I click the \"Administrators 1\" link to reach \"/groups/administrators\"",
+      "I click the \"Edit\" link to reach \"/admin/manage/groups/administrators\""
+    ],
+    "then": [
+      "The browser URL should include \"/admin/manage/groups/administrators\"",
+      "The page title or primary heading should show \"General\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/admin/manage/groups/administrators\"",
+        "The page title or primary heading should show \"General\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/admin/manage/groups/administrators",
+    "query": "",
+    "route_key": "/admin/manage/groups/administrators",
+    "page_type": "admin_manage"
+  }
+}

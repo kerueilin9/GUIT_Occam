@@ -1,0 +1,45 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_guest_029_users_section_sort_reputation",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to 聲望最高",
+    "given": [
+      "I am visiting the site as a guest"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"使用者\" link to reach \"/users\"",
+      "I click the \"聲望最高\" link to reach \"/users?section=sort-reputation\""
+    ],
+    "then": [
+      "The browser URL should include \"/users\"",
+      "The page title or primary heading should show \"NodeBB\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/users\"",
+        "The page title or primary heading should show \"NodeBB\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/users",
+    "query": "section=sort-reputation",
+    "route_key": "/users?section=sort-reputation",
+    "page_type": "account"
+  }
+}

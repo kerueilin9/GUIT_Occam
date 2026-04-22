@@ -1,0 +1,45 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_auth_080_admin_plugins_composer_default",
+  "require_login": true,
+  "storage_state": ".auth/nodebb_state.json",
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to Composer (Default)",
+    "given": [
+      "I am logged in to the site"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"Admin\" link to reach \"/admin\"",
+      "I click the \"Composer (Default)\" link to reach \"/admin/plugins/composer-default\""
+    ],
+    "then": [
+      "The browser URL should include \"/admin/plugins/composer-default\"",
+      "The page title or primary heading should show \"General\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/admin/plugins/composer-default\"",
+        "The page title or primary heading should show \"General\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/admin/plugins/composer-default",
+    "query": "",
+    "route_key": "/admin/plugins/composer-default",
+    "page_type": "admin"
+  }
+}

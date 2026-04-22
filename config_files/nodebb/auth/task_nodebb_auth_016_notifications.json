@@ -1,0 +1,44 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_auth_016_notifications",
+  "require_login": true,
+  "storage_state": ".auth/nodebb_state.json",
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to See all notifications",
+    "given": [
+      "I am logged in to the site"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"See all notifications\" link to reach \"/notifications\""
+    ],
+    "then": [
+      "The browser URL should include \"/notifications\"",
+      "The page title or primary heading should show \"PROFILE\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/notifications\"",
+        "The page title or primary heading should show \"PROFILE\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/notifications",
+    "query": "",
+    "route_key": "/notifications",
+    "page_type": "section"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "sites": [
+    "timeoff"
+  ],
+  "task_id": "timeoff_auth_027_calendar_teamview_department_1_date_2026_05",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3102",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "timeoff Navigation",
+    "scenario": "Navigate to May",
+    "given": [
+      "I am logged in to the site"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"Sales\" link to reach \"/calendar/teamview?department=1\"",
+      "I click the \"May\" link to reach \"/calendar/teamview?department=1&date=2026-05\""
+    ],
+    "then": [
+      "The browser URL should include \"/calendar/teamview\"",
+      "The page title or primary heading should show \"Team View\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/calendar/teamview\"",
+        "The page title or primary heading should show \"Team View\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/calendar/teamview",
+    "query": "department=1&date=2026-05",
+    "route_key": "/calendar/teamview?department=1&date=2026-05",
+    "page_type": "page"
+  }
+}

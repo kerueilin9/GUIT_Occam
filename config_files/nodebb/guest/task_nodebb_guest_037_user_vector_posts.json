@@ -1,0 +1,45 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_guest_037_user_vector_posts",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to 張貼",
+    "given": [
+      "I am visiting the site as a guest"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"/user/vector\" link to reach \"/user/vector\"",
+      "I click the \"張貼\" link to reach \"/user/vector/posts\""
+    ],
+    "then": [
+      "The browser URL should include \"/user/vector/posts\"",
+      "The page title or primary heading should show \"NodeBB\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/user/vector/posts\"",
+        "The page title or primary heading should show \"NodeBB\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/user/vector/posts",
+    "query": "",
+    "route_key": "/user/vector/posts",
+    "page_type": "account"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "sites": [
+    "timeoff"
+  ],
+  "task_id": "timeoff_auth_034_audit_email_user_id_1_page_1",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3102",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "timeoff Navigation",
+    "scenario": "Navigate to 1 of 1",
+    "given": [
+      "I am logged in to the site"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"Emails audit\" link to reach \"/audit/email\"",
+      "I click the \"Vector Crawler\" link to reach \"/audit/email?user_id=1\"",
+      "I click the \"1 of 1\" link to reach \"/audit/email?user_id=1&page=1\""
+    ],
+    "then": [
+      "The browser URL should include \"/audit/email\"",
+      "The page title or primary heading should show \"Emails audit\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/audit/email\"",
+        "The page title or primary heading should show \"Emails audit\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/audit/email",
+    "query": "user_id=1&page=1",
+    "route_key": "/audit/email?user_id=1&page=1",
+    "page_type": "page"
+  }
+}

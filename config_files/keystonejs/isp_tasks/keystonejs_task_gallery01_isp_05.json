@@ -1,0 +1,41 @@
+{
+  "sites": [
+    "keystonejs"
+  ],
+  "task_id": "keystonejs_task_gallery01_isp_05",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Create a new gallery",
+    "given": [
+      "I am logged in as an administrator"
+    ],
+    "when": [
+      "I navigate to Gallery list",
+      "I click on Create Gallery button",
+      "I fill in the gallery title with \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. This string is intentionally longer than typical max length to test overflow.\"",
+      "I fill in the gallery Published Date with \"2023-01-01\"",
+      "I save the gallery"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "isp_test_case": {
+    "_case_name": "gallery title exceed max length",
+    "_expected": "fail",
+    "gallery title": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. This string is intentionally longer than typical max length to test overflow."
+    },
+    "gallery Published Date": {
+      "value": "2023-01-01"
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

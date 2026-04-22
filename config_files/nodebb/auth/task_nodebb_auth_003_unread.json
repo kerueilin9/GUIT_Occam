@@ -1,0 +1,42 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_auth_003_unread",
+  "require_login": true,
+  "storage_state": ".auth/nodebb_state.json",
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to Unread",
+    "given": [
+      "I am logged in to the site"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"Unread\" link to reach \"/unread\""
+    ],
+    "then": [
+      "The browser URL should include \"/unread\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/unread\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/unread",
+    "query": "",
+    "route_key": "/unread",
+    "page_type": "section"
+  }
+}

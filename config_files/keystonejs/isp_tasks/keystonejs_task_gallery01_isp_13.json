@@ -1,0 +1,41 @@
+{
+  "sites": [
+    "keystonejs"
+  ],
+  "task_id": "keystonejs_task_gallery01_isp_13",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Content Management",
+    "scenario": "Create a new gallery",
+    "given": [
+      "I am logged in as an administrator"
+    ],
+    "when": [
+      "I navigate to Gallery list",
+      "I click on Create Gallery button",
+      "I fill in the gallery title with \"Unique Gallery 5\"",
+      "I fill in the gallery Published Date with \"2025-12-31\"",
+      "I save the gallery"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "isp_test_case": {
+    "_case_name": "published date future",
+    "_expected": "pass",
+    "gallery title": {
+      "value": "Unique Gallery 5"
+    },
+    "gallery Published Date": {
+      "value": "2025-12-31"
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

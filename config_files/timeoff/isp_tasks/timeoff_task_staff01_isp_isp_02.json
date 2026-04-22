@@ -5,7 +5,7 @@
   "task_id": "timeoff_task_staff01_isp_isp_02",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
-  "start_url": "http://localhost:3100",
+  "start_url": "http://localhost:3102",
   "geolocation": null,
   "gherkin": {
     "feature": "TimeOff Staff Management",
@@ -16,54 +16,37 @@
     "when": [
       "I navigate to the Staff page",
       "I add a new employee",
-      "I fill in First Name with \"Robert\"",
-      "I fill in Last Name with \"O'Malley\"",
-      "I fill in Email Address with \"user@domain\"",
-      "I fill in Password",
-      "I fill in Confirm Password",
+      "I fill in First Name with \"\"",
+      "I fill in Last Name with \"Doe\"",
+      "I fill in Email Address with \"john.doe.missingfn@example.com\"",
+      "I fill in Password with \"Password123!\"",
+      "I fill in Confirm Password with \"Password123!\"",
       "I save the new employee"
-    ],
-    "then": [
-      "The page should display 'New user account successfully added'"
     ]
   },
   "require_reset": false,
-  "eval": {
-    "eval_types": [
-      "gherkin_criteria"
-    ],
-    "reference_answers": {
-      "gherkin_acceptance_criteria": [
-        "The page should display 'New user account successfully added'"
-      ]
-    }
-  },
   "isp_test_case": {
-    "_expected": "unknown",
+    "_case_name": "first name missing",
+    "_expected": "fail",
     "First Name": {
-      "value": "Robert",
-      "category": "valid",
-      "description": "A typical, valid first name (different from original) to confirm normal input acceptance."
+      "value": ""
     },
     "Last Name": {
-      "value": "O'Malley",
-      "category": "valid",
-      "description": "Valid name with an apostrophe, testing character set handling."
+      "value": "Doe"
     },
     "Email Address": {
-      "value": "user@domain",
-      "category": "valid",
-      "description": "Valid email with minimum length for local part and domain."
+      "value": "john.doe.missingfn@example.com"
     },
-    "Password Confirm password": {
-      "value": "Password123",
-      "category": "original",
-      "description": "Original value from task specification"
+    "Password": {
+      "value": "Password123!"
     },
-    "1307": {
-      "value": "Password123",
-      "category": "original",
-      "description": "Original value from task specification"
+    "Confirm Password": {
+      "value": "Password123!"
     }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
   }
 }

@@ -1,0 +1,44 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_guest_010_category_1_announcements",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to Announcements",
+    "given": [
+      "I am visiting the site as a guest"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"Announcements\" link to reach \"/category/1/announcements\""
+    ],
+    "then": [
+      "The browser URL should include \"/category/1/announcements\"",
+      "The page title or primary heading should show \"NodeBB\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/category/1/announcements\"",
+        "The page title or primary heading should show \"NodeBB\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/category/1/announcements",
+    "query": "",
+    "route_key": "/category/1/announcements",
+    "page_type": "detail"
+  }
+}

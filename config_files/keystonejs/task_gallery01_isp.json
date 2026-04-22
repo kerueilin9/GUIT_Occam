@@ -12,14 +12,19 @@
     "when": [
       "I navigate to Gallery list",
       "I click on Create Gallery button",
-      "I fill in the gallery title with \"test\"",
-      "I fill in the gallery description",
+      "I fill in the gallery title",
+      "I fill in the gallery Published Date with \"2023-01-01\"",
       "I save the gallery"
     ],
     "then": [
       "The gallery should be created successfully",
       "I should see a success message"
     ]
+  },
+  "isp": {
+    "enabled": true,
+    "max_test_cases": 15,
+    "isp_model": "gemini-2.5-flash"
   },
   "intent_template_id": 0,
   "require_reset": false,

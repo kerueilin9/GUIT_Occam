@@ -1,0 +1,46 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_auth_133_popular_filter_watched_term_weekly",
+  "require_login": true,
+  "storage_state": ".auth/nodebb_state.json",
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to Week",
+    "given": [
+      "I am logged in to the site"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"Popular\" link to reach \"/popular\"",
+      "I click the \"Watched Topics\" link to reach \"/popular?filter=watched\"",
+      "I click the \"Week\" link to reach \"/popular?filter=watched&term=weekly\""
+    ],
+    "then": [
+      "The browser URL should include \"/popular\"",
+      "The page title or primary heading should show \"PROFILE\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/popular\"",
+        "The page title or primary heading should show \"PROFILE\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/popular",
+    "query": "filter=watched&term=weekly",
+    "route_key": "/popular?filter=watched&term=weekly",
+    "page_type": "section"
+  }
+}

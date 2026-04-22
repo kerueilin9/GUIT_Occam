@@ -1,0 +1,46 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_auth_149_sitemap_xml",
+  "require_login": true,
+  "storage_state": ".auth/nodebb_state.json",
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to VIEW SITEMAP",
+    "given": [
+      "I am logged in to the site"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"Admin\" link to reach \"/admin\"",
+      "I click the \"Web Crawler\" link to reach \"/admin/settings/web-crawler\"",
+      "I click the \"VIEW SITEMAP\" link to reach \"/sitemap.xml\""
+    ],
+    "then": [
+      "The browser URL should include \"/sitemap.xml\"",
+      "The page title or primary heading should show \"VIEW SITEMAP\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/sitemap.xml\"",
+        "The page title or primary heading should show \"VIEW SITEMAP\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/sitemap.xml",
+    "query": "",
+    "route_key": "/sitemap.xml",
+    "page_type": "section"
+  }
+}

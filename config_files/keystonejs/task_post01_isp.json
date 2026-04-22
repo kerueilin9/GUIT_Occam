@@ -26,17 +26,7 @@
 
   "isp": {
     "enabled": true,
-
-    "max_partitions_per_field": 3,
-
-    "expected_outcomes_by_category": {
-      "original" : "pass",
-      "valid"    : "pass",
-      "boundary" : "unknown",
-      "invalid"  : "fail",
-      "empty"    : "fail"
-    },
-
+    "max_test_cases": 10,
     "isp_model": "gemini-2.5-flash"
   },
 

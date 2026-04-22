@@ -1,0 +1,45 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_auth_112_flags_quick_mine",
+  "require_login": true,
+  "storage_state": ".auth/nodebb_state.json",
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to Assigned to me",
+    "given": [
+      "I am logged in to the site"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"Flagged Content\" link to reach \"/flags\"",
+      "I click the \"Assigned to me\" link to reach \"/flags?quick=mine\""
+    ],
+    "then": [
+      "The browser URL should include \"/flags\"",
+      "The page title or primary heading should show \"PROFILE\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/flags\"",
+        "The page title or primary heading should show \"PROFILE\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/flags",
+    "query": "quick=mine",
+    "route_key": "/flags?quick=mine",
+    "page_type": "section"
+  }
+}

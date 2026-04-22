@@ -1,0 +1,44 @@
+{
+  "sites": [
+    "nodebb"
+  ],
+  "task_id": "nodebb_guest_011_category_2_general_discussion",
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "http://localhost:3101",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "nodebb Navigation",
+    "scenario": "Navigate to General Discussion",
+    "given": [
+      "I am visiting the site as a guest"
+    ],
+    "when": [
+      "I open the configured home page",
+      "I click the \"General Discussion\" link to reach \"/category/2/general-discussion\""
+    ],
+    "then": [
+      "The browser URL should include \"/category/2/general-discussion\"",
+      "The page title or primary heading should show \"NodeBB\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The browser URL should include \"/category/2/general-discussion\"",
+        "The page title or primary heading should show \"NodeBB\""
+      ]
+    }
+  },
+  "route": {
+    "path": "/category/2/general-discussion",
+    "query": "",
+    "route_key": "/category/2/general-discussion",
+    "page_type": "detail"
+  }
+}
