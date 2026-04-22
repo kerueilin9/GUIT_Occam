@@ -19,14 +19,15 @@ from browser_env.env_config import (
     SHOPPING,
     SHOPPING_ADMIN,
     TIMEOFF,
-    KEYSTONEJS
+    KEYSTONEJS,
+    NODEBB
 )
 
 HEADLESS = True
 SLOW_MO = 0
 
 
-SITES = ["gitlab", "shopping", "shopping_admin", "reddit", "timeoff", "keystonejs"]
+SITES = ["gitlab", "shopping", "shopping_admin", "reddit", "timeoff", "keystonejs", "nodebb"]
 URLS = [
     f"{GITLAB}/-/profile",
     f"{SHOPPING}/wishlist/",
@@ -34,8 +35,9 @@ URLS = [
     f"{REDDIT}/user/{ACCOUNTS['reddit']['username']}/account",
     f"{TIMEOFF}/",
     f"{KEYSTONEJS}/keystone",
+    f"{NODEBB}/login"
 ]
-EXACT_MATCH = [True, True, True, True, False, False]
+EXACT_MATCH = [True, True, True, True, False, False, False]
 KEYWORDS = ["", "", "Dashboard", "Delete", "", ""]
 
 
@@ -133,6 +135,16 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
                 page.click('button[type="submit"]')
                 page.wait_for_timeout(2000)
 
+            if c == "nodebb":
+                username = ACCOUNTS["nodebb"]["username"]
+                password = ACCOUNTS["nodebb"]["password"]
+                page.goto(f"{NODEBB}/login")
+                page.wait_for_timeout(1000)
+                page.fill('input[name="username"]', username)
+                page.fill('input[name="password"]', password)
+                page.click('button[type="submit"]')
+                page.wait_for_timeout(2000)
+
             context.storage_state(path=f"{auth_folder}/{c}_state.json")
         finally:
             context_manager.__exit__(None, None, None)
@@ -195,6 +207,16 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
             page.goto(f"{KEYSTONEJS}/keystone/signin")
             page.wait_for_timeout(1000)
             page.fill('input[name="email"]', username)
+            page.fill('input[name="password"]', password)
+            page.click('button[type="submit"]')
+            page.wait_for_timeout(2000)
+            
+        if "nodebb" in comb:
+            username = ACCOUNTS["nodebb"]["username"]
+            password = ACCOUNTS["nodebb"]["password"]
+            page.goto(f"{NODEBB}/login")
+            page.wait_for_timeout(1000)
+            page.fill('input[name="username"]', username)
             page.fill('input[name="password"]', password)
             page.click('button[type="submit"]')
             page.wait_for_timeout(2000)
