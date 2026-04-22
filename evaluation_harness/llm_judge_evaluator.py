@@ -172,16 +172,25 @@ def _manual_gherkin_text(gherkin: dict | str, isp_block: dict) -> str:
         for s in given:
             lines.append(f"  Given {s}")
     if isinstance(when_steps, list):
-        # Manually inject ISP values
-        isp_values = _extract_isp_values(isp_block)
-        val_idx = 0
-        _WITH_VALUE_RE = re.compile(r'\bwith\s+[\'"]', re.IGNORECASE)
-        for step in when_steps:
-            step = str(step)
-            if "fill in" in step.lower() and val_idx < len(isp_values):
-                if not _WITH_VALUE_RE.search(step):
-                    step = f'{step} with "{isp_values[val_idx]}"'
-                val_idx += 1
+        injected_steps = [str(step) for step in when_steps]
+        if isp_block:
+            if _GHERKIN_PARSER_AVAILABLE:
+                try:
+                    injected_steps = GherkinParser._inject_isp_values_into_when(
+                        injected_steps,
+                        isp_block,
+                    )
+                except Exception:
+                    injected_steps = _inject_isp_values_into_when_fallback(
+                        injected_steps,
+                        isp_block,
+                    )
+            else:
+                injected_steps = _inject_isp_values_into_when_fallback(
+                    injected_steps,
+                    isp_block,
+                )
+        for step in injected_steps:
             lines.append(f"  When {step}")
     if isinstance(then, list):
         for s in then:
@@ -194,7 +203,7 @@ def _extract_isp_values(isp_block: dict) -> list[str]:
     """Extract ordered input values from isp_test_case, skipping meta keys."""
     values: list[str] = []
     for key, payload in isp_block.items():
-        if key == "_expected":
+        if str(key).startswith("_"):
             continue
         if isinstance(payload, dict):
             values.append(str(payload.get("value", "")))
@@ -203,17 +212,49 @@ def _extract_isp_values(isp_block: dict) -> list[str]:
     return values
 
 
+def _inject_isp_values_into_when_fallback(
+    when_steps: list[str],
+    isp_block: dict,
+) -> list[str]:
+    """Best-effort ISP injection when GherkinParser is unavailable."""
+    values = _extract_isp_values(isp_block)
+    if not values:
+        return when_steps
+
+    injected: list[str] = []
+    value_idx = 0
+    with_value_re = re.compile(r'\bwith\s+[\'"]', re.IGNORECASE)
+
+    for raw_step in when_steps:
+        step = str(raw_step)
+        if "fill in" in step.lower() and value_idx < len(values):
+            if not with_value_re.search(step):
+                step = f'{step} with "{values[value_idx]}"'
+            value_idx += 1
+        injected.append(step)
+
+    return injected
+
+
 def _format_isp_values(isp_block: dict) -> str:
     """Format ISP block as readable key→value lines (for intent path)."""
     lines: list[str] = []
     for key, payload in isp_block.items():
-        if key == "_expected":
+        if str(key).startswith("_"):
             continue
         if isinstance(payload, dict):
             val = payload.get("value", "")
             cat = payload.get("category", "")
             desc = payload.get("description", "")
-            lines.append(f"  - {key}: \"{val}\" (category: {cat}; {desc})")
+            if cat or desc:
+                detail_parts = []
+                if cat:
+                    detail_parts.append(f"category: {cat}")
+                if desc:
+                    detail_parts.append(desc)
+                lines.append(f'  - {key}: "{val}" ({"; ".join(detail_parts)})')
+            else:
+                lines.append(f'  - {key}: "{val}"')
         else:
             lines.append(f"  - {key}: {payload}")
     return "\n".join(lines)
@@ -348,6 +389,12 @@ completed the task correctly. Consider:
 2. Do the acceptance criteria (Then steps) appear to be satisfied on the page?
 3. For ISP scenarios: did the system respond appropriately (accept valid inputs / reject invalid ones)?
 4. Use accessibility-tree evidence as primary ground truth. Use body text only as fallback context.
+5. For ISP scenarios with invalid inputs, note that some forms may clear or reset previously filled fields after validation fails. Treat this as a possible system response, not automatically as evidence that the agent skipped those inputs.
+
+Scoring standard:
+- 1.0: The result appears to match the expected outcome. The required task behavior was completed successfully, or for ISP scenarios the system response matches the expected pass/fail behavior.
+- 0.0: The result appears not to match the expected outcome. The task was not completed correctly, or for ISP scenarios the system response contradicts the expected pass/fail behavior.
+- Only use one of these two scores: 1.0 or 0.0.
 
 Respond with ONLY a JSON object in this exact format (no markdown, no extra text):
 {{"score": <float 0.0-1.0>, "reason": "<one or two sentences explaining your judgement>"}}"""
