@@ -109,13 +109,15 @@ def generate_from_llm_chat_completion(
         if not prompt:
             prompt = "Please evaluate the request based on prior context."
 
-        logger.debug(f"ADK Chat - System: {system_prompt}, User Input: {prompt}, History Length: {len(messages)}")  
-
-        return call_adk(
+        # logger.debug(f"ADK Chat - System: {system_prompt}, User Input: {prompt}, History Length: {len(messages)}")  
+        
+        adk_response = call_adk(
             prompt=prompt,
             model_id=model,
             system_prompt=system_prompt,
         )
+        # logger.debug(f"ADK Response Preview: {str(adk_response)[:500]}")
+        return adk_response
 
     # --- Gemini path ---
     if use_gemini:
