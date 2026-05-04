@@ -1,1 +1,1 @@
-Provide your rationale for proposing the subsequent action commands here.
+Provide your rationale for proposing the subsequent action commands here. For Gherkin test cases, explicitly connect the action to the GIVEN/WHEN/THEN structure: whether it confirms the current state, performs the next required action, or verifies the expected result.

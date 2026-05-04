@@ -18,27 +18,36 @@ class GherkinScenario:
     then: List[str]
     
     def to_natural_language(self) -> str:
-        """Convert Gherkin scenario to natural language objective for the agent"""
-        parts = []
-        
-        # Add context from Given clauses
+        """Convert Gherkin scenario to a tester-oriented task brief."""
+        lines = [
+            "Execute the following Gherkin test case as a tester.",
+            "",
+            "Interpretation rules:",
+            "- GIVEN describes the initial/current state or preconditions. Treat it as context to confirm, not as the main action sequence unless setup is missing.",
+            "- WHEN describes the user actions you must perform, in order. Do not skip, rewrite, or replace these steps unless the UI requires an equivalent interaction.",
+            "- THEN describes the final expected result, screen, message, data, or state you must verify before stopping.",
+            "- Stop only after the THEN expectations are visibly satisfied, or after reporting the observed failure.",
+        ]
+
+        if self.feature:
+            lines.extend(["", f"FEATURE: {self.feature}"])
+        if self.scenario:
+            lines.append(f"SCENARIO: {self.scenario}")
+
         if self.given:
-            context = " and ".join(self.given)
-            parts.append(f"Starting from {context}")
-        
-        # Add actions from When clauses
+            lines.append("GIVEN:")
+            lines.extend([f"- {step}" for step in self.given])
         if self.when:
-            actions = " and then ".join(self.when)
-            parts.append(f"perform the following: {actions}")
-        
-        # Add expected outcome from Then clauses
+            lines.append("WHEN:")
+            lines.extend([f"- {step}" for step in self.when])
         if self.then:
-            expectations = " and ".join(self.then)
-            parts.append(f"so that {expectations}")
-        
-        logger.debug(f"Gherkin scenario converted to objective: {' '.join(parts)}")
-        
-        return ", ".join(parts) + "."
+            lines.append("THEN:")
+            lines.extend([f"- {step}" for step in self.then])
+
+        objective = "\n".join(lines)
+        logger.debug(f"Gherkin scenario converted to tester task brief: {objective}")
+
+        return objective
     
     def get_acceptance_criteria(self) -> List[str]:
         """Extract acceptance criteria from Then clauses"""
