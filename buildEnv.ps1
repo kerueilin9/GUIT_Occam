@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 
 $credentialPath = "D:\Ker\Downloads\gen-lang-client-0582494559-67ad47221f6d.json"
 $projectId = "gen-lang-client-0582494559"
-$location = "us-central1"
+$location = "global"
 $targetCondaEnv = "agentoccam"
 
 if (Get-Command deactivate -ErrorAction SilentlyContinue) {
