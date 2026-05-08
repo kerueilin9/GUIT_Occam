@@ -30,9 +30,14 @@ import json
 import re
 from typing import Any
 
-from playwright.sync_api import CDPSession, Page
+from playwright.sync_api import Page
 
+from evaluation_harness.evaluator_prompts import (
+    LLM_JUDGE_SYSTEM_PROMPT,
+    build_llm_judge_prompt,
+)
 from evaluation_harness.helper_functions import generate_from_llm_chat_completion
+from evaluation_harness.page_snapshot import get_page_snapshot
 
 try:
     from AgentOccam.gherkin_parser import GherkinParser
@@ -70,21 +75,14 @@ def llm_judge_evaluate(
     """
     scenario_text = _build_scenario_text(config)
     expected_hint = _build_expected_hint(config)
-    page_snapshot = _get_page_snapshot(page, trajectory)
+    page_snapshot = get_page_snapshot(page, trajectory)
 
-    prompt = _build_prompt(scenario_text, expected_hint, page_snapshot)
+    prompt = build_llm_judge_prompt(scenario_text, expected_hint, page_snapshot)
 
     try:
         response = generate_from_llm_chat_completion(
             messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are an expert QA engineer evaluating whether a web automation agent "
-                        "successfully completed a task. Be objective and base your judgement solely "
-                        "on the task description and the actual page state provided."
-                    ),
-                },
+                {"role": "system", "content": LLM_JUDGE_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
             model="auto",
@@ -279,125 +277,6 @@ def _build_expected_hint(config: dict[str, Any]) -> str | None:
                else "reject the input or show a validation error.")
         )
     return None
-
-
-# ---------------------------------------------------------------------------
-# Page snapshot
-# ---------------------------------------------------------------------------
-
-def _extract_accessibility_tree_text(trajectory: list | None) -> str:
-    """Extract the final accessibility-tree text from trajectory, if available."""
-    if not isinstance(trajectory, list):
-        return ""
-
-    for entry in reversed(trajectory):
-        if not isinstance(entry, dict) or "observation" not in entry:
-            continue
-
-        info = entry.get("info", {})
-        if isinstance(info, dict):
-            metadata = info.get("observation_metadata", {})
-            if isinstance(metadata, dict):
-                text_meta = metadata.get("text", {})
-                if isinstance(text_meta, dict):
-                    for key in ("accessibility_tree_text", "accessibility_tree"):
-                        value = text_meta.get(key)
-                        if isinstance(value, str) and value.strip():
-                            return value
-
-        observation = entry.get("observation", {})
-        if isinstance(observation, dict):
-            text_obs = observation.get("text")
-            if isinstance(text_obs, (list, tuple)) and text_obs:
-                candidate = text_obs[0]
-                if isinstance(candidate, str) and candidate.strip():
-                    return candidate
-            if isinstance(text_obs, str) and text_obs.strip():
-                return text_obs
-
-    return ""
-
-
-def _get_page_snapshot(page: Page, trajectory: list | None = None) -> dict[str, str]:
-    """Capture the current page state with accessibility-tree text as primary evidence."""
-    snapshot: dict[str, str] = {
-        "url": "",
-        "title": "",
-        "accessibility_tree_text": "",
-        "body_text": "",
-        "snapshot_source": "",
-    }
-    try:
-        snapshot["url"] = page.url
-    except Exception:
-        pass
-    try:
-        snapshot["title"] = page.title()
-    except Exception:
-        pass
-
-    a11y_text = _extract_accessibility_tree_text(trajectory)
-    if a11y_text:
-        snapshot["accessibility_tree_text"] = a11y_text[:12000]
-        snapshot["snapshot_source"] = "accessibility_tree"
-
-    try:
-        snapshot["body_text"] = page.inner_text("body")[:3000]
-    except Exception:
-        pass
-
-    if not snapshot["snapshot_source"]:
-        snapshot["snapshot_source"] = "body_text"
-
-    return snapshot
-
-
-# ---------------------------------------------------------------------------
-# Prompt builder
-# ---------------------------------------------------------------------------
-
-def _build_prompt(
-    scenario_text: str,
-    expected_hint: str | None,
-    page_snapshot: dict[str, str],
-) -> str:
-    hint_section = f"\n\n{expected_hint}" if expected_hint else ""
-    a11y_section = page_snapshot.get("accessibility_tree_text", "")
-    if not a11y_section:
-        a11y_section = "(Accessibility tree not available for this run.)"
-
-    return f"""You are evaluating whether a web automation agent successfully completed the following task.
-
---- TASK SCENARIO ---
-{scenario_text}{hint_section}
-
---- CURRENT PAGE STATE (after agent finished) ---
-URL   : {page_snapshot['url']}
-Title : {page_snapshot['title']}
-Primary snapshot source: {page_snapshot.get('snapshot_source', 'unknown')}
-
-Accessibility tree text (first 12000 chars):
-{a11y_section}
-
-Fallback body text (first 3000 chars):
-{page_snapshot['body_text']}
-
---- YOUR TASK ---
-Based on the scenario description and the actual page state above, judge whether the agent
-completed the task correctly. Consider:
-1. Did the agent perform the required actions (When steps)?
-2. Do the acceptance criteria (Then steps) appear to be satisfied on the page?
-3. For ISP scenarios: did the system respond appropriately (accept valid inputs / reject invalid ones)?
-4. Use accessibility-tree evidence as primary ground truth. Use body text only as fallback context.
-5. For ISP scenarios with invalid inputs, note that some forms may clear or reset previously filled fields after validation fails. Treat this as a possible system response, not automatically as evidence that the agent skipped those inputs.
-
-Scoring standard:
-- 1.0: The result appears to match the expected outcome. The required task behavior was completed successfully, or for ISP scenarios the system response matches the expected pass/fail behavior.
-- 0.0: The result appears not to match the expected outcome. The task was not completed correctly, or for ISP scenarios the system response contradicts the expected pass/fail behavior.
-- Only use one of these two scores: 1.0 or 0.0.
-
-Respond with ONLY a JSON object in this exact format (no markdown, no extra text):
-{{"score": <float 0.0-1.0>, "reason": "<one or two sentences explaining your judgement>"}}"""
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,110 @@
+"""Shared page-state extraction helpers for evaluators."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from playwright.sync_api import Page
+
+
+PageSnapshot = dict[str, str]
+
+
+def extract_accessibility_tree_text(trajectory: list | None) -> str:
+    """Extract the final accessibility-tree text from trajectory, if available."""
+    if not isinstance(trajectory, list):
+        return ""
+
+    for entry in reversed(trajectory):
+        if not isinstance(entry, dict) or "observation" not in entry:
+            continue
+
+        metadata_value = _extract_from_observation_metadata(entry)
+        if metadata_value:
+            return metadata_value
+
+        observation_value = _extract_from_observation(entry.get("observation", {}))
+        if observation_value:
+            return observation_value
+
+    return ""
+
+
+def get_page_snapshot(
+    page: Page,
+    trajectory: list | None = None,
+    *,
+    accessibility_limit: int = 12000,
+    body_limit: int = 3000,
+) -> PageSnapshot:
+    """Capture the current page state with accessibility-tree text as primary evidence."""
+    snapshot: PageSnapshot = {
+        "url": "",
+        "title": "",
+        "accessibility_tree_text": "",
+        "body_text": "",
+        "snapshot_source": "",
+    }
+
+    try:
+        snapshot["url"] = page.url
+    except Exception:
+        pass
+    try:
+        snapshot["title"] = page.title()
+    except Exception:
+        pass
+
+    accessibility_tree_text = extract_accessibility_tree_text(trajectory)
+    if accessibility_tree_text:
+        snapshot["accessibility_tree_text"] = accessibility_tree_text[:accessibility_limit]
+        snapshot["snapshot_source"] = "accessibility_tree"
+
+    try:
+        snapshot["body_text"] = page.inner_text("body")[:body_limit]
+    except Exception:
+        pass
+
+    if not snapshot["snapshot_source"]:
+        snapshot["snapshot_source"] = "body_text"
+
+    return snapshot
+
+
+def get_primary_page_text(snapshot: PageSnapshot) -> str:
+    """Return accessibility text when available, otherwise body text."""
+    return snapshot.get("accessibility_tree_text", "") or snapshot.get("body_text", "")
+
+
+def _extract_from_observation_metadata(entry: dict[str, Any]) -> str:
+    info = entry.get("info", {})
+    if not isinstance(info, dict):
+        return ""
+
+    metadata = info.get("observation_metadata", {})
+    if not isinstance(metadata, dict):
+        return ""
+
+    text_meta = metadata.get("text", {})
+    if not isinstance(text_meta, dict):
+        return ""
+
+    for key in ("accessibility_tree_text", "accessibility_tree"):
+        value = text_meta.get(key)
+        if isinstance(value, str) and value.strip():
+            return value
+    return ""
+
+
+def _extract_from_observation(observation: Any) -> str:
+    if not isinstance(observation, dict):
+        return ""
+
+    text_obs = observation.get("text")
+    if isinstance(text_obs, (list, tuple)) and text_obs:
+        candidate = text_obs[0]
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate
+    if isinstance(text_obs, str) and text_obs.strip():
+        return text_obs
+    return ""

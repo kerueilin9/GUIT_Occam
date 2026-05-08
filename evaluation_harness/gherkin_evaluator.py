@@ -2,15 +2,29 @@
 Gherkin-based evaluator for AgentOccam
 Evaluates agent performance against Gherkin acceptance criteria
 """
-from typing import List, Dict, Any
+import json
+import re
+from typing import List
+
 from playwright.sync_api import Page, CDPSession
+
 from AgentOccam.logger import logger
 from browser_env import Trajectory
+from evaluation_harness.evaluator_prompts import (
+    ELEMENT_EXISTENCE_SYSTEM_PROMPT,
+    GHERKIN_CRITERION_SYSTEM_PROMPT,
+    build_element_existence_prompt,
+    build_gherkin_criterion_prompt,
+)
 from evaluation_harness.helper_functions import (
     generate_from_llm_chat_completion,
     llm_fuzzy_match
 )
-import json
+from evaluation_harness.page_snapshot import (
+    PageSnapshot,
+    get_page_snapshot,
+    get_primary_page_text,
+)
 
 
 def evaluate_gherkin_criteria(
@@ -35,15 +49,7 @@ def evaluate_gherkin_criteria(
     if not acceptance_criteria:
         return 1.0  # No criteria to check
     
-    # Get current page state
-    current_url = page.url
-    page_title = page.title()
-    
-    # Get page content (visible text)
-    try:
-        page_content = page.inner_text("body")
-    except:
-        page_content = ""
+    page_snapshot = get_page_snapshot(page, trajectory)
     
     # Evaluate each criterion
     scores = []
@@ -51,10 +57,7 @@ def evaluate_gherkin_criteria(
     for criterion in acceptance_criteria:
         score = evaluate_single_criterion(
             criterion=criterion,
-            url=current_url,
-            title=page_title,
-            content=page_content,
-            page=page,
+            page_snapshot=page_snapshot,
             return_comment=comment
         )
         scores.append(score)
@@ -65,25 +68,18 @@ def evaluate_gherkin_criteria(
 
 def evaluate_single_criterion(
     criterion: str,
-    url: str,
-    title: str,
-    content: str,
-    page: Page,
+    page_snapshot: PageSnapshot,
     return_comment: bool = True,
-) -> float | tuple[float, str]:
+) -> float:
     """
     Evaluate a single Gherkin acceptance criterion
     
     Args:
         criterion: Single "Then" statement (e.g., "I should see Python content")
-        url: Current page URL
-        title: Current page title
-        content: Current page visible text content
-        page: Playwright page object
+        page_snapshot: Current page URL, title, accessibility tree, and body text
     
     Returns:
-        - if return_comment=False: score between 0.0 and 1.0
-        - if return_comment=True: (score, short comment)
+        Score between 0.0 and 1.0
     """
     # Extract the expected outcome from criterion
     # Common patterns:
@@ -93,6 +89,9 @@ def evaluate_single_criterion(
     # - "The URL should be X"
     
     criterion_lower = criterion.lower()
+    url = page_snapshot.get("url", "")
+    title = page_snapshot.get("title", "")
+    primary_text = get_primary_page_text(page_snapshot)
     
     # URL checks
     if "url should" in criterion_lower:
@@ -116,9 +115,9 @@ def evaluate_single_criterion(
     if "should see" in criterion_lower or "should contain" in criterion_lower:
         expected_content = extract_quoted_text(criterion) or extract_after_keyword(criterion, ["should see", "should contain"])
         if expected_content:
-            # Use fuzzy matching for content
+            # Use the same accessibility-first page evidence as LLMJudgeEvaluator.
             return llm_fuzzy_match(
-                content[:2000],  # pred - Limit content length
+                primary_text[:12000],
                 expected_content,  # reference
                 f"Check if page contains: {expected_content}"  # question
             )
@@ -127,18 +126,17 @@ def evaluate_single_criterion(
     if "should have" in criterion_lower or "should exist" in criterion_lower:
         element_desc = extract_after_keyword(criterion, ["should have", "should exist"])
         if element_desc:
-            # Use LLM to check if element exists
-            return check_element_existence(element_desc, content, page)
+            return check_element_existence(element_desc, page_snapshot)
     
     # Default: use LLM to evaluate criterion
-    if return_comment:
-        return llm_evaluate_criterion_with_comment(criterion, url, title, content)
-    return llm_evaluate_criterion(criterion, url, title, content)
+    return llm_evaluate_criterion_with_comment(
+        criterion=criterion,
+        page_snapshot=page_snapshot,
+    )
 
 
 def extract_quoted_text(text: str) -> str:
     """Extract text within quotes"""
-    import re
     matches = re.findall(r'"([^"]*)"', text)
     if matches:
         return matches[0]
@@ -161,29 +159,26 @@ def extract_after_keyword(text: str, keywords: List[str]) -> str:
     return ""
 
 
-def check_element_existence(element_desc: str, content: str, page: Page) -> float:
+def check_element_existence(
+    element_desc: str,
+    page_snapshot: PageSnapshot,
+) -> float:
     """
     Check if an element exists on the page using LLM
     
     Args:
         element_desc: Description of element (e.g., "a search button", "login form")
-        content: Page content
-        page: Playwright page
+        page_snapshot: Current page URL, title, accessibility tree, and body text
     
     Returns:
         Score between 0.0 and 1.0
     """
-    prompt = f"""Given the following page content, does it contain {element_desc}?
-
-Page content:
-{content[:1000]}
-
-Answer with just "YES" or "NO"."""
+    prompt = build_element_existence_prompt(element_desc, page_snapshot)
 
     try:
         response = generate_from_llm_chat_completion(
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that analyzes web page content."},
+                {"role": "system", "content": ELEMENT_EXISTENCE_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt}
             ],
             model="auto",
@@ -203,100 +198,28 @@ Answer with just "YES" or "NO"."""
         return 0.5
 
 
-def llm_evaluate_criterion(criterion: str, url: str, title: str, content: str) -> float:
-    """
-    Use LLM to evaluate if criterion is met
-    
-    Args:
-        criterion: Gherkin acceptance criterion
-        url: Current URL
-        title: Page title
-        content: Page content
-    
-    Returns:
-        Score between 0.0 and 1.0
-    """
-    prompt = f"""Evaluate if the following acceptance criterion is met based on the web page information.
-
-Acceptance Criterion: {criterion}
-
-Current Web Page:
-- URL: {url}
-- Title: {title}
-- Content (first 1000 chars): {content[:1000]}
-
-Does the web page satisfy this criterion? Rate from 0.0 to 1.0 where:
-- 1.0 = Fully satisfied
-- 0.5 = Partially satisfied
-- 0.0 = Not satisfied
-
-Respond with ONLY a number between 0.0 and 1.0."""
-
-    try:
-        response = generate_from_llm_chat_completion(
-            messages=[
-                {"role": "system", "content": "You are an expert at evaluating web automation test results against acceptance criteria."},
-                {"role": "user", "content": prompt}
-            ],
-            model="auto",
-            temperature=0,
-            max_tokens=10
-        )
-        
-        # Extract numeric score
-        import re
-        match = re.search(r'(\d+\.?\d*)', response)
-        if match:
-            score = float(match.group(1))
-            return max(0.0, min(1.0, score))  # Clamp to [0, 1]
-        else:
-            print(f"Warning: Could not extract score from LLM response: {response[:100]}")
-            return 0.5
-    except Exception as e:
-        print(f"Error in LLM evaluation: {e}")
-        print(f"Criterion was: {criterion}")
-        return 0.5
-
 def llm_evaluate_criterion_with_comment(
     criterion: str,
-    url: str,
-    title: str,
-    content: str,
+    page_snapshot: PageSnapshot,
 ) -> float:
     """
     Use LLM to evaluate if criterion is met and return a short rationale.
 
     Returns:
-        (score, comment)
-        - score: 0.0 ~ 1.0
-        - comment: one short sentence explaining the score
+        Score between 0.0 and 1.0
     """
-    prompt = f"""Evaluate the acceptance criterion and return JSON only.
-
-Acceptance Criterion: {criterion}
-
-Current Web Page:
-- URL: {url}
-- Title: {title}
-- Content (first 1000 chars): {content[:1000]}
-
-Return strict JSON with keys:
-{{"score": <0.0-1.0>, "comment": "<short reason in one sentence>"}}"""
-
+    prompt = build_gherkin_criterion_prompt(criterion, page_snapshot)
+    logger.debug(f"LLM evaluation prompt: {prompt}\n\n\n\n")
     try:
         response = generate_from_llm_chat_completion(
             messages=[
-                {"role": "system", "content": "You are an expert at evaluating web automation test results against acceptance criteria."},
+                {"role": "system", "content": GHERKIN_CRITERION_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt}
             ],
             model="auto",
             temperature=0,
             max_tokens=1000,
         )
-
-        import re
-        import json
-        
         # Try JSON parse first
         text = response.strip()
         match_json = re.search(r"\{.*\}", text, flags=re.DOTALL)
@@ -306,7 +229,7 @@ Return strict JSON with keys:
             comment = str(parsed.get("comment", "No explanation provided."))
             print(f"score: {score}, comment: {comment[:200]}")
             # logger for debugging LLM evaluation responses
-            logger.debug(f"LLM evaluation response: {response[:200]}/n/n/n/n")
+            logger.debug(f"LLM evaluation response: {response[:200]}\n\n\n\n")
             return max(0.0, min(1.0, score))
 
         # Fallback parsing if model didn't return strict JSON
