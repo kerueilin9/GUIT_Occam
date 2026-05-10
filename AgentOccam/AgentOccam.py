@@ -1800,11 +1800,10 @@ class AgentOccam:
         """Return the best Gherkin fill step for a typed field discovery."""
         label = cls._normalize_field_reference(getattr(meta, "label", "")).lower()
         context = str(getattr(meta, "surrounding_context", "") or "").lower()
-        haystack = f"{label} {context}"
-        if label == "name":
-            haystack += " title"
         label_tokens = set(cls._field_match_tokens(label))
         context_tokens = set(cls._field_match_tokens(context))
+        if label_tokens == {"name"}:
+            label_tokens.add("title")
 
         ranked: list[tuple[int, int, int, dict, int, str]] = []
         for idx, task_field in enumerate(fill_steps):
