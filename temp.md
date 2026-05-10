@@ -1,8 +1,6 @@
 ```
 . .\buildEnv.ps1  
-
-$env:GEMINI_API_KEY = "AIzaSyDhs2JlG37yLEmChiO-4MWHltY87BeHux8"  
-
+ 
 python browser_env/auto_login.py --site_list timeoff && 
 python browser_env/auto_login.py --site_list keystonejs  
 python browser_env/auto_login.py --site_list nodebb  
