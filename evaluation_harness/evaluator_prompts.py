@@ -16,12 +16,6 @@ GHERKIN_CRITERION_SYSTEM_PROMPT = (
     "Gherkin acceptance criteria."
 )
 
-ELEMENT_EXISTENCE_SYSTEM_PROMPT = (
-    "You are a helpful assistant that analyzes web page state from accessibility "
-    "tree and visible body text."
-)
-
-
 def build_llm_judge_prompt(
     scenario_text: str,
     expected_hint: str | None,
@@ -40,7 +34,7 @@ URL   : {page_snapshot['url']}
 Title : {page_snapshot['title']}
 Primary snapshot source: {page_snapshot.get('snapshot_source', 'unknown')}
 
-Accessibility tree text (first 12000 chars):
+Accessibility tree text (first 20000 chars):
 {a11y_section}
 
 Fallback body text (first 3000 chars):
@@ -61,7 +55,7 @@ Scoring standard:
 - Only use one of these two scores: 1.0 or 0.0.
 
 Respond with ONLY a JSON object in this exact format (no markdown, no extra text):
-{{"score": <float 0.0-1.0>, "reason": "<one or two sentences explaining your judgement>"}}"""
+{{"score": <0.0 or 1.0>, "reason": "<one or two sentences explaining your judgement>"}}"""
 
 
 def build_gherkin_criterion_prompt(
@@ -79,38 +73,19 @@ Current Web Page:
 - Title: {page_snapshot['title']}
 - Primary snapshot source: {page_snapshot.get('snapshot_source', 'unknown')}
 
-Accessibility tree text (first 12000 chars):
+Accessibility tree text (first 20000 chars):
 {a11y_section}
 
 Fallback body text (first 3000 chars):
 {page_snapshot['body_text']}
+
+Scoring standard:
+- 1.0: The criterion is satisfied by the page state.
+- 0.0: The criterion is not satisfied by the page state.
+- Only use one of these two scores: 1.0 or 0.0. Do not return partial credit.
 
 Return strict JSON with keys:
-{{"score": <0.0-1.0>, "comment": "<short reason in one sentence>"}}"""
-
-
-def build_element_existence_prompt(
-    element_desc: str,
-    page_snapshot: PageSnapshot,
-) -> str:
-    a11y_section = _accessibility_section(page_snapshot)
-
-    return f"""Given the following page state, does it contain {element_desc}?
-
-Use accessibility-tree evidence as primary ground truth. Use body text only as fallback context.
-
-Current Web Page:
-- URL: {page_snapshot['url']}
-- Title: {page_snapshot['title']}
-- Primary snapshot source: {page_snapshot.get('snapshot_source', 'unknown')}
-
-Accessibility tree text (first 12000 chars):
-{a11y_section}
-
-Fallback body text (first 3000 chars):
-{page_snapshot['body_text']}
-
-Answer with just "YES" or "NO"."""
+{{"score": <0.0 or 1.0>, "comment": "<short reason in one sentence>"}}"""
 
 
 def _accessibility_section(page_snapshot: PageSnapshot) -> str:

@@ -46,6 +46,11 @@ except Exception:
     _GHERKIN_PARSER_AVAILABLE = False
 
 
+def _binary_score(score: float) -> float:
+    """Convert any parsed score into the evaluator's binary 0/1 scale."""
+    return 1.0 if score >= 0.5 else 0.0
+
+
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
@@ -92,7 +97,7 @@ def llm_judge_evaluate(
         score, reason = _parse_response(response)
     except Exception as exc:
         print(f"[LLMJudge] ERROR during LLM call: {exc}")
-        score, reason = 0.5, f"LLM evaluation failed: {exc}"
+        score, reason = 0.0, f"LLM evaluation failed: {exc}"
 
     print(f"[LLMJudge] score: {score}")
     print(f"[LLMJudge] reason: {reason}")
@@ -292,15 +297,14 @@ def _parse_response(response: str) -> tuple[float, str]:
     if match_json:
         try:
             parsed = json.loads(match_json.group(0))
-            score = float(parsed.get("score", 0.5))
+            score = _binary_score(float(parsed.get("score", 0.0)))
             reason = str(parsed.get("reason", "No reason provided."))
-            return max(0.0, min(1.0, score)), reason
+            return score, reason
         except (json.JSONDecodeError, ValueError):
             pass
 
     # Fallback: extract first float and use remaining text as reason
     score_match = re.search(r'(\d+\.?\d*)', text)
-    score = float(score_match.group(1)) if score_match else 0.5
-    score = max(0.0, min(1.0, score))
+    score = _binary_score(float(score_match.group(1))) if score_match else 0.0
     reason = text if len(text) < 300 else text[:300] + "..."
     return score, reason
