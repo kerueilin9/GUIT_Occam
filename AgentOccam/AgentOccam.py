@@ -1778,6 +1778,70 @@ class AgentOccam:
 
         return None
 
+    _FIELD_MATCH_STOPWORDS = {"a", "an", "the", "field", "textbox", "input", "box"}
+
+    @classmethod
+    def _field_match_tokens(cls, text: str) -> list[str]:
+        normalized = cls._normalize_field_reference(text).lower()
+        tokens = [
+            token
+            for token in re.split(r"[^a-z0-9]+", normalized)
+            if len(token) >= 3 and token not in cls._FIELD_MATCH_STOPWORDS
+        ]
+        return list(dict.fromkeys(tokens))
+
+    @classmethod
+    def _match_isp_discovery_to_fill_step(
+        cls,
+        meta,
+        fill_steps: list,
+        match_counts: dict,
+    ) -> tuple[dict | None, int, int, str]:
+        """Return the best Gherkin fill step for a typed field discovery."""
+        label = cls._normalize_field_reference(getattr(meta, "label", "")).lower()
+        context = str(getattr(meta, "surrounding_context", "") or "").lower()
+        haystack = f"{label} {context}"
+        if label == "name":
+            haystack += " title"
+        label_tokens = set(cls._field_match_tokens(label))
+        context_tokens = set(cls._field_match_tokens(context))
+
+        ranked: list[tuple[int, int, int, dict, int, str]] = []
+        for idx, task_field in enumerate(fill_steps):
+            tokens: list[str] = []
+            for keyword in [task_field.get("display", ""), *(task_field.get("keywords", []) or [])]:
+                tokens.extend(cls._field_match_tokens(keyword))
+            tokens = [token for token in dict.fromkeys(tokens) if token]
+            score = (
+                2 * sum(1 for token in tokens if token in label_tokens)
+                + sum(1 for token in tokens if token in context_tokens)
+            )
+            display_norm = cls._normalize_field_reference(task_field.get("display", "")).lower()
+            if label and label == display_norm:
+                score += 10
+            reason = f"token match {tokens}"
+            if score <= 0:
+                continue
+            logical_key = cls._normalize_field_reference(task_field.get("display", "")).lower()
+            prior_matches = match_counts.get(logical_key, 0)
+            ranked.append((-score, prior_matches, idx, task_field, score, reason))
+
+        if not ranked:
+            return None, -1, 0, "no matching Gherkin fill step"
+
+        ranked.sort(key=lambda item: (item[0], item[1], item[2]))
+        _, _, idx, task_field, score, reason = ranked[0]
+        return task_field, idx, score, reason
+
+    @staticmethod
+    def _debug_isp_value(label: str, value: str) -> str:
+        value = str(value or "").replace("\n", "\\n")
+        if "password" in str(label or "").lower():
+            return "<redacted>"
+        if len(value) > 60:
+            value = value[:57] + "..."
+        return repr(value)
+
     def generate_isp_task_files(
         self,
         discoveries: list,
@@ -1828,6 +1892,9 @@ class AgentOccam:
 
         field_hints = isp_cfg.get("field_hints", [])
         max_fields = int(isp_cfg.get("max_fields") or 10)
+        allow_unmatched_type_actions = bool(
+            isp_cfg.get("allow_unmatched_type_actions", False)
+        )
         max_cases = int(
             isp_cfg.get("max_test_cases")
             or isp_cfg.get("max_combinations")
@@ -1853,33 +1920,68 @@ class AgentOccam:
             actor_config=self.config.actor,
         )
 
-        # ── De-duplicate & cap fields ─────────────────────────────────────────
-        seen: set = set()
-        unique: list = []
-        for d in discoveries:
-            if d["element_id"] not in seen:
-                seen.add(d["element_id"])
-                unique.append(d)
-        unique = unique[:max_fields]
+        print(f"[ISP] raw discoveries: {len(discoveries)}")
+        print(f"[ISP] Gherkin fill steps: {len(fill_steps)}")
 
-        if not unique:
+        if not discoveries:
             print("[ISP] No type actions recorded — skipping task file generation.")
             return []
 
-        # ── Prepare field metadata and labels ─────────────────────────────────
-        field_label_map:  dict = {}   # label -> list of match keywords
-        label_counts: dict = {}
-        prepared_fields: list = []
+        # Parse every typed action first. Logical-field de-dupe must happen
+        # after label/context extraction because element ids can change across
+        # re-renders for the same field.
+        logical_fields: dict = {}
+        match_counts: dict = {}
+        previous_typed_field: dict | None = None
 
-        for idx, d in enumerate(unique):
+        for raw_idx, d in enumerate(discoveries):
             meta = FieldAnalyzer.extract(
                 d["element_id"], d["obs_text"], field_hints=field_hints
             )
             meta.original_value = d["original_value"]
-            task_field = fill_steps[idx] if idx < len(fill_steps) else None
+            raw_label_key = self._normalize_field_reference(getattr(meta, "label", "")).lower()
+
+            task_field, fill_idx, match_score, match_reason = (
+                self._match_isp_discovery_to_fill_step(
+                    meta,
+                    fill_steps,
+                    match_counts,
+                )
+            )
+            if task_field is None and len(discoveries) == len(fill_steps) and raw_idx < len(fill_steps):
+                task_field = fill_steps[raw_idx]
+                fill_idx = raw_idx
+                match_score = 1
+                match_reason = "order fallback after label/context match failed"
+            elif (
+                previous_typed_field
+                and raw_label_key
+                and raw_label_key == previous_typed_field["raw_label_key"]
+                and str(d["original_value"]) == previous_typed_field["value"]
+            ):
+                task_field = previous_typed_field["task_field"]
+                fill_idx = previous_typed_field["fill_idx"]
+                match_score = 1
+                match_reason = "duplicate typed value for same observed label"
+
+            if task_field is None and allow_unmatched_type_actions:
+                used_keys = set(logical_fields.keys())
+                for candidate_idx, candidate in enumerate(fill_steps):
+                    candidate_key = self._normalize_field_reference(candidate.get("display", "")).lower()
+                    if candidate_key not in used_keys:
+                        task_field = candidate
+                        fill_idx = candidate_idx
+                        match_score = 1
+                        match_reason = "next unmatched Gherkin fill step fallback"
+                        break
+
             if task_field and task_field.get("display"):
-                meta.label = task_field["display"]
-                normalized_task_label = task_field["display"].lower()
+                display_label = task_field["display"]
+                logical_key = self._normalize_field_reference(display_label).lower()
+                match_counts[logical_key] = match_counts.get(logical_key, 0) + 1
+
+                meta.label = display_label
+                normalized_task_label = display_label.lower()
                 if "password" in normalized_task_label:
                     meta.input_type = "password"
                 elif "email" in normalized_task_label:
@@ -1887,10 +1989,114 @@ class AgentOccam:
                 elif any(token in normalized_task_label for token in ["number", "amount", "count", "qty", "quantity"]):
                     meta.input_type = "number"
 
+                previous = logical_fields.get(logical_key)
+                if previous:
+                    print(
+                        "[ISP] dropped duplicate: "
+                        f"{display_label} element_id={previous['element_id']} "
+                        f"value={self._debug_isp_value(display_label, previous['original_value'])}"
+                    )
+                else:
+                    print(
+                        "[ISP] matched field: "
+                        f"{display_label} element_id={d['element_id']} "
+                        f"score={match_score} reason={match_reason}"
+                    )
+
+                logical_fields[logical_key] = {
+                    "label": display_label,
+                    "meta": meta,
+                    "task_field": task_field,
+                    "order": fill_idx,
+                    "element_id": d["element_id"],
+                    "original_value": d["original_value"],
+                    "match_score": match_score,
+                    "match_reason": match_reason,
+                }
+                previous_typed_field = {
+                    "raw_label_key": raw_label_key,
+                    "value": str(d["original_value"]),
+                    "task_field": task_field,
+                    "fill_idx": fill_idx,
+                }
+                continue
+
+            if not allow_unmatched_type_actions:
+                print(
+                    "[ISP] dropped unmatched type action: "
+                    f"element_id={d['element_id']} "
+                    f"value={self._debug_isp_value(getattr(meta, 'label', ''), d['original_value'])}"
+                )
+                continue
+
+            if len(logical_fields) >= len(fill_steps):
+                print(
+                    "[ISP] dropped extra unmatched type action: "
+                    f"element_id={d['element_id']} "
+                    f"value={self._debug_isp_value(getattr(meta, 'label', ''), d['original_value'])}"
+                )
+                continue
+
+            fallback_label = meta.label
+            if not fallback_label:
+                print(
+                    "[ISP] dropped unmatched type action without label: "
+                    f"element_id={d['element_id']} "
+                    f"value={self._debug_isp_value('', d['original_value'])}"
+                )
+                continue
+            logical_key = (
+                self._normalize_field_reference(fallback_label).lower()
+                or str(d["element_id"])
+            )
+            previous = logical_fields.get(logical_key)
+            if previous:
+                print(
+                    "[ISP] dropped duplicate: "
+                    f"{fallback_label} element_id={previous['element_id']} "
+                    f"value={self._debug_isp_value(fallback_label, previous['original_value'])}"
+                )
+            logical_fields[logical_key] = {
+                "label": fallback_label,
+                "meta": meta,
+                "task_field": None,
+                "order": len(fill_steps) + raw_idx,
+                "element_id": d["element_id"],
+                "original_value": d["original_value"],
+                "match_score": 0,
+                "match_reason": "allowed unmatched type action",
+            }
+
+        print(f"[ISP] logical fields after dedupe: {len(logical_fields)}")
+
+        if not logical_fields:
+            print("[ISP] No Gherkin-aligned typed fields found — skipping task file generation.")
+            return []
+
+        logical_field_records = sorted(
+            logical_fields.values(),
+            key=lambda record: (record["order"], record["label"]),
+        )
+        if len(logical_field_records) > max_fields:
+            for dropped in logical_field_records[max_fields:]:
+                print(
+                    "[ISP] dropped due to max_fields: "
+                    f"{dropped['label']} element_id={dropped['element_id']}"
+                )
+            logical_field_records = logical_field_records[:max_fields]
+
+        # ── Prepare field metadata and labels ─────────────────────────────────
+        field_label_map:  dict = {}   # label -> list of match keywords
+        label_counts: dict = {}
+        prepared_fields: list = []
+
+        for record in logical_field_records:
+            meta = record["meta"]
+            task_field = record["task_field"]
             label = self._dedupe_field_label(
-                task_field["display"] if task_field else meta.label or d["element_id"],
+                record["label"],
                 label_counts,
-                fallback=d["element_id"],
+                fallback=record["element_id"],
             )
 
             keywords = []

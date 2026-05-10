@@ -94,8 +94,8 @@ class FieldAnalyzer:
         pattern = re.compile(r'\[' + re.escape(eid) + r'\]')
         match = pattern.search(obs_text)
         if match:
-            start = max(0, match.start() - 150)
-            end   = min(len(obs_text), match.end() + 150)
+            start = max(0, match.start() - 300)
+            end   = min(len(obs_text), match.end() + 300)
             context = obs_text[start:end].strip()
         else:
             context = ""
@@ -105,31 +105,52 @@ class FieldAnalyzer:
         input_type = "text"
         required   = False
 
-        for line in obs_text.splitlines():
-            if f"[{eid}]" not in line:
-                continue
+        lines = obs_text.splitlines()
+        target_idx = -1
+        target_line = ""
+        for idx, line in enumerate(lines):
+            if f"[{eid}]" in line:
+                target_idx = idx
+                target_line = line
+                break
 
+        if target_line:
             # Label: first single- or double-quoted substring on the line
-            lbl_match = re.search(r"['\"]([^'\"]+)['\"]", line)
+            lbl_match = re.search(r"['\"]([^'\"]+)['\"]", target_line)
             if lbl_match:
                 label = lbl_match.group(1)
 
+            # Rich-text iframes all expose the same generic label; their real
+            # field label is the nearest preceding StaticText row.
+            if not label or "rich text area" in label.lower():
+                previous_lines = lines[max(0, target_idx - 80):target_idx]
+                for prev_line in reversed(previous_lines):
+                    prev_match = re.search(r"StaticText ['\"]([^'\"]+)['\"]", prev_line)
+                    if prev_match:
+                        candidate = prev_match.group(1).strip()
+                        if (
+                            candidate
+                            and re.search(r"[A-Za-z]", candidate)
+                            and candidate not in {"Select...", "Clear value"}
+                        ):
+                            label = candidate
+                            break
+
             # Input type inference
-            if cls._PASSWORD_RE.search(line) or ("password" in label.lower()):
+            if cls._PASSWORD_RE.search(target_line) or ("password" in label.lower()):
                 input_type = "password"
-            elif cls._EMAIL_RE.search(line) or ("email" in label.lower()):
+            elif cls._EMAIL_RE.search(target_line) or ("email" in label.lower()):
                 input_type = "email"
-            elif cls._PHONE_RE.search(line) or any(token in label.lower() for token in ["phone", "mobile", "telephone"]):
+            elif cls._PHONE_RE.search(target_line) or any(token in label.lower() for token in ["phone", "mobile", "telephone"]):
                 input_type = "phone"
-            elif cls._NUMBER_RE.search(line):
+            elif cls._NUMBER_RE.search(target_line):
                 input_type = "number"
-            elif cls._TEXTAREA_RE.search(line) or ("content" in label.lower()):
+            elif cls._TEXTAREA_RE.search(target_line) or ("content" in label.lower()):
                 input_type = "textarea"
             else:
                 input_type = "text"
 
-            required = bool(cls._REQUIRED_RE.search(line))
-            break  # only use first matching line
+            required = bool(cls._REQUIRED_RE.search(target_line))
 
         # ── 3. Enrich with task-level field_hints (if provided) ──────────────
         if field_hints and label:
