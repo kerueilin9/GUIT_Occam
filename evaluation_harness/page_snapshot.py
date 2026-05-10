@@ -34,7 +34,7 @@ def get_page_snapshot(
     page: Page,
     trajectory: list | None = None,
     *,
-    accessibility_limit: int = 12000,
+    accessibility_limit: int = 20000,
     body_limit: int = 3000,
 ) -> PageSnapshot:
     """Capture the current page state with accessibility-tree text as primary evidence."""
@@ -57,6 +57,7 @@ def get_page_snapshot(
 
     accessibility_tree_text = extract_accessibility_tree_text(trajectory)
     if accessibility_tree_text:
+        accessibility_tree_text = _filter_unselected_items(accessibility_tree_text)
         snapshot["accessibility_tree_text"] = accessibility_tree_text[:accessibility_limit]
         snapshot["snapshot_source"] = "accessibility_tree"
 
@@ -69,11 +70,6 @@ def get_page_snapshot(
         snapshot["snapshot_source"] = "body_text"
 
     return snapshot
-
-
-def get_primary_page_text(snapshot: PageSnapshot) -> str:
-    """Return accessibility text when available, otherwise body text."""
-    return snapshot.get("accessibility_tree_text", "") or snapshot.get("body_text", "")
 
 
 def _extract_from_observation_metadata(entry: dict[str, Any]) -> str:
@@ -94,6 +90,15 @@ def _extract_from_observation_metadata(entry: dict[str, Any]) -> str:
         if isinstance(value, str) and value.strip():
             return value
     return ""
+
+
+def _filter_unselected_items(accessibility_tree_text: str) -> str:
+    """Drop unselected option/menuitem rows that otherwise dominate snapshots."""
+    return "\n".join(
+        line
+        for line in str(accessibility_tree_text).splitlines()
+        if "selected: False" not in line
+    )
 
 
 def _extract_from_observation(observation: Any) -> str:
