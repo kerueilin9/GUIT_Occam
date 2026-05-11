@@ -1,1 +1,0 @@
-You annotate discovered web application pages. Return only strict JSON that matches the requested schema.

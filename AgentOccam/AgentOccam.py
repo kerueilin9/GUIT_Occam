@@ -1791,13 +1791,13 @@ class AgentOccam:
         return list(dict.fromkeys(tokens))
 
     @classmethod
-    def _match_isp_discovery_to_fill_step(
+    def _match_isp_type_action_to_fill_step(
         cls,
         meta,
         fill_steps: list,
         match_counts: dict,
     ) -> tuple[dict | None, int, int, str]:
-        """Return the best Gherkin fill step for a typed field discovery."""
+        """Return the best Gherkin fill step for a recorded typed field."""
         label = cls._normalize_field_reference(getattr(meta, "label", "")).lower()
         context = str(getattr(meta, "surrounding_context", "") or "").lower()
         label_tokens = set(cls._field_match_tokens(label))
@@ -1843,14 +1843,14 @@ class AgentOccam:
 
     def generate_isp_task_files(
         self,
-        discoveries: list,
+        type_action_records: list,
         task_config: dict,
         config_file_path: str,
     ) -> list:
         """Generate ISP variant task JSON files from recorded ``type`` actions.
 
         Called after a normal :meth:`act` run on a task with ``isp.enabled:
-        true``.  The *discoveries* list comes from monitoring ``env.step``
+        true``.  The *type_action_records* list comes from monitoring ``env.step``
         during that run.
 
         For each generated ISP testcase:
@@ -1865,7 +1865,7 @@ class AgentOccam:
 
         Parameters
         ----------
-        discoveries : list
+        type_action_records : list
             ``[{"element_id", "original_value", "obs_text"}, ...]``
         task_config : dict
             Parsed original task JSON (must contain the ``isp`` block).
@@ -1919,10 +1919,10 @@ class AgentOccam:
             actor_config=self.config.actor,
         )
 
-        print(f"[ISP] raw discoveries: {len(discoveries)}")
+        print(f"[ISP] raw type actions: {len(type_action_records)}")
         print(f"[ISP] Gherkin fill steps: {len(fill_steps)}")
 
-        if not discoveries:
+        if not type_action_records:
             print("[ISP] No type actions recorded — skipping task file generation.")
             return []
 
@@ -1933,7 +1933,7 @@ class AgentOccam:
         match_counts: dict = {}
         previous_typed_field: dict | None = None
 
-        for raw_idx, d in enumerate(discoveries):
+        for raw_idx, d in enumerate(type_action_records):
             meta = FieldAnalyzer.extract(
                 d["element_id"], d["obs_text"], field_hints=field_hints
             )
@@ -1941,13 +1941,13 @@ class AgentOccam:
             raw_label_key = self._normalize_field_reference(getattr(meta, "label", "")).lower()
 
             task_field, fill_idx, match_score, match_reason = (
-                self._match_isp_discovery_to_fill_step(
+                self._match_isp_type_action_to_fill_step(
                     meta,
                     fill_steps,
                     match_counts,
                 )
             )
-            if task_field is None and len(discoveries) == len(fill_steps) and raw_idx < len(fill_steps):
+            if task_field is None and len(type_action_records) == len(fill_steps) and raw_idx < len(fill_steps):
                 task_field = fill_steps[raw_idx]
                 fill_idx = raw_idx
                 match_score = 1

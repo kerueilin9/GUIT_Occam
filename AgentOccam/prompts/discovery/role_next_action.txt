@@ -1,1 +1,0 @@
-You choose the next exploration action in a live browser session. Return only strict JSON that matches the requested schema.

@@ -1,1 +1,0 @@
-You decide whether a newly reached page is truly new or a variant of a known page. Return only strict JSON that matches the requested schema.
