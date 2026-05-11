@@ -1,0 +1,76 @@
+\documentclass{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+
+% --- Function-call style for pseudocode ---
+\newcommand{\Call}[2]{\mathrm{#1}(#2)}
+
+\begin{document}
+
+\begin{algorithm}[t]
+\caption{Generate ISP Test Cases from Form Discoveries}
+\label{alg:isp-generation}
+
+\SetKwInOut{KwIn}{Input}
+\SetKwInOut{KwOut}{Output}
+
+\KwIn{
+$\mathit{discoveries}$: recorded type actions, each containing $\{element\_id,\ original\_value,\ obs\_text\}$;\\
+$\mathit{gherkin}$: original Gherkin task;\\
+$\mathit{field\_hints}$: optional field hints;\\
+$\mathit{max\_fields}$: maximum number of aligned fields;\\
+$\mathit{max\_cases}$: maximum number of ISP test cases
+}
+\KwOut{
+$\mathit{cases}$: structured ISP test cases, each containing $\{name,\ expected,\ inputs\}$
+}
+
+\BlankLine
+
+$\mathit{fillSteps} \leftarrow \Call{ExtractFillSteps}{\mathit{gherkin.when}}$\;
+
+\If{$\mathit{discoveries} = \emptyset$}{
+    \Return $\emptyset$\;
+}
+
+$\mathit{logicalFields} \leftarrow \emptyset$\;
+$\mathit{matchCounts} \leftarrow \emptyset$\;
+
+\ForEach{$d \in \mathit{discoveries}$}{
+    $m \leftarrow \Call{ExtractFieldMetadata}{d.element\_id,\ d.obs\_text,\ \mathit{field\_hints}}$\;
+    $m.\mathit{original\_value} \leftarrow d.\mathit{original\_value}$\;
+
+    $(f,\ idx) \leftarrow \Call{MatchToFillStep}{m,\ \mathit{fillSteps},\ \mathit{matchCounts}}$\;
+
+    \If{$f = \texttt{null} \text{ and } \Call{FallbackApplicable}{\mathit{discoveries},\ \mathit{fillSteps}}$}{
+        $(f,\ idx) \leftarrow \Call{OrderFallback}{d,\ \mathit{fillSteps}}$\;
+    }
+
+    \If{$f \neq \texttt{null}$}{
+        $m.\mathit{label} \leftarrow f.\mathit{display}$\;
+        $m.\mathit{input\_type} \leftarrow \Call{RefineInputType}{m,\ f}$\;
+        $\Call{UpdateLogicalField}{\mathit{logicalFields},\ m,\ f,\ idx}$\;
+        $\mathit{matchCounts}[m.\mathit{label}] \leftarrow \mathit{matchCounts}[m.\mathit{label}] + 1$\;
+    }
+}
+
+$\mathit{logicalFields} \leftarrow \Call{FinalizeLogicalFields}{\mathit{logicalFields},\ \mathit{max\_fields}}$\;
+$\mathit{fieldMetas} \leftarrow \Call{PrepareFieldMetadata}{\mathit{logicalFields}}$\;
+
+$\mathit{cases} \leftarrow \Call{GenerateWithLLM}{\mathit{fieldMetas},\ \mathit{gherkin},\ \mathit{max\_cases}}$\;
+
+\If{$\mathit{cases} = \emptyset$}{
+    $\mathit{cases} \leftarrow \Call{GenerateWithHeuristics}{\mathit{fieldMetas},\ \mathit{gherkin},\ \mathit{max\_cases}}$\;
+}
+
+\ForEach{$c \in \mathit{cases}$}{
+    $c.\mathit{expected} \leftarrow \Call{NormalizeOrInferExpected}{c,\ \mathit{fieldMetas}}$\;
+}
+
+\Return $\mathit{cases}$\;
+\end{algorithm}
+
+\end{document}
