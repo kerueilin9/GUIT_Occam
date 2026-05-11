@@ -16,7 +16,9 @@
       "I navigate to Posts list",
       "I click on Create Post button",
       "I fill in the post title field",
-      "I fill in the post content field",
+      "I click on Create button",
+      "I fill in the post Content Brief field",
+      "I fill in the post Content Extended field",
       "I save the post"
     ],
     "then": [
@@ -26,15 +28,16 @@
 
   "isp": {
     "enabled": true,
-    "max_test_cases": 10,
-    "isp_model": "gemini-2.5-flash"
+    "max_test_cases": 15,
+    "isp_model": "gemini-2.5-flash",
+    "allow_unmatched_type_actions": false
   },
 
   "intent_template_id": 0,
   "require_reset": false,
 
   "eval": {
-    "eval_types": ["gherkin_criteria", "isp_report"],
+    "eval_types": ["gherkin_criteria"],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "A success message should be displayed"

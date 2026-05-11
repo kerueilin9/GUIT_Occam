@@ -1,0 +1,46 @@
+{
+  "sites": [
+    "keystonejs"
+  ],
+  "task_id": "keystonejs_task_post01_isp_isp_15",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Post Form – ISP Input Validation",
+    "scenario": "Create a new post with various input values",
+    "given": [
+      "I am logged in as an administrator"
+    ],
+    "when": [
+      "I navigate to Posts list",
+      "I click on Create Post button",
+      "I fill in the post title field with \"Diverse Post Title with Special Chars & Numbers 123\"",
+      "I click on Create button",
+      "I fill in the post Content Brief field with \"Brief content with some unicode: éàçüö. And a few special characters: !@#\"",
+      "I fill in the post Content Extended field with \"Extended content with multiple lines and varied special characters: $ % ^ & * ( ) _ +\\nAlso some numbers: 4567890.\"",
+      "I save the post"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "isp_test_case": {
+    "_case_name": "all fields diverse valid values",
+    "_expected": "pass",
+    "post title": {
+      "value": "Diverse Post Title with Special Chars & Numbers 123"
+    },
+    "post Content Brief": {
+      "value": "Brief content with some unicode: éàçüö. And a few special characters: !@#"
+    },
+    "post Content Extended": {
+      "value": "Extended content with multiple lines and varied special characters: $ % ^ & * ( ) _ +\nAlso some numbers: 4567890."
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

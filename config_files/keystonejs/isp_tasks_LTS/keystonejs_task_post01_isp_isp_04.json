@@ -1,0 +1,46 @@
+{
+  "sites": [
+    "keystonejs"
+  ],
+  "task_id": "keystonejs_task_post01_isp_isp_04",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Post Form – ISP Input Validation",
+    "scenario": "Create a new post with various input values",
+    "given": [
+      "I am logged in as an administrator"
+    ],
+    "when": [
+      "I navigate to Posts list",
+      "I click on Create Post button",
+      "I fill in the post title field with \"Post with Empty Content\"",
+      "I click on Create button",
+      "I fill in the post Content Brief field with \"\"",
+      "I fill in the post Content Extended field with \"\"",
+      "I save the post"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "isp_test_case": {
+    "_case_name": "all content fields empty (optional fields)",
+    "_expected": "pass",
+    "post title": {
+      "value": "Post with Empty Content"
+    },
+    "post Content Brief": {
+      "value": ""
+    },
+    "post Content Extended": {
+      "value": ""
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "sites": [
+    "keystonejs"
+  ],
+  "task_id": "keystonejs_task_post01_isp_isp_06",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Post Form – ISP Input Validation",
+    "scenario": "Create a new post with various input values",
+    "given": [
+      "I am logged in as an administrator"
+    ],
+    "when": [
+      "I navigate to Posts list",
+      "I click on Create Post button",
+      "I fill in the post title field with \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. This is a very long but valid title for testing purposes.\"",
+      "I click on Create button",
+      "I fill in the post Content Brief field with \"This is the content brief for my new post.\"",
+      "I fill in the post Content Extended field with \"This is the extended content for my new post.\"",
+      "I save the post"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "isp_test_case": {
+    "_case_name": "title long valid string",
+    "_expected": "pass",
+    "post title": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. This is a very long but valid title for testing purposes."
+    },
+    "post Content Brief": {
+      "value": "This is the content brief for my new post."
+    },
+    "post Content Extended": {
+      "value": "This is the extended content for my new post."
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

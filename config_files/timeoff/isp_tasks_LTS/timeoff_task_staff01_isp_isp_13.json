@@ -1,0 +1,52 @@
+{
+  "sites": [
+    "timeoff"
+  ],
+  "task_id": "timeoff_task_staff01_isp_isp_13",
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3102",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "TimeOff Staff Management",
+    "scenario": "Add a new employee account",
+    "given": [
+      "I am logged in as an administrator"
+    ],
+    "when": [
+      "I navigate to the Staff page",
+      "I add a new employee",
+      "I fill in First Name with \"Jean-Luc\"",
+      "I fill in Last Name with \"Müller\"",
+      "I fill in Email Address with \"jean-luc.mueller@example.com\"",
+      "I fill in Password with \"Password123!\"",
+      "I fill in Confirm Password with \"Password123!\"",
+      "I save the new employee"
+    ]
+  },
+  "require_reset": false,
+  "isp_test_case": {
+    "_case_name": "names with unicode and hyphens",
+    "_expected": "pass",
+    "First Name": {
+      "value": "Jean-Luc"
+    },
+    "Last Name": {
+      "value": "Müller"
+    },
+    "Email Address": {
+      "value": "jean-luc.mueller@example.com"
+    },
+    "Password": {
+      "value": "Password123!"
+    },
+    "Confirm Password": {
+      "value": "Password123!"
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

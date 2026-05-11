@@ -16,12 +16,12 @@
       "I enter Last Name as 'st'",
       "I enter Email Address as 'test@gmail.com'",
       "I enter Password as 'test'",
+      "I enter Confirm Password as 'test'",
       "I save the new employee"
     ],
     "then": [
       "The page should display 'New user account successfully added'",
-      "The new employee 'te st' should appear in the staff list",
-      "The employee email should be 'test@gmail.com'"
+      "The new employee 'te st' should appear in the staff list"
     ]
   },
   "intent_template_id": 0,

@@ -1,0 +1,46 @@
+{
+  "sites": [
+    "keystonejs"
+  ],
+  "task_id": "keystonejs_task_post01_isp_isp_10",
+  "require_login": true,
+  "storage_state": ".auth/keystonejs_state.json",
+  "start_url": "http://localhost:3100/keystone",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "KeystoneJS Post Form – ISP Input Validation",
+    "scenario": "Create a new post with various input values",
+    "given": [
+      "I am logged in as an administrator"
+    ],
+    "when": [
+      "I navigate to Posts list",
+      "I click on Create Post button",
+      "I fill in the post title field with \"Multi-line Brief Post\"",
+      "I click on Create button",
+      "I fill in the post Content Brief field with \"This is the first line of a multi-line content brief.\\nThis is the second line with more text, testing newline handling.\\nAnd a third line for good measure, making it a bit longer to test textarea rendering and storage of newlines.\"",
+      "I fill in the post Content Extended field with \"This is the extended content for my new post.\"",
+      "I save the post"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "isp_test_case": {
+    "_case_name": "brief multi-line and long content",
+    "_expected": "pass",
+    "post title": {
+      "value": "Multi-line Brief Post"
+    },
+    "post Content Brief": {
+      "value": "This is the first line of a multi-line content brief.\nThis is the second line with more text, testing newline handling.\nAnd a third line for good measure, making it a bit longer to test textarea rendering and storage of newlines."
+    },
+    "post Content Extended": {
+      "value": "This is the extended content for my new post."
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

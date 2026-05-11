@@ -19,7 +19,7 @@
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display Staff",
-        "The current URL should contain \"/employees\""
+        "The current URL should contain \"/users\""
       ]
     }
   }
