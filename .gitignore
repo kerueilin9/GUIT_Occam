@@ -33,3 +33,4 @@ AgentOccam-Trajectories/
 # Auth files
 .auth/
 
+isp_tasks/
