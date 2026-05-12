@@ -47,6 +47,16 @@ def run():
         task_ids = [filename[:-len(".json")] for filename in os.listdir(f"config_files/{relative_task_dir}") if filename.endswith(".json")]
     for task_id in task_ids:
         config_file_list.append(f"config_files/{relative_task_dir}/{task_id}.json")
+    def _task_order(config_file):
+        with open(config_file, "r", encoding="utf-8") as f:
+            return json.load(f).get("order", float("inf"))
+    config_file_list = [
+        config_file
+        for _, config_file in sorted(
+            enumerate(config_file_list),
+            key=lambda item: (_task_order(item[1]), item[1]),
+        )
+    ]
 
     fullpage = config.env.fullpage if hasattr(config.env, "fullpage") else True
     current_viewport_only = not fullpage
