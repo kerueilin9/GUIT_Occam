@@ -20,13 +20,8 @@ class GherkinScenario:
     def to_natural_language(self) -> str:
         """Convert Gherkin scenario to a tester-oriented task brief."""
         lines = [
-            "Execute the following Gherkin test case as a tester.",
-            "",
-            "Interpretation rules:",
-            "- GIVEN describes the initial/current state or preconditions. Treat it as context to confirm, not as the main action sequence unless setup is missing.",
-            "- WHEN describes the user actions you must perform, in order. Do not skip, rewrite, or replace these steps unless the UI requires an equivalent interaction.",
-            "- THEN describes the final expected result, screen, message, data, or state you must verify before stopping.",
-            "- Stop only after the THEN expectations are visibly satisfied, or after reporting the observed failure.",
+            "Execute this Gherkin test case exactly: satisfy GIVEN preconditions, "
+            "perform each WHEN step in order, then verify every THEN clause before stopping.",
         ]
 
         if self.feature:
@@ -45,7 +40,8 @@ class GherkinScenario:
             lines.extend([f"- {step}" for step in self.then])
 
         objective = "\n".join(lines)
-        logger.debug(f"Gherkin scenario converted to tester task brief: {objective}")
+        # LOG
+        # logger.debug(f"Gherkin scenario converted to tester task brief: {objective}")
 
         return objective
     

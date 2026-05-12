@@ -155,6 +155,11 @@ class Agent:
             if k in self.previous_interactions.keys():
                 self.previous_interactions[k].append(interaction_dict[k])
 
+    def get_input_label(self, input_type):
+        if input_type == "objective" and getattr(self, "is_gherkin_task", False):
+            return "GHERKIN TASK"
+        return input_type.upper()
+
     def equal_history_length(self):
         lengths = [len(self.previous_interactions[k]) for k in self.previous_interactions.keys()]
         return (len(set(lengths)) == 1)
@@ -582,15 +587,16 @@ class Actor(Agent):
                 input_type = input_type[len("critic: "):]
                 input_content = criticism_elements[input_type]
                 input_type = "FROM USER: " + input_type
+            input_label = self.get_input_label(input_type)
             if input_content and isinstance(input_content, str):
-                input_list.append(("text", f"{input_type.upper()}:\n{input_content}\n"))
+                input_list.append(("text", f"{input_label}:\n{input_content}\n"))
             elif input_content and isinstance(input_content, list):
-                input_list.append(("text", f"{input_type.upper()}:\n"))
+                input_list.append(("text", f"{input_label}:\n"))
                 input_list += input_content if len(input_content) > 0 else ["N/A"]
 
         if "image" in self.config.current_observation.type:
             input_type = "current visual observation"
-            input_list.append(("text", f"{input_type.upper()}:\n"))
+            input_list.append(("text", f"{self.get_input_label(input_type)}:\n"))
             input_list.append(("image", INPUT_TYPE_TO_CONTENT_MAP["current visual observation"]))
 
         return self.prune_message_list(message_list=[("text", input_prefix)] + input_list + [("text", input_suffix)])
@@ -672,13 +678,13 @@ class Actor(Agent):
             for t in self.config.trash:
                 content = VERBOSE_TO_CONTENT_MAP.get(t, "")
                 with open(self.output_trash_path, "a", encoding="utf-8") as af:
-                    af.write(f"{t.upper()}:\n{content}\n\n")
+                    af.write(f"{self.get_input_label(t)}:\n{content}\n\n")
             with open(self.output_play_path, "w", encoding="utf-8") as _:
                 pass
             for p in other_play_keys:
                 content = VERBOSE_TO_CONTENT_MAP.get(p, "")
                 with open(self.output_play_path, "a", encoding="utf-8") as af:
-                    af.write(f"{p.upper()}:\n{content}\n\n")
+                    af.write(f"{self.get_input_label(p)}:\n{content}\n\n")
             for i, action_elements in enumerate(action_element_list):
                 if len(action_element_list) > 1:
                     with open(self.output_play_path, "a", encoding="utf-8") as af:
@@ -947,8 +953,8 @@ class Actor(Agent):
                     model_response = self.call_model_with_message(system_prompt=instruction+"\nGenerating the command `{}` will be severely punished! Don't generate invalid actions! We don't have that element id in the current observation!".format(invalid_action_str), messages=self.arrange_message_for_model(online_input))
                 else:
                     # LLM Actor prompt
-                    # logger.debug(f"Calling model with instruction system_prompt: {instruction}")
-                    # logger.debug(f"Calling model with instruction messages: {self.arrange_message_for_model(online_input)}")
+                    logger.debug(f"Calling model with instruction system_prompt: {instruction}")
+                    logger.debug(f"Calling model with instruction messages: {self.arrange_message_for_model(online_input)}")
                     model_response = self.call_model_with_message(system_prompt=instruction, messages=self.arrange_message_for_model(online_input))
                 action_elements = self.parse_elements(text=model_response, key_list=self.config.output)
                 action_elements = self.parse_action_from_action_candidates(action_elements=action_elements)
@@ -1064,8 +1070,9 @@ class Actor(Agent):
         return action_elements
 
 class Critic(Agent):
-    def __init__(self, config, objective, prompt_template):
+    def __init__(self, config, objective, prompt_template, is_gherkin_task=False):
         super().__init__(config, objective, prompt_template)
+        self.is_gherkin_task = is_gherkin_task
         self.instruction = None
         self.actor_basic_info_dict = None
 
@@ -1086,7 +1093,7 @@ class Critic(Agent):
             for t in self.config.trash:
                 content = VERBOSE_TO_CONTENT_MAP[t]
                 with open(self.output_trash_path, "a") as af:
-                    af.write(f"{t.upper()}:\n{content}\n\n")
+                    af.write(f"{self.get_input_label(t)}:\n{content}\n\n")
 
     def update_actor_basic_info(self, **actor_basic_info_dict):
         self.actor_basic_info_dict = actor_basic_info_dict
@@ -1124,15 +1131,16 @@ class Critic(Agent):
                 continue
             elif input_type in INPUT_TYPE_TO_CONTENT_MAP.keys():
                 input_content = INPUT_TYPE_TO_CONTENT_MAP[input_type]
+            input_label = self.get_input_label(input_type)
             if input_content and isinstance(input_content, str):
-                input_list.append(("text", f"{input_type.upper()}:\n{input_content}\n"))
+                input_list.append(("text", f"{input_label}:\n{input_content}\n"))
             elif input_content and isinstance(input_content, list):
-                input_list.append(("text", f"{input_type.upper()}:\n"))
+                input_list.append(("text", f"{input_label}:\n"))
                 input_list += input_content if len(input_content) > 0 else ["N/A"]
 
         if "image" in self.config.current_observation.type:
             input_type = "current visual observation"
-            input_list.append(("text", f"{input_type.upper()}:\n"))
+            input_list.append(("text", f"{self.get_input_label(input_type)}:\n"))
             input_list.append(("image", INPUT_TYPE_TO_CONTENT_MAP["current visual observation"]))
 
         return self.prune_message_list(message_list=[("text", input_prefix)] + input_list + [("text", input_suffix)])
@@ -1162,8 +1170,9 @@ class Critic(Agent):
         return criticism_elements
 
 class Judge(Agent):
-    def __init__(self, config, objective, prompt_template):
+    def __init__(self, config, objective, prompt_template, is_gherkin_task=False):
         super().__init__(config, objective, prompt_template)
+        self.is_gherkin_task = is_gherkin_task
         self.instruction = None
         self.actor_basic_info_dict = None
 
@@ -1203,15 +1212,16 @@ class Judge(Agent):
                 continue
             elif input_type in INPUT_TYPE_TO_CONTENT_MAP.keys():
                 input_content = INPUT_TYPE_TO_CONTENT_MAP[input_type]
+            input_label = self.get_input_label(input_type)
             if input_content and isinstance(input_content, str):
-                input_list.append(("text", f"{input_type.upper()}:\n{input_content}\n"))
+                input_list.append(("text", f"{input_label}:\n{input_content}\n"))
             elif input_content and isinstance(input_content, list):
-                input_list.append(("text", f"{input_type.upper()}:\n"))
+                input_list.append(("text", f"{input_label}:\n"))
                 input_list += input_content if len(input_content) > 0 else ["N/A"]
 
         if "image" in self.config.current_observation.type:
             input_type = "current visual observation"
-            input_list.append(("text", f"{input_type.upper()}:\n"))
+            input_list.append(("text", f"{self.get_input_label(input_type)}:\n"))
             input_list.append(("image", INPUT_TYPE_TO_CONTENT_MAP["current visual observation"]))
 
         return self.prune_message_list(message_list=[("text", input_prefix)] + input_list + [("text", input_suffix)])
@@ -1230,7 +1240,7 @@ class Judge(Agent):
             for t in self.config.trash:
                 content = VERBOSE_TO_CONTENT_MAP[t]
                 with open(self.output_trash_path, "a") as af:
-                    af.write(f"{t.upper()}:\n{content}\n\n")
+                    af.write(f"{self.get_input_label(t)}:\n{content}\n\n")
 
     def flatten_action_element_list(self, action_element_list):
         new_action_element_list = []
@@ -1376,13 +1386,20 @@ class AgentOccam:
         self.config.actor.others = self.config.others ## pass others config to actor
         if len(self.sites) > 1:
             self.config.actor.navigation_command += ["go_home"]
+        is_gherkin_task = getattr(self, "is_gherkin_task", False)
+        is_isp_task = getattr(self, "is_isp_task", False)
+        root_plan_text = (
+            "Complete Gherkin scenario (see GHERKIN TASK)"
+            if is_gherkin_task
+            else f"Find the solution to \"{self.objective}\""
+        )
         self.actor = Actor(
             config=self.config.actor,
             objective=self.objective,
             prompt_template=self.prompt_dict["actor"],
-            plan_tree_node=PlanTreeNode(id=0, type="branch", text=f"Find the solution to \"{self.objective}\"", level=0, url=self.online_url, step=0),
-            is_gherkin_task=getattr(self, 'is_gherkin_task', False),
-            is_isp_task=getattr(self, 'is_isp_task', False),
+            plan_tree_node=PlanTreeNode(id=0, type="branch", text=root_plan_text, level=0, url=self.online_url, step=0),
+            is_gherkin_task=is_gherkin_task,
+            is_isp_task=is_isp_task,
         )
         with open(self.actor.output_trash_path, "w") as _:
             pass
@@ -1393,6 +1410,7 @@ class AgentOccam:
             config=self.config.critic,
             objective=self.objective,
             prompt_template=self.prompt_dict["critic"][self.config.critic.character],
+            is_gherkin_task=getattr(self, "is_gherkin_task", False),
         )
     
     def init_judge(self):
@@ -1401,6 +1419,7 @@ class AgentOccam:
             config=self.config.judge,
             objective=self.objective,
             prompt_template=self.prompt_dict["judge"],
+            is_gherkin_task=getattr(self, "is_gherkin_task", False),
         )
         
     def predict_action(self):
