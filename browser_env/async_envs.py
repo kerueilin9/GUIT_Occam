@@ -57,6 +57,8 @@ class AsyncScriptBrowserEnv(Env[npt.NDArray[np.uint8], Action]):
             instance_config = {}
 
         storage_state = instance_config.get("storage_state", None)
+        if instance_config.get("require_login") is False:
+            storage_state = None
         start_url = instance_config.get("start_url", None)
         geolocation = instance_config.get("geolocation", None)
 

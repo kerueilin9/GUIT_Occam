@@ -20,14 +20,24 @@ from browser_env.env_config import (
     SHOPPING_ADMIN,
     TIMEOFF,
     KEYSTONEJS,
-    NODEBB
+    NODEBB,
+    POSTMILL,
 )
 
 HEADLESS = True
 SLOW_MO = 0
 
 
-SITES = ["gitlab", "shopping", "shopping_admin", "reddit", "timeoff", "keystonejs", "nodebb"]
+SITES = [
+    "gitlab",
+    "shopping",
+    "shopping_admin",
+    "reddit",
+    "timeoff",
+    "keystonejs",
+    "nodebb",
+    "postmill",
+]
 URLS = [
     f"{GITLAB}/-/profile",
     f"{SHOPPING}/wishlist/",
@@ -35,10 +45,47 @@ URLS = [
     f"{REDDIT}/user/{ACCOUNTS['reddit']['username']}/account",
     f"{TIMEOFF}/",
     f"{KEYSTONEJS}/keystone",
-    f"{NODEBB}/login"
+    f"{NODEBB}/login",
+    f"{POSTMILL}/user/{ACCOUNTS['postmill']['username']}",
 ]
-EXACT_MATCH = [True, True, True, True, False, False, False]
-KEYWORDS = ["", "", "Dashboard", "Delete", "", ""]
+EXACT_MATCH = [True, True, True, True, False, False, False, False]
+KEYWORDS = ["", "", "Dashboard", "Delete", "", "", "", ACCOUNTS["postmill"]["username"]]
+
+
+def login_postmill(page) -> None:
+    username = ACCOUNTS["postmill"]["username"]
+    password = ACCOUNTS["postmill"]["password"]
+    page.goto(f"{POSTMILL}/login")
+    page.wait_for_timeout(1000)
+
+    username_selectors = [
+        'input[name="username"]',
+        'input[name="_username"]',
+        'input[name="email"]',
+        'input[type="text"]',
+    ]
+    password_selectors = [
+        'input[name="password"]',
+        'input[name="_password"]',
+        'input[type="password"]',
+    ]
+
+    for selector in username_selectors:
+        if page.locator(selector).count():
+            page.fill(selector, username)
+            break
+    else:
+        raise RuntimeError("Could not find Postmill username field")
+
+    for selector in password_selectors:
+        if page.locator(selector).count():
+            page.fill(selector, password)
+            break
+    else:
+        raise RuntimeError("Could not find Postmill password field")
+
+    page.click('button[type="submit"], input[type="submit"]')
+    page.wait_for_timeout(2000)
 
 
 def is_expired(
@@ -145,6 +192,9 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
                 page.click('button[type="submit"]')
                 page.wait_for_timeout(2000)
 
+            if c == "postmill":
+                login_postmill(page)
+
             context.storage_state(path=f"{auth_folder}/{c}_state.json")
         finally:
             context_manager.__exit__(None, None, None)
@@ -220,6 +270,9 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
             page.fill('input[name="password"]', password)
             page.click('button[type="submit"]')
             page.wait_for_timeout(2000)
+
+        if "postmill" in comb:
+            login_postmill(page)
 
         context.storage_state(path=f"{auth_folder}/{'.'.join(comb)}_state.json")
     finally:

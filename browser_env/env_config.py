@@ -11,6 +11,7 @@ HOMEPAGE = os.environ.get("HOMEPAGE", "http://localhost:4399")
 TIMEOFF = os.environ.get("TIMEOFF", "http://localhost:3102")
 KEYSTONEJS = os.environ.get("KEYSTONEJS", "http://localhost:3100")
 NODEBB = os.environ.get("NODEBB", "http://localhost:3101")
+POSTMILL = os.environ.get("POSTMILL", "http://localhost:3200")
 
 assert (
     REDDIT
@@ -23,6 +24,7 @@ assert (
     and TIMEOFF
     and KEYSTONEJS
     and NODEBB
+    and POSTMILL
 ), (
     f"Please setup the URLs to each site. Current: \n"
     + f"Reddit: {REDDIT}\n"
@@ -35,6 +37,7 @@ assert (
     + f"TimeOff: {TIMEOFF}\n"
     + f"KeystoneJS: {KEYSTONEJS}\n"
     + f"NodeBB: {NODEBB}\n"
+    + f"Postmill: {POSTMILL}\n"
 )
 
 
@@ -50,6 +53,7 @@ ACCOUNTS = {
     "timeoff": {"username": "vector@selab.com", "password": "selab1623"},
     "keystonejs": {"username": "vector@selab.com", "password": "password"},
     "nodebb": {"username": "vector@selab.com", "password": "selab1623"},
+    "postmill": {"username": "MarvelsGrantMan136", "password": "test1234"},
 }
 
 URL_MAPPINGS = {
@@ -62,5 +66,6 @@ URL_MAPPINGS = {
     HOMEPAGE: "http://homepage.com",
     TIMEOFF: "http://timeoff.management",
     KEYSTONEJS: "http://keystonejs.com",
-    NODEBB: "http://nodebb.com"
+    NODEBB: "http://nodebb.com",
+    POSTMILL: "http://postmill.com",
 }

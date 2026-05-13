@@ -261,7 +261,7 @@ def test(
                     print("Reddit post task. Sleep 30 mins.")
                     time.sleep(1800)
                 # automatically login
-                if _c["storage_state"]:
+                if _c.get("require_login") is not False and _c["storage_state"]:
                     cookie_file_name = os.path.basename(_c["storage_state"])
                     comb = get_site_comb_from_filepath(cookie_file_name)
                     temp_dir = tempfile.mkdtemp()
