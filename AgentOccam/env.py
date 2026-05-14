@@ -79,6 +79,8 @@ class WebArenaEnvironmentWrapper():
         self.reward = 0.0
         self._isp_screenshot_saved = False
         self.isp_screenshot_path = None
+        self.evaluation_comment = ""
+        self.evaluation_comments = []
         
         self.trajectory: Trajectory = []
         self.update_webarena_metrics()
@@ -87,6 +89,8 @@ class WebArenaEnvironmentWrapper():
         self.obs, self.info = self.webarena_env.reset(options={"config_file": self.config_file})
         self._isp_screenshot_saved = False
         self.isp_screenshot_path = None
+        self.evaluation_comment = ""
+        self.evaluation_comments = []
 
     def close(self):
         self.webarena_env.close()
@@ -131,6 +135,8 @@ class WebArenaEnvironmentWrapper():
         status = {'done': self.is_done, 'reward': self.reward, 'success': float(self.reward > 0), 'num_actions': self.steps}
         if self.isp_screenshot_path:
             status['isp_screenshot_path'] = self.isp_screenshot_path
+        if self.evaluation_comment:
+            status['evaluation_comment'] = self.evaluation_comment
         return status
 
     def _save_isp_screenshot_if_needed(self):
@@ -211,6 +217,8 @@ class WebArenaEnvironmentWrapper():
             try:
                 evaluator = evaluator_router(self.config_file)
                 self.reward = evaluator(trajectory=self.trajectory, config_file=self.config_file, page=self.webarena_env.page, client=self.webarena_env.get_page_client(self.webarena_env.page))
+                self.evaluation_comment = getattr(evaluator, "evaluation_comment", "")
+                self.evaluation_comments = getattr(evaluator, "evaluation_comments", [])
             except Exception as e:
                 print(f"Got excepetion: {e}")
                 self.reward = 0

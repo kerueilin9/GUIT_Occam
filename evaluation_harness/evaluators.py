@@ -397,6 +397,8 @@ class HTMLContentEvaluator(Evaluator):
 class EvaluatorComb:
     def __init__(self, evaluators: list[Evaluator]) -> None:
         self.evaluators = evaluators
+        self.evaluation_comments: list[dict[str, Any]] = []
+        self.evaluation_comment: str = ""
 
     @beartype
     def __call__(
@@ -407,14 +409,27 @@ class EvaluatorComb:
         client: Optional[CDPSession] = None,
     ) -> float:
         score = 1.0
+        self.evaluation_comments = []
+        self.evaluation_comment = ""
         for evaluator in self.evaluators:
             cur_score = evaluator(trajectory, config_file, page, client)
             score *= cur_score
+            self.evaluation_comments.extend(
+                getattr(evaluator, "evaluation_comments", [])
+            )
+        if self.evaluation_comments:
+            self.evaluation_comment = "\n".join(
+                f"[{item['score']}] {item['criterion']} - {item['comment']}"
+                for item in self.evaluation_comments
+            )
         return score
 
 
 class GherkinCriteriaEvaluator(Evaluator):
     """Evaluator for Gherkin acceptance criteria"""
+    def __init__(self, eval_tag: str = "") -> None:
+        super().__init__(eval_tag)
+        self.evaluation_comments: list[dict[str, Any]] = []
     
     @beartype
     def __call__(
@@ -432,15 +447,17 @@ class GherkinCriteriaEvaluator(Evaluator):
         comment = configs["eval"].get("comment", True)  # any additional comment or instruction for evaluation
         
         if not acceptance_criteria or not page:
+            self.evaluation_comments = []
             return 1.0  # No criteria or no page to evaluate
         
         # Evaluate using Gherkin evaluator
-        score = evaluate_gherkin_criteria(
+        score, self.evaluation_comments = evaluate_gherkin_criteria(
             acceptance_criteria=acceptance_criteria,
             page=page,
             trajectory=trajectory,
             client=client,
             comment=comment,
+            return_details=True,
         )
         
         return score

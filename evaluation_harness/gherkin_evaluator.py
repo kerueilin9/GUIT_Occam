@@ -32,7 +32,8 @@ def evaluate_gherkin_criteria(
     trajectory: Trajectory,
     client: CDPSession = None,
     comment: bool = True,
-) -> float:
+    return_details: bool = False,
+) -> float | tuple[float, list[dict]]:
     """
     Evaluate if the agent met the Gherkin acceptance criteria
     
@@ -46,30 +47,41 @@ def evaluate_gherkin_criteria(
         Score between 0.0 and 1.0
     """
     if not acceptance_criteria:
-        return 1.0  # No criteria to check
+        return (1.0, []) if return_details else 1.0  # No criteria to check
     
     page_snapshot = get_page_snapshot(page, trajectory)
     
     # Evaluate each criterion
     scores = []
+    details = []
     
     for criterion in acceptance_criteria:
-        score = evaluate_single_criterion(
+        result = evaluate_single_criterion(
             criterion=criterion,
             page_snapshot=page_snapshot,
             return_comment=comment
         )
+        if comment:
+            score, criterion_comment = result
+            details.append({
+                "criterion": criterion,
+                "score": score,
+                "comment": criterion_comment,
+            })
+        else:
+            score = result
         scores.append(score)
     
     # Gherkin criteria are binary: every Then expectation must pass.
-    return 1.0 if scores and all(score == 1.0 for score in scores) else 0.0
+    final_score = 1.0 if scores and all(score == 1.0 for score in scores) else 0.0
+    return (final_score, details) if return_details else final_score
 
 
 def evaluate_single_criterion(
     criterion: str,
     page_snapshot: PageSnapshot,
     return_comment: bool = True,
-) -> float:
+) -> float | tuple[float, str]:
     """
     Evaluate a single Gherkin acceptance criterion
     
@@ -80,16 +92,17 @@ def evaluate_single_criterion(
     Returns:
         Score between 0.0 and 1.0
     """
-    return llm_evaluate_criterion_with_comment(
+    score, comment = llm_evaluate_criterion_with_comment(
         criterion=criterion,
         page_snapshot=page_snapshot,
     )
+    return (score, comment) if return_comment else score
 
 
 def llm_evaluate_criterion_with_comment(
     criterion: str,
     page_snapshot: PageSnapshot,
-) -> float:
+) -> tuple[float, str]:
     """
     Use LLM to evaluate if criterion is met and return a short rationale.
 
@@ -118,7 +131,7 @@ def llm_evaluate_criterion_with_comment(
             print(f"score: {score}, comment: {comment[:200]}")
             # logger for debugging LLM evaluation responses
             logger.debug(f"LLM evaluation response: {response[:200]}\n\n\n\n")
-            return score
+            return score, comment
 
         # Fallback parsing if model didn't return strict JSON
         match_score = re.search(r"(\d+\.?\d*)", text)
@@ -129,9 +142,9 @@ def llm_evaluate_criterion_with_comment(
             comment = "Scored based on criterion-page alignment."
             
         print(f"score: {score}, comment: {comment[:200]}")
-        return score
+        return score, comment
 
     except Exception as e:
         print(f"Error in LLM evaluation with comment: {e}")
         print(f"Criterion was: {criterion}")
-        return 0.0
+        return 0.0, f"Error in LLM evaluation with comment: {e}"
