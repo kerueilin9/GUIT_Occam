@@ -98,6 +98,8 @@ class ScriptBrowserEnv(Env[dict[str, Observation], Action]):
         self.save_trace_enabled = save_trace_enabled
         self.sleep_after_execution = sleep_after_execution
         self.global_config = global_config
+        self.dialog_policy = self._get_env_config_value("dialog_policy", "accept")
+        self.dialog_prompt_text = self._get_env_config_value("dialog_prompt_text", "")
 
         match observation_type:
             case "html" | "accessibility_tree":
@@ -125,11 +127,70 @@ class ScriptBrowserEnv(Env[dict[str, Observation], Action]):
             self.observation_handler.get_observation_space()
         )
 
+    def _get_env_config_value(self, name: str, default: Any) -> Any:
+        env_config = getattr(self.global_config, "env", None)
+        if env_config is None:
+            return default
+        return getattr(env_config, name, default)
+
+    def _resolve_dialog_value(self, dialog: Any, name: str, default: str = "") -> str:
+        value = getattr(dialog, name, default)
+        if callable(value):
+            try:
+                value = value()
+            except TypeError:
+                value = default
+        return value if value is not None else default
+
+    def _handle_dialog(self, dialog: Any) -> None:
+        dialog_type = self._resolve_dialog_value(dialog, "type", "dialog")
+        dialog_message = self._resolve_dialog_value(dialog, "message", "")
+        target_page = getattr(dialog, "page", None)
+        if callable(target_page):
+            target_page = target_page()
+        target_page = target_page or getattr(self, "page", None)
+
+        policy = str(self.dialog_policy or "accept").lower()
+        should_accept = policy not in {"dismiss", "cancel", "reject"}
+        action_taken = "accepted" if should_accept else "dismissed"
+
+        try:
+            if should_accept:
+                if dialog_type == "prompt":
+                    dialog.accept(str(self.dialog_prompt_text or ""))
+                else:
+                    dialog.accept()
+            else:
+                dialog.dismiss()
+        except Exception as e:
+            action_taken = f"{action_taken}_failed: {e}"
+            try:
+                dialog.dismiss()
+                action_taken += "; dismissed"
+            except Exception:
+                pass
+
+        if target_page is None:
+            return
+        dialog_events = getattr(target_page, "dialog_events", [])
+        dialog_events.append(
+            {
+                "type": dialog_type,
+                "message": dialog_message,
+                "action": action_taken,
+            }
+        )
+        target_page.dialog_events = dialog_events
+        target_page.dialog_message = dialog_message
+
+    def _prepare_page(self, page: Page) -> None:
+        if getattr(page, "_agentoccam_dialog_handler_attached", False):
+            return
+        page.on("dialog", self._handle_dialog)
+        page._agentoccam_dialog_handler_attached = True
+
     @beartype
     def setup(self, config_file: Path | None = None) -> None:
-        def handle_dialog(dialog):
-            self.page.dialog_message = dialog.message
-            dialog.dismiss()
         self.context_manager = sync_playwright()
         self.playwright = self.context_manager.__enter__()
         self.browser = self.playwright.chromium.launch(
@@ -154,13 +215,14 @@ class ScriptBrowserEnv(Env[dict[str, Observation], Action]):
             geolocation=geolocation,
             device_scale_factor=1,
         )
+        self.context.on("page", self._prepare_page)
         if self.save_trace_enabled:
             self.context.tracing.start(screenshots=True, snapshots=True)
         if start_url:
             start_urls = start_url.split(" |AND| ")
             for url in start_urls:
                 page = self.context.new_page()
-                page.on("dialog", handle_dialog)
+                self._prepare_page(page)
                 client = page.context.new_cdp_session(
                     page
                 )  # talk to chrome devtools
@@ -173,7 +235,7 @@ class ScriptBrowserEnv(Env[dict[str, Observation], Action]):
             self.page.bring_to_front()
         else:
             self.page = self.context.new_page()
-            page.on("dialog", handle_dialog)
+            self._prepare_page(self.page)
             client = self.page.context.new_cdp_session(self.page)
             if self.text_observation_type == "accessibility_tree":
                 client.send("Accessibility.enable")

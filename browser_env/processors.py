@@ -1231,12 +1231,26 @@ class TextObervationProcessor(ObservationProcessor):
             )
             content = self.clean_accesibility_tree(content)
             self.obs_nodes_info = obs_nodes_info
+            page_dialog_events = getattr(page, "dialog_events", [])
             page_dialog_message = getattr(page, "dialog_message", "")
-            if page_dialog_message:
-                import copy
+            if page_dialog_events or page_dialog_message:
                 if node_root.properties is None:
                     node_root.properties = {}
-                node_root.properties["page_dialog_message"] = copy.deepcopy(page_dialog_message) + " Retry."
+                if page_dialog_events:
+                    dialog_lines = [
+                        (
+                            f"{event.get('type', 'dialog')} dialog "
+                            f"{event.get('action', 'handled')}: "
+                            f"{event.get('message', '')}"
+                        ).strip()
+                        for event in page_dialog_events
+                    ]
+                else:
+                    dialog_lines = [f"dialog handled: {page_dialog_message}"]
+                dialog_summary = " | ".join(dialog_lines)
+                node_root.properties["page_dialog_message"] = dialog_summary
+                content = f"{content}\n[BrowserDialog] {dialog_summary}"
+                page.dialog_events = []
                 page.dialog_message = None
 
             validation_messages = self._collect_form_validation_messages(page)
