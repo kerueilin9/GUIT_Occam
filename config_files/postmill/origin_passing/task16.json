@@ -1,0 +1,29 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task16",
+  "order": 16,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Comments",
+    "scenario": "1st Comment - no URL",
+    "given": ["I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"],
+    "when": [
+      "From the Postmill page find posts with the \"All\" filter",
+      "Click on the title of a post without URL",
+      "Add a comment and click on \"Post\".",
+      "Delete the newly created comment"
+    ],
+    "then": ["The comment disappeared from the list of comments"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["The comment disappeared from the list of comments"]
+    }
+  }
+}

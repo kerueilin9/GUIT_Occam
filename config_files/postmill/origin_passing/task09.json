@@ -1,0 +1,41 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task09",
+  "order": 9,
+  "require_login": false,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Post with URL",
+    "scenario": "Post with URL",
+    "given": ["I am on the Postmill site"],
+    "when": [
+      "Click on the header \"button\" with the account name",
+      "Clik on \"User setting\" in the user dropdown menu",
+      "In the \"General\" section, select \"Open The linked content\" for \"when clicking submission links...\" option, then save.",
+      "Click on the \"Submit\" tab",
+      "Enter the following in the URL field: https://latavernedutesteur.fr/ ",
+      "Fill the title field with: La taverne du testeur URL",
+      "Select \"science\" in Forum, then click on \"Create a post\".",
+      "Click on the post title",
+      "Return to the previous page",
+      "Delete the submission",
+      "Click on the header \"button\" with the account name and click on \"User settings\"",
+      "In the \"General\" section, select \"Open the submission\" for \"when clicking submission links...\" option, then save."
+    ],
+    "then": [
+      "The page remains displayed.\nA message confirming that the changes have been taken into account is displayed."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The page remains displayed.\nA message confirming that the changes have been taken into account is displayed."
+      ]
+    }
+  }
+}

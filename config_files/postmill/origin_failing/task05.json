@@ -1,0 +1,38 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task05",
+  "order": 5,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Forum",
+    "scenario": "Create forum - error message on Title too short",
+    "given": [
+      "I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"
+    ],
+    "when": [
+      "Click on the header Forums",
+      "Click on the \"Create forum\" button",
+      "Create a new forum:\n- Enter /f/tech in the \"Name\" field\n- Fill the \"Title\" field with \"Tech\"\n- Fill the \"Description\" field with \"A place to discuss the latest tech trends and innovations.\"\n- Fill the \"Sidebar\" field with \"Welcome to the Technology forum! Please follow the rules and engage in respectful discussions.\"\n- Click the \"Create forum\" button"
+    ],
+    "then": [
+      "An error message is displayed \"The title field must be longer than 10 characters.\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "An error message is displayed \"The title field must be longer than 10 characters.\""
+      ]
+    }
+  }
+}

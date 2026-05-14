@@ -1,0 +1,31 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task06",
+  "order": 6,
+  "require_login": false,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Blocking list",
+    "scenario": "Blocking list",
+    "given": ["I am on the Postmill site"],
+    "when": [
+      "Click on the header \"button\" with the account name",
+      "Click on block list"
+    ],
+    "then": [
+      "The \"Block list\" page showing blocked users is displayed.\nA message indicating the effect of blocking is displayed.\nA toolbox with \"Hidden forums\" and \"Trash\" is also present."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The \"Block list\" page showing blocked users is displayed.\nA message indicating the effect of blocking is displayed.\nA toolbox with \"Hidden forums\" and \"Trash\" is also present."
+      ]
+    }
+  }
+}

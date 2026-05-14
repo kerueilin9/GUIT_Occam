@@ -1,0 +1,37 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task04",
+  "order": 4,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Submission",
+    "scenario": "Create submission - Body field error message when empty",
+    "given": [
+      "I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"
+    ],
+    "when": [
+      "Click on the header +Submit",
+      "Create a submission:\nEnter https://example.com/test-article in the \"URL\" field\nFill the \"Title\" field with New Features in Web Development\nSelect Technology from the \"Forum\" dropdown\nClick the \"Create submission\" button"
+    ],
+    "then": [
+      "An error message should appear, as the \"Body\" field is required."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "An error message should appear, as the \"Body\" field is required."
+      ]
+    }
+  }
+}

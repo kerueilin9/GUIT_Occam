@@ -1,0 +1,29 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task07",
+  "order": 7,
+  "require_login": false,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Dark mode",
+    "scenario": "Dark mode",
+    "given": ["I am on the Postmill site"],
+    "when": [
+      "Click on the header \"button\" with the account name",
+      "Click on Dark mode",
+      "Click on the header \"button\" with the account name",
+      "Click on Light mode"
+    ],
+    "then": ["Display switches to Light mode (white instead of black as background color)"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["Display switches to Light mode (white instead of black as background color)"]
+    }
+  }
+}

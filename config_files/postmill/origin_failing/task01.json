@@ -1,0 +1,36 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task01",
+  "order": 1,
+  "require_login": false,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Registration",
+    "scenario": "Registration - With Google account",
+    "given": [
+      "I am on the Postmill site"
+    ],
+    "when": [
+      "Click on Sign Up"
+    ],
+    "then": [
+      "A \"Sign Up\" title page appears.\nIt contains:\nA mandatory \"Username\" field, followed by a sentence indicating the characters allowed.\nA \"Password\" field followed by another field pasted below \"(repeat)\" followed by a sentence indicating the expected characteristics.\nAn optional e-mail address field followed by a sentence indicating that it will only be used to reset the password\nA sign-up button\nA link \"Register with your Google account\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "A \"Sign Up\" title page appears.\nIt contains:\nA mandatory \"Username\" field, followed by a sentence indicating the characters allowed.\nA \"Password\" field followed by another field pasted below \"(repeat)\" followed by a sentence indicating the expected characteristics.\nAn optional e-mail address field followed by a sentence indicating that it will only be used to reset the password\nA sign-up button\nA link \"Register with your Google account\""
+      ]
+    }
+  }
+}

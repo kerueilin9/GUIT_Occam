@@ -1,0 +1,37 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task14",
+  "order": 14,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Comments",
+    "scenario": "reply to comment on a post with image",
+    "given": [
+      "I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"
+    ],
+    "when": [
+      "From the Postmill page find posts with the \"All\" filter in the \"Featured\" drop donwn menu",
+      "Click on the title of a post with an image and with comments"
+    ],
+    "then": [
+      "The post page opens with a comment field and the previous comment(s).\nYou can create a permalink or reply to existing comments."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The post page opens with a comment field and the previous comment(s).\nYou can create a permalink or reply to existing comments."
+      ]
+    }
+  }
+}

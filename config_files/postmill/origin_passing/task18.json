@@ -1,0 +1,31 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task18",
+  "order": 18,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Comments",
+    "scenario": "Comment URL",
+    "given": ["I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"],
+    "when": [
+      "From the Postmill page find posts with the \"All / Most commented / All time\" filter",
+      "Click on the text \"X comment(s)\" of a post with URL where X is the number of comments in the post."
+    ],
+    "then": [
+      "The post is displayed with all its comments, if any.\nA \"Comments\" field for creating a new comment and a \"Post\" button are available."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The post is displayed with all its comments, if any.\nA \"Comments\" field for creating a new comment and a \"Post\" button are available."
+      ]
+    }
+  }
+}

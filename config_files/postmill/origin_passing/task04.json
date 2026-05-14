@@ -1,0 +1,34 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task04",
+  "order": 4,
+  "require_login": false,
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Account",
+    "scenario": "Account",
+    "given": ["I am on the Postmill site"],
+    "when": [
+      "Find a new unknown identifier, and enter this username and a valid password to be repeated twice.",
+      "Enter valid e-mail address for prerequisites",
+      "Click on sign up",
+      "Click on the header \"button\" with the account name",
+      "Click on \"My account\"",
+      "Change user name and confirm",
+      "Log out and log back in with new credentials",
+      "Return to \"My account\" and delete the account",
+      "Fill in the account details, validate the checkbox and click on the delete button.",
+      "Login with delete account"
+    ],
+    "then": ["Connection failure with \"Invalid credentials\" message"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["Connection failure with \"Invalid credentials\" message"]
+    }
+  }
+}

@@ -1,13 +1,13 @@
 {
-  "sites": ["timeoff"],
-  "task_id": "timeoff_absence01",
+  "sites": ["gadael"],
+  "task_id": "gadael_task01",
   "require_login": true,
-  "storage_state": ".auth/timeoff_state.json",
-  "start_url": "http://localhost:3102",
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
   "geolocation": null,
   "gherkin": {
-    "feature": "TimeOff Leave Request",
-    "scenario": "Submit a new absence request",
+    "feature": "Create a compulsory leave",
+    "scenario": "Create a compulsory leave",
     "given": ["I am logged in as an employee"],
     "when": [
       "I click on the new absence button",

@@ -1,6 +1,6 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task_department02",
+  "task_id": "timeoff_department02",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
@@ -10,7 +10,8 @@
     "scenario": "Modify Sales department properties",
     "given": ["I am logged in as an administrator"],
     "when": [
-      "I navigate to the departments management page",
+      "I click on Settings in the head bar",
+      "I click on Departments",
       "I edit the Sales department",
       "I change the department name to 'Sales1'",
       "I set the Allowance to '15'",
@@ -19,9 +20,7 @@
     ],
     "then": [
       "The page should display 'Department Sales1 was updated'",
-      "The department 'Sales1' should appear in the departments list",
-      "The department should show Allowance of 15",
-      "The department should have Accrued allowance enabled"
+      "The department 'Sales1' should appear in the departments list and Allowance should be 15 and Accrued allowance should be enabled"
     ]
   },
   "intent_template_id": 0,
@@ -30,8 +29,8 @@
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The page should display 'Department Sales1 was updated'",
-        "The department 'Sales1' should appear in the departments list with Allowance of 15"
+      "The page should display 'Department Sales1 was updated'",
+      "The department 'Sales1' should appear in the departments list and Allowance should be 15 and Accrued allowance should be enabled"
       ]
     }
   }

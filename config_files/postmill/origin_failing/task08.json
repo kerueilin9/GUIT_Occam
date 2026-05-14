@@ -1,0 +1,38 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task08",
+  "order": 8,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Submission",
+    "scenario": "Post submission - The URL field remains empty after entry",
+    "given": [
+      "I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"
+    ],
+    "when": [
+      "Click on the header \"button\" with the account name",
+      "Click on the \"+Submit\" link in the header",
+      "Enter the following in the URL field: lataverne"
+    ],
+    "then": [
+      "An error message is displayed : \"wrong format for a URL\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "An error message is displayed : \"wrong format for a URL\""
+      ]
+    }
+  }
+}

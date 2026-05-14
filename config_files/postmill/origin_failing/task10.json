@@ -1,0 +1,38 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task10",
+  "order": 10,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Wiki",
+    "scenario": "Wiki - creating a new page",
+    "given": [
+      "I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"
+    ],
+    "when": [
+      "Go to the \"Wiki\" tab",
+      "Create new wiki page:\n- Fill the \"Title\" field with \"Introduction to Artificial Intelligence\"\n- Fill the \"Body\" field with \"This page provides an overview of AI, its history, and applications.\"\n- Click on the \"Save\" button",
+      "Click on the \"Remove page\" button"
+    ],
+    "then": [
+      "A message \"page removed\" appears."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "A message \"page removed\" appears."
+      ]
+    }
+  }
+}

@@ -13,8 +13,9 @@
       "I navigate to Gallery list",
       "I click on Create Gallery button",
       "I fill in the gallery title",
+      "I click on Create button",
       "I fill in the gallery Published Date with \"2023-01-01\"",
-      "I save the gallery"
+      "I save the gallery (click twice because first click closes the date picker and second click saves the gallery)"
     ],
     "then": [
       "The gallery should be created successfully",

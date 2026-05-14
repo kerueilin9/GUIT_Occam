@@ -1,0 +1,32 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task13",
+  "order": 13,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Wiki",
+    "scenario": "Wiki - creating a new page",
+    "given": ["I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"],
+    "when": [
+      "Go to the \"Wiki\" tab",
+      "Click on \"Create this page\"",
+      "Create values to fill in the fields and click on \"Save\"."
+    ],
+    "then": [
+      "A page with the wiki title is displayed\nIt contains under the title: \n- information from the index page\nIt also contains 3 sections on the right:\n- Index \n- Toolbox with Edit page and Page history\n- Navigation with: All pages, Recent changes and \"Create new page\"."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "A page with the wiki title is displayed\nIt contains under the title: \n- information from the index page\nIt also contains 3 sections on the right:\n- Index \n- Toolbox with Edit page and Page history\n- Navigation with: All pages, Recent changes and \"Create new page\"."
+      ]
+    }
+  }
+}

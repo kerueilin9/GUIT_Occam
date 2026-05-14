@@ -1,0 +1,36 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task02",
+  "order": 2,
+  "require_login": false,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Registration",
+    "scenario": "Registration - Errors",
+    "given": ["I am on the Postmill site"],
+    "when": [
+      "Click on Sign Up",
+      "Enter \"MarvelsGrantMan136\" as identifier",
+      "Enter a password with 'test1234'",
+      "Enter the same password in the Repeat field",
+      "Click on \"Sign up\"",
+      "Enter a login that does not yet exist, then click on the \"Sign up\" button.",
+      "Enter only the password field with a valid password, then click on \"Sign up\".",
+      "Enter a pair of invalid passwords such as \"Yahou15\" (7 characters) then click on Sign up",
+      "Enter 2 different valid passwords and click on Sign up",
+      "Enter the same valid passwords and an invalid e-mail address (e.g. \"plop@123.\") then click on Sign up",
+      "Delete the information in the e-mail address field and click on \"Sign up\"."
+    ],
+    "then": ["Registration works"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["Registration works"]
+    }
+  }
+}

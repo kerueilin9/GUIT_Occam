@@ -24,9 +24,9 @@
     ]
   },
     "isp": {
-    "enabled": "true",
-    "max_test_cases": 15,
-    "isp_model": "gemini-2.5-flash"
+        "enabled": "true",
+        "max_test_cases": 15,
+        "isp_model": "gemini-2.5-flash"
   },
   "require_reset": false,
   "eval": {

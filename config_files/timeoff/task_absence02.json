@@ -10,14 +10,14 @@
     "scenario": "Submit a new absence request with Sick Leave",
     "given": ["I am logged in as an employee"],
     "when": [
-      "I navigate to the new absence page",
-      "I select leave type as \"Sick Leave\"",
-      "I select From date as \"2025/12/01\"",
-      "I select From as \"Morning\"",
-      "I select To date as \"2025/12/01\"",
-      "I select To as \"Afternoon\"",
-      "I add comment \"test\"",
-      "I submit the new absence"
+      "I click on the new absence button",
+      "I select leave type with \"Sick Leave\"",
+      "I fill in From date with \"2025/12/01\"",
+      "I select From with \"Morning\"",
+      "I fill in To date with \"2025/12/01\"",
+      "I select To with \"Afternoon\"",
+      "I fill in comment with \"test\"",
+      "I click on the Create button"
     ],
     "then": [
       "The message \"New leave request was added\" should appear on the screen"

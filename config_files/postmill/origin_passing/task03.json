@@ -1,0 +1,28 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task03",
+  "order": 3,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Profile",
+    "scenario": "Profile",
+    "given": ["I am on the Postmill site"],
+    "when": [
+      "Click on the header dropdown menu with the account name",
+      "Click on \"Profile\"",
+      "Click on \"Overview\" and \"Submissions\"."
+    ],
+    "then": ["Tabs displayed correctly"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["Tabs displayed correctly"]
+    }
+  }
+}

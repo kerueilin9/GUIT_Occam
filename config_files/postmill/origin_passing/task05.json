@@ -1,0 +1,29 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task05",
+  "order": 5,
+  "require_login": false,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Settings",
+    "scenario": "Settings",
+    "given": ["I am on the Postmill site"],
+    "when": [
+      "Click on the header \"button\" with the account name",
+      "Click on \"User Settings\"",
+      "In the \"General\" section, select \"New\" in Home Page instead of \"Hot\" (or vice versa), then click on the \"Save changes\" button.",
+      "Go to \"Postmill\" page"
+    ],
+    "then": ["In the rightmost tab, the value chosen (New or Hot) in the previous step is displayed."]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["In the rightmost tab, the value chosen (New or Hot) in the previous step is displayed."]
+    }
+  }
+}

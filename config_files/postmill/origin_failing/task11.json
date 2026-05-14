@@ -1,0 +1,40 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task11",
+  "order": 11,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Wiki",
+    "scenario": "Wiki - Compare page",
+    "given": [
+      "I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"
+    ],
+    "when": [
+      "Go to the \"Wiki\" tab",
+      "Click on \"Create this page\"",
+      "Create values to fill in the fields and click on \"Save\".",
+      "Click on \"Page history\".",
+      "Click on the \"Compare\" button"
+    ],
+    "then": [
+      "The \"Compare\" page is displayed"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The \"Compare\" page is displayed"
+      ]
+    }
+  }
+}

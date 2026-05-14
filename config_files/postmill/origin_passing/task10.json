@@ -1,0 +1,43 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task10",
+  "order": 10,
+  "require_login": false,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Post blocked",
+    "scenario": "Post blocked",
+    "given": ["I am on the Postmill site"],
+    "when": [
+      "click on Sign Up",
+      "Create and enter an unkown identifier",
+      "Enter a password that complies with the indicated rules",
+      "Enter the same password in the Repeat field",
+      "Enter valid e-mail address for prerequisites",
+      "Click on sign up",
+      "Click on the \"Submit\" tab",
+      "Fill in the title field with: The tester's tavern",
+      "Select \"science\" in Forum, then click on \"Create submission\".",
+      "Click on the \"Submit\" tab",
+      "Fill in the title field with: The tester's tavern 2",
+      "Select \"science\" in Forum, then click on \"Create submission\".",
+      "Click on the \"Submit\" tab",
+      "Fill in the title field with: The tester's tavern 3",
+      "Select \"science\" in Forum, then click on \"Create submission\".",
+      "Click on the \"Submit\" tab",
+      "Fill in the title field with: The tester's tavern 4",
+      "Select \"science\" in Forum, then click on \"Create submission\"."
+    ],
+    "then": ["An error message indicating that you can no longer post is displayed"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["An error message indicating that you can no longer post is displayed"]
+    }
+  }
+}

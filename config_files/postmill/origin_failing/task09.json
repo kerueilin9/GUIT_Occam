@@ -1,0 +1,38 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task09",
+  "order": 9,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Submission",
+    "scenario": "Submission image without body",
+    "given": [
+      "I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"
+    ],
+    "when": [
+      "Click on the \"Submit\" tab",
+      "Enter the following in the URL field: https://latavernedutesteur.fr/",
+      "Click on \"image\" next to URL"
+    ],
+    "then": [
+      "A button \"select a file\" and a drowpdown menu \"Choose your image format\" appear"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "A button \"select a file\" and a drowpdown menu \"Choose your image format\" appear"
+      ]
+    }
+  }
+}

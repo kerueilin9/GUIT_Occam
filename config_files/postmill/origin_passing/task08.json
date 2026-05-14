@@ -1,0 +1,30 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task08",
+  "order": 8,
+  "require_login": false,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Submission",
+    "scenario": "Submission",
+    "given": ["I am on the Postmill site"],
+    "when": [
+      "Click on the \"Submit\" tab",
+      "Fill in the title field with: The tester's tavern",
+      "Select \"science\" in Forum, then click on \"Create submission\".",
+      "Add a comment and confirm",
+      "Delete the comment and submission"
+    ],
+    "then": ["The page is redirected to the /f/science forum"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["The page is redirected to the /f/science forum"]
+    }
+  }
+}

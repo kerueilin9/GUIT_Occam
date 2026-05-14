@@ -1,0 +1,30 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task11",
+  "order": 11,
+  "require_login": false,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Forum",
+    "scenario": "Forum",
+    "given": ["I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"],
+    "when": [
+      "Go to the Forums tab",
+      "Search for the AskReddit  forum",
+      "Click on the \"Tags\" tab",
+      "Click on Alphabetical",
+      "Click on a forum name on the page"
+    ],
+    "then": ["The forum page opens"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["The forum page opens"]
+    }
+  }
+}

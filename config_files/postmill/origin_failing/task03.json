@@ -1,0 +1,36 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task03",
+  "order": 3,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Notification",
+    "scenario": "User notification page with a notification about last connexion",
+    "given": [
+      "I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234 - click on the \"Keep me logged in\" box"
+    ],
+    "when": [
+      "In the top menu bar, click on the email symbol (notification)"
+    ],
+    "then": [
+      "The notification page is displayed with a non empty list of notifications"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The notification page is displayed with a non empty list of notifications"
+      ]
+    }
+  }
+}

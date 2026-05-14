@@ -1,0 +1,30 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task12",
+  "order": 12,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Creating a forum",
+    "scenario": "Creating a forum",
+    "given": ["I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"],
+    "when": [
+      "Go to the Forum tab",
+      "Click on the \"Create forum\" button",
+      "Enter the information with typical forum value and click on the \"Create forum\" button",
+      "Click on \"Delete Forum\"",
+      "Enter the name of the forum, check the confirmation box and delete it"
+    ],
+    "then": ["The Postmill tab is displayed"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["The Postmill tab is displayed"]
+    }
+  }
+}

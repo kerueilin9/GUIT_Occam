@@ -1,0 +1,39 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task13",
+  "order": 13,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Comments",
+    "scenario": "1st Comment - no URL",
+    "given": [
+      "I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"
+    ],
+    "when": [
+      "From the Postmill page find posts with the \"All\" filter in the \"Featured\" dropdown menu",
+      "Click on the title of a post without URL",
+      "Add the comment \"no URL\" and click on \"Post\".",
+      "Delete the newly created comment\nA pop up appears: confirm deletion"
+    ],
+    "then": [
+      "The comment is still in the list of comments because it needs to be checked by an administrator (\"see message on the page\")"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The comment is still in the list of comments because it needs to be checked by an administrator (\"see message on the page\")"
+      ]
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "sites": [
+    "postmill"
+  ],
+  "task_id": "postmill_task02",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Login",
+    "scenario": "Login and access to my Profile page then on Premium subscribtion page",
+    "given": [
+      "I am on the Postmill site and log in with account MarvelsGrantMan136 / test1234"
+    ],
+    "when": [
+      "In the user drop-down menu, click on profile"
+    ],
+    "then": [
+      "A list of user post is displayed, and a User zone with the User Id, the duration of the registration, and a premium button"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "A list of user post is displayed, and a User zone with the User Id, the duration of the registration, and a premium button"
+      ]
+    }
+  }
+}
