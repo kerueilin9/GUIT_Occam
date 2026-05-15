@@ -101,6 +101,7 @@ def run():
         if os.path.exists(os.path.join(dstdir, f"{task_config['task_id']}.json")):
             print(f"Skip {task_config['task_id']}.")
             continue
+        task_start_time = time.perf_counter()
         if task_config['task_id'] in list(range(600, 650))+list(range(681, 689)):
             print("Reddit post task. Sleep 30 mins.")
             time.sleep(1800)
@@ -154,6 +155,7 @@ def run():
                 print(f"[ISP] Task file generation error (non-fatal): {_isp_exc}")
 
         env.close()
+        task_elapsed_seconds = round(time.perf_counter() - task_start_time, 3)
 
         if config.logging:
             with open(config_file, "r", encoding="utf-8") as f:
@@ -172,6 +174,7 @@ def run():
                 "task_id": task_config['task_id'],
                 "model": config.agent.actor.model if hasattr(config.agent, "actor") else config.agent.model_name,
                 "type": config.agent.type,
+                "task_elapsed_seconds": task_elapsed_seconds,
                 # Use OS-independent path pieces for logfile (format: <logdir>/<filename>.json)
                 "logfile": os.path.join(os.path.basename(dstdir), os.path.basename(log_file)).replace('\\', '/'),
             }

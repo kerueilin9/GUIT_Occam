@@ -167,10 +167,17 @@ class Agent:
     def parse_elements(self, text, key_list):
         element_dict = {}
         for k in key_list:
-            # _match = re.search(rf'{k.upper()}:\s*(.*?)\s*(?=\n[A-Z\d\s\W]*: *\n|$)', text, re.DOTALL)
-            _match = re.search(rf'{k.upper()}:\s*(.*?)\s*(?=\n[A-Z\s]*:|$)', text, re.DOTALL)
-            element_dict[k] = _match.group(1).strip() if _match else ""
+            element_dict[k] = self.parse_output_field(text, k)
         return element_dict
+
+    def parse_output_field(self, text, key):
+        header = re.escape(key.upper())
+        _match = re.search(
+            rf"^[ \t]*{header}:[ \t]*(.*?)(?=^[ \t]*[A-Z][A-Z0-9 _/-]*:[ \t]*|\Z)",
+            text or "",
+            re.DOTALL | re.MULTILINE,
+        )
+        return _match.group(1).strip() if _match else ""
 
     def get_output_specifications(self):
         return build_output_specifications(self.config.output)
@@ -399,6 +406,13 @@ class Actor(Agent):
         action_elements["instruction"] = instruction
         action_elements["input"] = online_input
         return action_elements
+
+    def _print_invalid_action(self, invalid_action_str, model_response):
+        raw_action = self.parse_output_field(model_response, "action")
+        print(
+            f"Invalid actions: {invalid_action_str}\n"
+            f"ACTION:\n{raw_action}"
+        )
     
     def update_online_state(self, **online_states):
         super().update_online_state(**online_states)
@@ -972,7 +986,7 @@ class Actor(Agent):
                         action_element_list.append(action_elements)
                     else:
                         invalid_action_str = action_elements["action"]
-                        print(f"Invalid actions: {invalid_action_str}")
+                        self._print_invalid_action(invalid_action_str, model_response)
                         invalid_actions = True
                 elif any("action candidates" in k for k in action_elements.keys()):
                     action_candidates_key = [k for k in action_elements.keys() if "action candidates" in k][0]
@@ -991,7 +1005,7 @@ class Actor(Agent):
                             filtered_action_candidates.append({'reason': reason, 'action': action})
                         else:
                             invalid_action_str = action
-                            print(f"Invalid actions: {invalid_action_str}")
+                            self._print_invalid_action(invalid_action_str, model_response)
                             invalid_actions = True
                     if filtered_action_candidates:
                         action_elements[action_candidates_key] = filtered_action_candidates
@@ -1037,7 +1051,7 @@ class Actor(Agent):
                         action_element_list.append(action_elements)
                     else:
                         invalid_action_str = action_elements["action"]
-                        print(f"Invalid actions: {invalid_action_str}")
+                        self._print_invalid_action(invalid_action_str, model_response)
                         invalid_actions = True
                 if not get_valid_actions:
                     identity_name = getattr(identity.config, "name", identity.__class__.__name__)
