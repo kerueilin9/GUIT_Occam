@@ -15,6 +15,7 @@ from AgentOccam.obs_opt import (
     translate_node_to_str,
 )
 from AgentOccam.gherkin_parser import parse_gherkin, gherkin_to_objective
+from AgentOccam.ax_trace_recorder import AXTraceRecorder
 
 
 class WebArenaEnvironmentWrapper():
@@ -81,9 +82,12 @@ class WebArenaEnvironmentWrapper():
         self.isp_screenshot_path = None
         self.evaluation_comment = ""
         self.evaluation_comments = []
+        task_name = self.config.get("task_id") or os.path.splitext(os.path.basename(self.config_file))[0]
+        self.ax_trace_recorder = AXTraceRecorder(task_name)
         
         self.trajectory: Trajectory = []
         self.update_webarena_metrics()
+        self._capture_ax_trace()
         
     def reset(self):
         self.obs, self.info = self.webarena_env.reset(options={"config_file": self.config_file})
@@ -91,6 +95,8 @@ class WebArenaEnvironmentWrapper():
         self.isp_screenshot_path = None
         self.evaluation_comment = ""
         self.evaluation_comments = []
+        self.ax_trace_recorder = AXTraceRecorder(self.config.get("task_id") or os.path.splitext(os.path.basename(self.config_file))[0])
+        self._capture_ax_trace()
 
     def close(self):
         self.webarena_env.close()
@@ -169,6 +175,12 @@ class WebArenaEnvironmentWrapper():
             print(f"[ISP] Failed to save manual review screenshot: {e}")
         finally:
             self._isp_screenshot_saved = True
+
+    def _capture_ax_trace(self):
+        try:
+            self.ax_trace_recorder.capture(self.webarena_env.page)
+        except Exception as e:
+            print(f"[AXTrace] Failed to capture accessibility trace: {e}")
     
     def step(self, action):
         self.steps = self.steps + 1
@@ -196,6 +208,8 @@ class WebArenaEnvironmentWrapper():
             try:
                 self.obs, _, self.terminated, _, self.info = self.webarena_env.step(action_cmd) 
                 self.update_webarena_metrics(action_cmd)
+                if action_cmd["action_type"] not in {ActionTypes.STOP, ActionTypes.NONE}:
+                    self._capture_ax_trace()
             except Exception as e:
                 print(f"Error occurred while taking step: {e}")
             
