@@ -2,7 +2,7 @@
   "sites": ["postmill"],
   "task_id": "postmill_task09",
   "order": 9,
-  "require_login": false,
+  "require_login": true,
   "storage_state": ".auth/postmill_state.json",
   "start_url": "http://localhost:3200",
   "geolocation": null,
