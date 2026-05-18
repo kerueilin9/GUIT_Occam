@@ -37,7 +37,7 @@ from evaluation_harness.evaluator_prompts import (
     build_llm_judge_prompt,
 )
 from evaluation_harness.helper_functions import generate_from_llm_chat_completion
-from evaluation_harness.page_snapshot import get_page_snapshot
+from evaluation_harness.page_snapshot import capture_page_screenshot, get_page_snapshot
 
 try:
     from AgentOccam.gherkin_parser import GherkinParser
@@ -94,7 +94,34 @@ def llm_judge_evaluate(
             temperature=0,
             max_tokens=1200,
         )
-        score, reason = _parse_response(response)
+        score, reason, needs_screenshot = _parse_response(response)
+
+        if needs_screenshot:
+            screenshot_bytes = _try_capture_screenshot(page)
+            if screenshot_bytes:
+                try:
+                    visual_prompt = build_llm_judge_prompt(
+                        scenario_text,
+                        expected_hint,
+                        page_snapshot,
+                        screenshot_attached=True,
+                    )
+                    visual_response = generate_from_llm_chat_completion(
+                        messages=[
+                            {"role": "system", "content": LLM_JUDGE_SYSTEM_PROMPT},
+                            {"role": "user", "content": visual_prompt},
+                        ],
+                        model="auto",
+                        temperature=0,
+                        max_tokens=1200,
+                        image_bytes=screenshot_bytes,
+                    )
+                    score, reason, _ = _parse_response(visual_response)
+                    reason = f"{reason} (Used screenshot because text evidence was insufficient.)"
+                except Exception as exc:
+                    reason = f"{reason} Screenshot-assisted evaluation failed: {exc}"
+            else:
+                reason = f"{reason} Screenshot was requested but could not be captured."
     except Exception as exc:
         print(f"[LLMJudge] ERROR during LLM call: {exc}")
         score, reason = 0.0, f"LLM evaluation failed: {exc}"
@@ -288,8 +315,8 @@ def _build_expected_hint(config: dict[str, Any]) -> str | None:
 # Response parser
 # ---------------------------------------------------------------------------
 
-def _parse_response(response: str) -> tuple[float, str]:
-    """Parse LLM response into (score, reason). Robust to minor formatting issues."""
+def _parse_response(response: str) -> tuple[float, str, bool]:
+    """Parse LLM response into (score, reason, needs_screenshot)."""
     text = response.strip()
 
     # Try strict JSON parse
@@ -299,7 +326,8 @@ def _parse_response(response: str) -> tuple[float, str]:
             parsed = json.loads(match_json.group(0))
             score = _binary_score(float(parsed.get("score", 0.0)))
             reason = str(parsed.get("reason", "No reason provided."))
-            return score, reason
+            needs_screenshot = _coerce_bool(parsed.get("needs_screenshot", False))
+            return score, reason, needs_screenshot
         except (json.JSONDecodeError, ValueError):
             pass
 
@@ -307,4 +335,30 @@ def _parse_response(response: str) -> tuple[float, str]:
     score_match = re.search(r'(\d+\.?\d*)', text)
     score = _binary_score(float(score_match.group(1))) if score_match else 0.0
     reason = text if len(text) < 300 else text[:300] + "..."
-    return score, reason
+    return score, reason, _mentions_screenshot_need(reason)
+
+
+def _coerce_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)
+
+
+def _mentions_screenshot_need(text: str) -> bool:
+    lower_text = text.lower()
+    return (
+        "need screenshot" in lower_text
+        or "needs screenshot" in lower_text
+        or ("cannot determine from" in lower_text and "text" in lower_text)
+        or ("insufficient" in lower_text and "visual" in lower_text)
+    )
+
+
+def _try_capture_screenshot(page: Page) -> bytes | None:
+    try:
+        return capture_page_screenshot(page)
+    except Exception as exc:
+        print(f"[LLMJudge] WARNING: Failed to capture final screenshot: {exc}")
+        return None

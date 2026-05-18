@@ -72,6 +72,11 @@ def get_page_snapshot(
     return snapshot
 
 
+def capture_page_screenshot(page: Page) -> bytes:
+    """Capture the final page as PNG bytes for optional vision-assisted evaluation."""
+    return page.screenshot(full_page=True, type="png", timeout=60000)
+
+
 def _extract_from_observation_metadata(entry: dict[str, Any]) -> str:
     info = entry.get("info", {})
     if not isinstance(info, dict):

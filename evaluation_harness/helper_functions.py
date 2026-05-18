@@ -1,4 +1,5 @@
 """Implements helper functions to assist evaluation cases where other evaluators are not suitable."""
+import base64
 import json
 import os
 from typing import Any
@@ -64,17 +65,60 @@ def _build_prompt_from_messages(messages: list[dict[str, Any]]) -> tuple[str, st
     return "\n\n".join(turns), system_prompt
 
 
+def _attach_image_to_last_user_message(
+    messages: list[dict[str, Any]],
+    image_bytes: bytes,
+    image_mime_type: str,
+) -> list[dict[str, Any]]:
+    """Return OpenAI-compatible messages with an image attached to the last user turn."""
+    encoded_image = base64.b64encode(image_bytes).decode("ascii")
+    image_url = f"data:{image_mime_type};base64,{encoded_image}"
+    output_messages: list[dict[str, Any]] = []
+
+    last_user_index = next(
+        (
+            idx
+            for idx in range(len(messages) - 1, -1, -1)
+            if messages[idx].get("role") == "user"
+        ),
+        -1,
+    )
+
+    for idx, message in enumerate(messages):
+        copied_message = dict(message)
+        if idx == last_user_index:
+            text_content = str(copied_message.get("content", ""))
+            copied_message["content"] = [
+                {"type": "text", "text": text_content},
+                {"type": "image_url", "image_url": {"url": image_url}},
+            ]
+        output_messages.append(copied_message)
+
+    return output_messages
+
+
 def generate_from_llm_chat_completion(
     messages: list[dict[str, Any]],
     model: str = "auto",
     temperature: float = 0,
     max_tokens: int = 768,
+    image_bytes: bytes | None = None,
+    image_mime_type: str = "image/png",
 ) -> str:
     prompt, system_prompt = _build_prompt_from_messages(messages)
 
     # 1. Decide Provider and Model
     if model == "auto":
-        if _is_vertex_mode() and ADK_AVAILABLE:
+        if image_bytes and os.getenv("GEMINI_API_KEY") and GEMINI_AVAILABLE:
+            model, use_gemini, use_adk = "gemini-2.5-flash", True, False
+        elif image_bytes and os.getenv("OPENAI_API_KEY") and OPENAI_AVAILABLE:
+            model, use_gemini, use_adk = "gpt-4o", False, False
+        elif image_bytes:
+            raise ValueError(
+                "Image-assisted LLM evaluation requires GEMINI_API_KEY or OPENAI_API_KEY. "
+                "ADK/Vertex image support is not wired in this evaluator helper yet."
+            )
+        elif _is_vertex_mode() and ADK_AVAILABLE:
             model, use_gemini, use_adk = "adk-gemini-2.5-flash", False, True
         elif os.getenv("GEMINI_API_KEY") and GEMINI_AVAILABLE:
             model, use_gemini, use_adk = "gemini-2.5-flash", True, False
@@ -92,11 +136,15 @@ def generate_from_llm_chat_completion(
         model_lower = model.lower()
         use_adk = model_lower.startswith("adk-") or (_is_vertex_mode() and "gemini" in model_lower and ADK_AVAILABLE)
         use_gemini = ("gemini" in model_lower) and not use_adk
+        if image_bytes and use_adk:
+            raise ValueError("Image-assisted evaluation is not supported through the ADK provider yet.")
 
         # Reuse the shared provider registry for explicit non-GPT, non-Gemini, non-ADK models.
         try:
             family = detect_model_family(model_lower)
             if family not in {"gpt", "gemini", "adk"}:
+                if image_bytes:
+                    raise ValueError(f"Image-assisted evaluation is not supported for model family '{family}'.")
                 call_model = build_call_model(model, system_prompt=system_prompt or "")
                 return call_model(prompt=prompt or "Please evaluate the request based on prior context.")
         except ValueError:
@@ -137,7 +185,10 @@ def generate_from_llm_chat_completion(
 
         # Last message as current user prompt, previous turns as history
         user_input = history.pop()["parts"][0] if history else ""
-        logger.debug(f"Gemini Chat - System: {sys_msg}, User Input: {user_input}, History Length: {len(history)}")
+        logger.debug(
+            f"Gemini Chat - System: {sys_msg}, User Input: {user_input}, "
+            f"History Length: {len(history)}, Image Attached: {bool(image_bytes)}"
+        )
         genai_model = genai.GenerativeModel(
             model_name=model,
             system_instruction=sys_msg,
@@ -153,8 +204,11 @@ def generate_from_llm_chat_completion(
         )
 
         chat = genai_model.start_chat(history=history)
+        user_parts: list[Any] = [user_input]
+        if image_bytes:
+            user_parts.append({"mime_type": image_mime_type, "data": image_bytes})
         response = chat.send_message(
-            user_input,
+            user_parts if image_bytes else user_input,
             generation_config=genai.GenerationConfig(
                 temperature=temperature,
                 max_output_tokens=max_tokens,
@@ -183,8 +237,13 @@ def generate_from_llm_chat_completion(
     if not OPENAI_AVAILABLE:
         raise ValueError("OpenAI not available. Please set OPENAI_API_KEY.")
 
+    openai_messages = (
+        _attach_image_to_last_user_message(messages, image_bytes, image_mime_type)
+        if image_bytes
+        else messages
+    )
     return generate_from_openai_chat_completion(
-        messages=messages,
+        messages=openai_messages,
         model=model,
         temperature=temperature,
         max_tokens=max_tokens,
