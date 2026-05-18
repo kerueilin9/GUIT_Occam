@@ -1,6 +1,7 @@
 {
   "sites": ["timeoff"],
   "task_id": "timeoff_loginError",
+  "order": 99,
   "require_login": false,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
