@@ -4,7 +4,6 @@
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
-  "geolocation": null,
   "gherkin": {
     "feature": "TimeOff User Authentication",
     "scenario": "User logout",
@@ -15,8 +14,6 @@
       "The login form should be visible"
     ]
   },
-  "intent_template_id": 0,
-  "require_reset": false,
   "eval": {
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {

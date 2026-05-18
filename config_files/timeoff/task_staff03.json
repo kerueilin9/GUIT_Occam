@@ -1,33 +1,29 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task_staff05",
+  "task_id": "timeoff_staff03",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
-  "geolocation": null,
   "gherkin": {
     "feature": "TimeOff Departments Management",
-    "scenario": "Update Sales department manager",
+    "scenario": "Delete Sales department manager",
     "given": ["I am logged in as an administrator"],
     "when": [
-      "I navigate to the departments management page",
-      "I edit the Sales1 department",
-      "I change the Manager to 'te st'",
-      "I save the changes"
+      "I navigate to the Staff's profile page",
+      "I click the Ke rueilin staff member",
+      "I click on delete"
     ],
     "then": [
-      "The page should display 'Department Sales1 was updated'",
-      "The Sales1 department should show manager 'te st'"
+      "The page should display 'Employee records were removed from the system'",
+      "The Ke rueilin manager on longer exists"
     ]
   },
-  "intent_template_id": 0,
-  "require_reset": false,
   "eval": {
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The page should display 'Department Sales1 was updated'",
-        "The Sales1 department should have manager 'te st'"
+        "The page should display 'Employee records were removed from the system'",
+        "The Ke rueilin manager on longer exists"
       ]
     }
   }

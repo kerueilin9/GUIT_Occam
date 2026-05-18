@@ -4,7 +4,6 @@
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
-  "geolocation": null,
   "gherkin": {
     "feature": "TimeOff Leave Request",
     "scenario": "Submit a new absence request",
@@ -20,8 +19,6 @@
       "The 'Overlapping booking!' message should appear on the screen"
     ]
   },
-  "intent_template_id": 0,
-  "require_reset": false,
   "eval": {
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {

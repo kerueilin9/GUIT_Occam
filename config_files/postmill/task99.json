@@ -1,0 +1,29 @@
+{
+  "sites": ["postmill"],
+  "task_id": "postmill_task01",
+  "order": 1,
+  "require_login": false,
+  "storage_state": ".auth/postmill_state.json",
+  "start_url": "http://localhost:3200",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "Postmill Registration",
+    "scenario": "Registration",
+    "given": ["I am on the Postmill site"],
+    "when": [
+    ],
+    "then": [
+      "The site's home page is displayed on the \"Postmill\" tab.\nIn the header you can also see: \n- 4 other available tabs: Forums, Wiki, Login and Register\n- a search field\nThe \"Posmill\" page contains: Submissions (underlined), Comments, a default filter on \"Featured\" and a default sort on \"Hot\"."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The site's home page is displayed on the \"Postmill\" tab.\nIn the header you can also see: \n- 4 other available tabs: Forums, Wiki, Login and Register\n- a search field\nThe \"Posmill\" page contains: Submissions (underlined), Comments, a default filter on \"Featured\" and a default sort on \"Hot\"."
+      ]
+    }
+  }
+}

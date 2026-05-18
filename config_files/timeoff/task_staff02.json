@@ -1,36 +1,29 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task_staff02",
+  "task_id": "timeoff_staff02",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
-  "geolocation": null,
   "gherkin": {
     "feature": "TimeOff Staff Management",
-    "scenario": "Add a new employee account",
-    "given": ["I am logged in as an administrator"],
+    "scenario": "Update Vector Crawler Staff information",
+    "given": ["I am logged in as an admin"],
     "when": [
-      "I navigate to the Staff page",
-      "I add a new employee",
-      "I enter First Name as 'te'",
-      "I enter Last Name as 'st'",
-      "I enter Email Address as 'test@gmail.com'",
-      "I enter Password as 'test'",
-      "I enter Confirm Password as 'test'",
-      "I save the new employee"
+      "I navigate to the Staff's profile page",
+      "I edit the Test User",
+      "I change the first name to \"Ke\"",
+      "I change the last name to \"rueilin\"",
+      "I save the changes"
     ],
     "then": [
-      "The page should display 'New user account successfully added'",
-      "The new employee 'te st' should appear in the staff list"
+      "The message \"Details for Ke rueilin were updated\" should appear on the screen"
     ]
   },
-  "intent_template_id": 0,
-  "require_reset": false,
   "eval": {
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The page should display 'New user account successfully added'"
+        "The message \"Details for Ke rueilin were updated\" should be visible on the page"
       ]
     }
   }

@@ -1,27 +1,26 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_other01",
+  "task_id": "timeoff_general05",
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
   "gherkin": {
-    "feature": "TimeOff Integration API Management",
-    "scenario": "Regenerate API token",
+    "feature": "TimeOff General Settings",
+    "scenario": "Carry over unused allowance",
     "given": ["I am logged in as an administrator"],
     "when": [
-      "I navigate to the Integration API page",
-      "I click to regenerate the token",
-      "I save the settings"
+      "I navigate to General settings",
+      "I click on 'Carry over allowance'"
     ],
     "then": [
-      "The page should display 'Settings were saved'"
+      "The page should display 'Unused allowance was successfully carried over'"
     ]
   },
   "eval": {
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The page should display 'Settings were saved'"
+        "The page should display 'Unused allowance was successfully carried over'"
       ]
     }
   }

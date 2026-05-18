@@ -1,0 +1,31 @@
+{
+  "sites": ["timeoff"],
+  "task_id": "timeoff_loginError",
+  "require_login": false,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3102",
+  "gherkin": {
+    "feature": "TimeOff Login",
+    "scenario": "login with incorrect password",
+    "given": ["I am in the login page"],
+    "when": [
+        "I fill in Email with 'test.user@example.com'",
+        "I fill in Password with 'wrongpassword'",
+        "I click the login button"
+    ],
+    "then": [
+      "The page should display 'Incorrect credentials'",
+      "I should remain on the login page"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The page should display 'Incorrect credentials'",
+        "I should remain on the login page"
+      ]
+    }
+  }
+}
+

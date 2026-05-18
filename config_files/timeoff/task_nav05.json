@@ -1,10 +1,10 @@
 {
   "sites": ["timeoff"],
-  "task_id": "timeoff_task_nav05",
+  "task_id": "timeoff_nav05",
+  "order": 1,
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
-  "geolocation": null,
   "gherkin": {
     "feature": "TimeOff Navigation",
     "scenario": "Navigate to My feeds from user menu",
@@ -12,7 +12,6 @@
     "when": ["I click on the user menu", "I click on Feeds"],
     "then": ["The page should navigate to My feeds"]
   },
-  "require_reset": false,
   "eval": {
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {

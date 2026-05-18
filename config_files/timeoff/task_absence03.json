@@ -4,7 +4,6 @@
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
-  "geolocation": null,
   "gherkin": {
     "feature": "TimeOff Leave Request Approval",
     "scenario": "Approve leave request",
@@ -12,13 +11,12 @@
     "when": [
       "I click on the user menu",
       "I click on Requests",
-      "I click on Approve button"
+      "I click on Approve button with Leave request type is Holiday"
     ],
     "then": [
         "The 'Request from Vector Crawler was approved' message should appear on the screen"
     ]
   },
-  "require_reset": false,
   "eval": {
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {

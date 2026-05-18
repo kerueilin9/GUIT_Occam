@@ -4,7 +4,6 @@
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
-  "geolocation": null,
   "gherkin": {
     "feature": "TimeOff Bank Holidays Management",
     "scenario": "Add a new bank holiday",
@@ -21,14 +20,12 @@
       "The bank holiday \"Ker\" with date \"2025/09/09\" should be in the list"
     ]
   },
-  "intent_template_id": 0,
-  "require_reset": false,
   "eval": {
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The page should display \"Changes to bank holidays were saved\"",
-        "The bank holiday \"Ker\" should be visible in the holidays list"
+      "I should see a success message \"Changes to bank holidays were saved\"",
+      "The bank holiday \"Ker\" with date \"2025/09/09\" should be in the list"
       ]
     }
   }
