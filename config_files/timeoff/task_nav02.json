@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_nav02",
   "order": 1,
   "require_login": true,
@@ -8,12 +10,20 @@
   "gherkin": {
     "feature": "TimeOff Navigation",
     "scenario": "Navigate to Team View",
-    "given": ["I am logged in as an employee"],
-    "when": ["I click on Team View in the head bar"],
-    "then": ["The page should navigate to Team View"]
+    "given": [
+      "I am logged in as an employee"
+    ],
+    "when": [
+      "I click Team View in the header"
+    ],
+    "then": [
+      "The page should display Team View"
+    ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display Team View",
@@ -22,4 +32,3 @@
     }
   }
 }
-

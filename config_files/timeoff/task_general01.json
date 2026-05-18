@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_general01",
   "order": 4,
   "require_login": true,
@@ -8,26 +10,29 @@
   "gherkin": {
     "feature": "TimeOff Company Settings Management",
     "scenario": "Update company general settings",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
       "I navigate to General settings",
-      "I change the Company name to \"ker\"",
-      "I change the Country to \"CN\"",
+      "I change the company name to \"ker\"",
+      "I change the country to \"CN\"",
       "I save the settings"
     ],
     "then": [
-        "The page should display \"Company was successfully updated\"",
-        "The Company name should be \"ker\" and the Country should be \"CN\""
+      "The page should display \"Company was successfully updated\"",
+      "The company name should be \"ker\" and the country should be \"CN\""
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display \"Company was successfully updated\"",
-        "The Company name should be \"ker\" and the Country should be \"CN\""
+        "The company name should be \"ker\" and the country should be \"CN\""
       ]
     }
   }
 }
-

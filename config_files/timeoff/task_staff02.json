@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_staff02",
   "order": 7,
   "require_login": true,
@@ -7,11 +9,13 @@
   "start_url": "http://localhost:3102",
   "gherkin": {
     "feature": "TimeOff Staff Management",
-    "scenario": "Update Vector Crawler Staff information",
-    "given": ["I am logged in as an admin"],
+    "scenario": "Update Test User staff information",
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
-      "I navigate to the Staff's profile page",
-      "I edit the Test User",
+      "I navigate to the staff member's profile page",
+      "I edit the Test User staff member",
       "I change the first name to \"Ke\"",
       "I change the last name to \"rueilin\"",
       "I save the changes"
@@ -21,7 +25,9 @@
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The message \"Details for Ke rueilin were updated\" should be visible on the page"
@@ -29,4 +35,3 @@
     }
   }
 }
-

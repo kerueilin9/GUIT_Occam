@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_staff04",
   "order": 7,
   "require_login": true,
@@ -8,16 +10,18 @@
   "gherkin": {
     "feature": "TimeOff Departments Management",
     "scenario": "Update Sales department manager",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
       "I navigate to the Staff page",
       "I add a new employee",
-      "I fill in First Name with 'Test'",
-      "I fill in Last Name with 'User'",
+      "I fill in the First Name field with 'Test'",
+      "I fill in the Last Name field with 'User'",
       "I check the 'Is administrator user' checkbox",
-      "I fill in Email Address with 'test.user@example.com'",
-      "I fill in Password with 'Password123'",
-      "I fill in Confirm Password with 'Password123'",
+      "I fill in the Email Address field with 'test.user@example.com'",
+      "I fill in the Password field with 'Password123'",
+      "I fill in the Confirm Password field with 'Password123'",
       "I save the new employee",
       "I navigate to the departments management page",
       "I edit the Sales1 department",
@@ -30,13 +34,14 @@
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display 'Department Sales1 was updated'",
-        "The Sales1 department should have manager 'Test User'"
+        "The Sales1 department should show manager 'Test User'"
       ]
     }
   }
 }
-

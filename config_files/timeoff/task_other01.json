@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_other01",
   "order": 6,
   "require_login": true,
@@ -8,10 +10,12 @@
   "gherkin": {
     "feature": "TimeOff Integration API Management",
     "scenario": "Regenerate API token",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
       "I navigate to the Integration API page",
-      "I click to regenerate the token",
+      "I click the regenerate token button",
       "I save the settings"
     ],
     "then": [
@@ -19,7 +23,9 @@
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display 'Settings were saved'"
@@ -27,4 +33,3 @@
     }
   }
 }
-

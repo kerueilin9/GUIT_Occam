@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_department01",
   "order": 3,
   "require_login": true,
@@ -8,28 +10,31 @@
   "gherkin": {
     "feature": "TimeOff Departments Management",
     "scenario": "Add a new department with allowance",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
-      "I click on Settings in the head bar",
-      "I click on Departments",
-      "I click on Add new department button",
-      "I fill in the department name with \"test\"",
-      "I set the Allowance to \"10\"",
-      "I click on Create button"
+      "I click Settings in the header",
+      "I click Departments",
+      "I click the Add new department button",
+      "I fill in the department name field with \"test\"",
+      "I set the allowance to \"10\"",
+      "I click the Create button"
     ],
     "then": [
-      "I should see a success message \"Changes to departments were saved\"",
-      "The department \"test\" should be in the list with allowance 10"
+      "I should see the success message \"Changes to departments were saved\"",
+      "The department \"test\" should be in the list with an allowance of 10"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "I should see a success message \"Changes to departments were saved\"",
-        "The department \"test\" should be in the list with allowance 10"
+        "I should see the success message \"Changes to departments were saved\"",
+        "The department \"test\" should be in the list with an allowance of 10"
       ]
     }
   }
 }
-

@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_department03",
   "order": 3,
   "require_login": true,
@@ -8,12 +10,14 @@
   "gherkin": {
     "feature": "TimeOff Departments Management",
     "scenario": "Delete a department",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
-      "I click on Settings in the head bar",
-      "I click on Departments",
-      "I click the test department",
-      "I click delete button"
+      "I click Settings in the header",
+      "I click Departments",
+      "I click the \"test\" department",
+      "I click the Delete button"
     ],
     "then": [
       "The page should display 'Department was successfully removed'",
@@ -21,13 +25,14 @@
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-      "The page should display 'Department was successfully removed'",
-      "The department 'test' should no longer appear in the departments list"
+        "The page should display 'Department was successfully removed'",
+        "The department 'test' should no longer appear in the departments list"
       ]
     }
   }
 }
-

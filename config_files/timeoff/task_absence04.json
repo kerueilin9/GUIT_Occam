@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_absence04",
   "order": 2,
   "require_login": true,
@@ -7,13 +9,15 @@
   "start_url": "http://localhost:3102",
   "gherkin": {
     "feature": "TimeOff Leave Request",
-    "scenario": "Submit a new absence request",
-    "given": ["I am logged in as an employee"],
+    "scenario": "Prevent overlapping absence request",
+    "given": [
+      "I am logged in as an employee"
+    ],
     "when": [
       "I navigate to the new absence page",
       "I fill in the absence request form",
-      "I add comment \"test\"",
-      "I submit the new absence"
+      "I fill in the comment field with \"test\"",
+      "I submit the new absence request"
     ],
     "then": [
       "The 'Failed to create a leave request' message should appear on the screen",
@@ -21,7 +25,9 @@
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The 'Failed to create a leave request' message should appear on the screen",
@@ -30,4 +36,3 @@
     }
   }
 }
-

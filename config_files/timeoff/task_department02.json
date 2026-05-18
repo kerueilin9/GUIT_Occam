@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_department02",
   "order": 3,
   "require_login": true,
@@ -8,13 +10,15 @@
   "gherkin": {
     "feature": "TimeOff Departments Management",
     "scenario": "Modify Sales department properties",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
-      "I click on Settings in the head bar",
-      "I click on Departments",
+      "I click Settings in the header",
+      "I click Departments",
       "I edit the Sales department",
       "I change the department name to 'Sales1'",
-      "I set the Allowance to '15'",
+      "I set the allowance to '15'",
       "I check the 'Accrued allowance' checkbox",
       "I save the changes"
     ],
@@ -23,12 +27,13 @@
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-      "The page should display 'Department Sales1 was updated'"
+        "The page should display 'Department Sales1 was updated'"
       ]
     }
   }
 }
-

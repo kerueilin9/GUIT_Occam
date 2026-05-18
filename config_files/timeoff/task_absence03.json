@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_absence03",
   "order": 2,
   "require_login": true,
@@ -8,18 +10,22 @@
   "gherkin": {
     "feature": "TimeOff Leave Request Approval",
     "scenario": "Approve leave request",
-    "given": ["I am logged in as an admin"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
-      "I click on the user menu",
-      "I click on Requests",
-      "I click on Approve button with Leave request type is Holiday"
+      "I click the user menu",
+      "I click Requests",
+      "I click the Approve button for the Holiday leave request"
     ],
     "then": [
-        "The 'Request from Vector Crawler was approved' message should appear on the screen"
+      "The 'Request from Vector Crawler was approved' message should appear on the screen"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The 'Request from Vector Crawler was approved' message should appear on the screen"
@@ -27,4 +33,3 @@
     }
   }
 }
-

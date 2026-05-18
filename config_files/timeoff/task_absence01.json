@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_absence01",
   "order": 2,
   "require_login": true,
@@ -8,18 +10,22 @@
   "gherkin": {
     "feature": "TimeOff Leave Request",
     "scenario": "Submit a new absence request",
-    "given": ["I am logged in as an employee"],
+    "given": [
+      "I am logged in as an employee"
+    ],
     "when": [
-      "I click on the new absence button",
-      "I fill in comment with \"test\"",
-      "I click on the Create button"
+      "I click the New Absence button",
+      "I fill in the comment field with \"test\"",
+      "I click the Create button"
     ],
     "then": [
       "The message \"New leave request was added\" should appear on the screen"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The message \"New leave request was added\" should be visible on the page"
@@ -27,4 +33,3 @@
     }
   }
 }
-

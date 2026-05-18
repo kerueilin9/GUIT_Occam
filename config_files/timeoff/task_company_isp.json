@@ -1,27 +1,31 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_company_isp",
   "order": 99,
   "require_login": false,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
   "gherkin": {
-    "feature": "",
-    "scenario": "create a new company",
-    "given": ["I am in the login page"],
+    "feature": "TimeOff Company Registration",
+    "scenario": "Create a new company",
+    "given": [
+      "I am on the login page"
+    ],
     "when": [
-      "click on Register new company",
-      "I fill in the company name with 'Test Company'",
-      "I fill First name with 'Test'",
-      "I fill Last name with 'Company'",
-      "I fill Email with 'test.company@example.com'",
-      "I fill Password with 'Password123'",
-      "I fill Confirm Password with 'Password123'",
+      "I click Register new company",
+      "I fill in the company name field with 'Test Company'",
+      "I fill in the First name field with 'Test'",
+      "I fill in the Last name field with 'Company'",
+      "I fill in the Email field with 'test.company@example.com'",
+      "I fill in the Password field with 'Password123'",
+      "I fill in the Confirm Password field with 'Password123'",
       "I click the Create button"
     ],
     "then": [
       "The page should display 'Registration is complete.'",
-      "I navigate to the home page and should see 'Employee Calendar' in this page"
+      "The home page should display 'Employee Calendar'"
     ]
   },
   "isp": {
@@ -30,13 +34,14 @@
     "isp_model": "gemini-2.5-flash"
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display 'Registration is complete.'",
-        "I navigate to the home page and should see 'Employee Calendar' in this page"
+        "The home page should display 'Employee Calendar'"
       ]
     }
   }
 }
-

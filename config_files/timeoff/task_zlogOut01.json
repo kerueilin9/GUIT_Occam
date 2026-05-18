@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_task99",
   "order": 98,
   "require_login": true,
@@ -7,16 +9,23 @@
   "start_url": "http://localhost:3102",
   "gherkin": {
     "feature": "TimeOff User Authentication",
-    "scenario": "User logout",
-    "given": ["I am logged in as an employee"],
-    "when": ["I click on the user menu", "I click on the logout button"],
+    "scenario": "User logs out",
+    "given": [
+      "I am logged in as an employee"
+    ],
+    "when": [
+      "I click the user menu",
+      "I click the Log out button"
+    ],
     "then": [
       "I should be redirected to the login page",
       "The login form should be visible"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The login form should be visible",
@@ -25,4 +34,3 @@
     }
   }
 }
-

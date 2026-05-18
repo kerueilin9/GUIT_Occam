@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_general04_isp",
   "order": 4,
   "require_login": true,
@@ -8,19 +10,21 @@
   "gherkin": {
     "feature": "TimeOff Leave Types Management",
     "scenario": "Add a new leave type with allowance",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
       "I navigate to General settings",
       "I go to the Leave Types section",
-      "I add a new leave type with Name \"test\"",
+      "I fill in the name field with \"test\"",
       "I check the \"Use allowance\" checkbox",
       "I select Color 3",
-      "I set the Limit to \"5\"",
+      "I fill in the limit field with \"5\"",
       "I save the leave type"
     ],
     "then": [
-        "The page should display \"Changes to leave types were saved\"",
-        "The leave type \"test\" should be visible in the leave types list and have Color 3 and limit 5"
+      "The page should display \"Changes to leave types were saved\"",
+      "The leave type \"test\" should be visible in the leave types list and have Color 3 and a limit of 5"
     ]
   },
   "isp": {
@@ -29,13 +33,14 @@
     "isp_model": "gemini-2.5-flash"
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display \"Changes to leave types were saved\"",
-        "The leave type \"test\" should be visible in the leave types list and have Color 3 and limit 5"
+        "The leave type \"test\" should be visible in the leave types list and have Color 3 and a limit of 5"
       ]
     }
   }
 }
-

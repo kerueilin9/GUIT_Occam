@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_staff01_isp",
   "order": 7,
   "require_login": true,
@@ -8,28 +10,32 @@
   "gherkin": {
     "feature": "TimeOff Staff Management",
     "scenario": "Add a new employee account",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
       "I navigate to the Staff page",
       "I add a new employee",
-      "I fill in First Name with 'Test'",
-      "I fill in Last Name with 'User'",
-      "I fill in Email Address with 'test.user@example.com'",
-      "I fill in Password with 'Password123'",
-      "I fill in Confirm Password with 'Password123'",
+      "I fill in the First Name field with 'Test'",
+      "I fill in the Last Name field with 'User'",
+      "I fill in the Email Address field with 'test.user@example.com'",
+      "I fill in the Password field with 'Password123'",
+      "I fill in the Confirm Password field with 'Password123'",
       "I save the new employee"
     ],
     "then": [
       "The page should display 'New user account successfully added'"
     ]
   },
-    "isp": {
-        "enabled": "false",
-        "max_test_cases": 15,
-        "isp_model": "gemini-2.5-flash"
+  "isp": {
+    "enabled": "false",
+    "max_test_cases": 15,
+    "isp_model": "gemini-2.5-flash"
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display 'New user account successfully added'"
@@ -37,4 +43,3 @@
     }
   }
 }
-

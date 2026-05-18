@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_general02",
   "order": 4,
   "require_login": true,
@@ -8,26 +10,29 @@
   "gherkin": {
     "feature": "TimeOff Company Schedule Management",
     "scenario": "Update company week schedule to include weekends",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
       "I navigate to General settings",
-      "I check the Saturday checkbox in Company week schedule",
-      "I check the Sunday checkbox in Company week schedule",
+      "I check the Saturday checkbox in the company week schedule",
+      "I check the Sunday checkbox in the company week schedule",
       "I save the schedule settings"
     ],
     "then": [
-      "I should see a success message \"Schedule for company was saved\"",
+      "I should see the success message \"Schedule for company was saved\"",
       "The company week schedule should include Saturday and Sunday"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-      "I should see a success message \"Schedule for company was saved\"",
-      "The company week schedule should include Saturday and Sunday"
+        "I should see the success message \"Schedule for company was saved\"",
+        "The company week schedule should include Saturday and Sunday"
       ]
     }
   }
 }
-

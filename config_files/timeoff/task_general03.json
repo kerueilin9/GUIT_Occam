@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_general03",
   "order": 4,
   "require_login": true,
@@ -8,27 +10,30 @@
   "gherkin": {
     "feature": "TimeOff Bank Holidays Management",
     "scenario": "Add a new bank holiday",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
       "I navigate to General settings",
       "I go to the Bank Holidays section",
-      "I add a new bank holiday with Name \"Ker\"",
-      "I set the Date to \"2025/09/09\"",
+      "I add a new bank holiday with the name \"Ker\"",
+      "I set the date to \"2025/09/09\"",
       "I save the bank holiday"
     ],
     "then": [
-      "I should see a success message \"Changes to bank holidays were saved\"",
+      "I should see the success message \"Changes to bank holidays were saved\"",
       "The bank holiday \"Ker\" with date \"2025/09/09\" should be in the list"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-      "I should see a success message \"Changes to bank holidays were saved\"",
-      "The bank holiday \"Ker\" with date \"2025/09/09\" should be in the list"
+        "I should see the success message \"Changes to bank holidays were saved\"",
+        "The bank holiday \"Ker\" with date \"2025/09/09\" should be in the list"
       ]
     }
   }
 }
-

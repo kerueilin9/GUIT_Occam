@@ -1,32 +1,37 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_staff03",
   "order": 7,
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
   "gherkin": {
-    "feature": "TimeOff Departments Management",
+    "feature": "TimeOff Staff Management",
     "scenario": "Delete Sales department manager",
-    "given": ["I am logged in as an administrator"],
+    "given": [
+      "I am logged in as an administrator"
+    ],
     "when": [
-      "I navigate to the Staff's profile page",
+      "I navigate to the staff member's profile page",
       "I click the Ke rueilin staff member",
-      "I click on delete"
+      "I click Delete"
     ],
     "then": [
       "The page should display 'Employee records were removed from the system'",
-      "The Ke rueilin manager on longer exists"
+      "The Ke rueilin manager no longer exists"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display 'Employee records were removed from the system'",
-        "The Ke rueilin manager on longer exists"
+        "The Ke rueilin manager no longer exists"
       ]
     }
   }
 }
-

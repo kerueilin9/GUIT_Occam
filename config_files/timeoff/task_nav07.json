@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_nav07",
   "order": 1,
   "require_login": true,
@@ -8,15 +10,26 @@
   "gherkin": {
     "feature": "TimeOff Navigation",
     "scenario": "Navigate to Allowance usage",
-    "given": ["I am logged in as an employee"],
-    "when": ["I click on the settings menu", "I click on Reports", "I click on Allowance usage by time"],
-    "then": ["The page should navigate to Allowance usage"]
+    "given": [
+      "I am logged in as an employee"
+    ],
+    "when": [
+      "I click the settings menu",
+      "I click Reports",
+      "I click Allowance usage by time"
+    ],
+    "then": [
+      "The page should display Allowance usage"
+    ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
-      "gherkin_acceptance_criteria": ["The page should display Allowance usage"]
+      "gherkin_acceptance_criteria": [
+        "The page should display Allowance usage"
+      ]
     }
   }
 }
-

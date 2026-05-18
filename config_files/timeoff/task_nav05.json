@@ -1,5 +1,7 @@
 {
-  "sites": ["timeoff"],
+  "sites": [
+    "timeoff"
+  ],
   "task_id": "timeoff_nav05",
   "order": 1,
   "require_login": true,
@@ -8,15 +10,25 @@
   "gherkin": {
     "feature": "TimeOff Navigation",
     "scenario": "Navigate to My feeds from user menu",
-    "given": ["I am logged in as an employee"],
-    "when": ["I click on the user menu", "I click on Feeds"],
-    "then": ["The page should navigate to My feeds"]
+    "given": [
+      "I am logged in as an employee"
+    ],
+    "when": [
+      "I click on the user menu",
+      "I click on Feeds"
+    ],
+    "then": [
+      "The page should display My feeds"
+    ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
-      "gherkin_acceptance_criteria": ["The page should display My feeds"]
+      "gherkin_acceptance_criteria": [
+        "The page should display My feeds"
+      ]
     }
   }
 }
-
