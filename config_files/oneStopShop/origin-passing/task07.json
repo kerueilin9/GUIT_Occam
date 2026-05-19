@@ -1,0 +1,38 @@
+{
+  "sites": [
+    "shopping"
+  ],
+  "task_id": "shopping_task07",
+  "order": 7,
+  "require_login": false,
+  "storage_state": ".auth/shopping_state.json",
+  "start_url": "http://localhost:7770",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "OneStopShop Account",
+    "scenario": "Creation an account",
+    "given": [
+      "I am on the OneStopShop site"
+    ],
+    "when": [
+      "Type \"http://localhost:7770\" on the url bar.\r\nAnd click on \"Enter\".",
+      "Click on the tab \"Create an account\".",
+      "Fill in the fields:\r\n - First Name\r\n - Last Name\r\n - Email\r\n - Password\r\n - Confirm Password.\r\nClick on the button \"Create an Account\""
+    ],
+    "then": [
+      "The account is created.\r\nThe page \"My account\" is displayed with a message \"Thank you for registering with Main Website Store\"."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The account is created.\r\nThe page \"My account\" is displayed with a message \"Thank you for registering with Main Website Store\"."
+      ]
+    }
+  }
+}

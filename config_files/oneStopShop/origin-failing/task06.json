@@ -1,0 +1,39 @@
+{
+  "sites": [
+    "shopping"
+  ],
+  "task_id": "shopping_task06",
+  "order": 6,
+  "require_login": false,
+  "storage_state": ".auth/shopping_state.json",
+  "start_url": "http://localhost:7770",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "OneStopShop Account",
+    "scenario": "Attempt to create an account, different password, new warning",
+    "given": [
+      "I am on the OneStopShop site"
+    ],
+    "when": [
+      "Navigate to One Stop Market website at http://localhost:7770",
+      "Click on \"Create an Account\" link",
+      "Complete Account Form by filling in:\r\nFirst Name: Emma\r\nLast Name: Lopez\r\nEmail: emma.lopez@gmail.com\r\nPassword: Password123\r\nConfirm Password: Password456\r\nCheck \"Sign Up for Newsletter\"\r\nCheck \"Show Password\"",
+      "Click \"Create an Account\""
+    ],
+    "then": [
+      "An error message appears: \"Both password should have the same value. Please modify to create an account\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "An error message appears: \"Both password should have the same value. Please modify to create an account\""
+      ]
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "sites": [
+    "shopping"
+  ],
+  "task_id": "shopping_task05",
+  "order": 5,
+  "require_login": true,
+  "storage_state": ".auth/shopping_state.json",
+  "start_url": "http://localhost:7770",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "OneStopShop Account",
+    "scenario": "Connection",
+    "given": [
+      "I am on the OneStopShop site and logged in as emma.lopez@gmail.com"
+    ],
+    "when": [],
+    "then": [
+      "I'm connected on the website. The screen \"My Account\" is displayed. \r\nThe message \"Welcome, Emma Lopez!\" is displayed at the right on the top of the page."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "I'm connected on the website. The screen \"My Account\" is displayed. \r\nThe message \"Welcome, Emma Lopez!\" is displayed at the right on the top of the page."
+      ]
+    }
+  }
+}

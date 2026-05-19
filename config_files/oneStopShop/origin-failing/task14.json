@@ -1,0 +1,37 @@
+{
+  "sites": [
+    "shopping"
+  ],
+  "task_id": "shopping_task14",
+  "order": 14,
+  "require_login": false,
+  "storage_state": ".auth/shopping_state.json",
+  "start_url": "http://localhost:7770",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "OneStopShop Search",
+    "scenario": "Search From new menu",
+    "given": [
+      "I am on the OneStopShop site"
+    ],
+    "when": [
+      "Type \"http://localhost:7770\" on the url bar.\r\nAnd click on \"Enter\".",
+      "Select the \"Office Product\" category and the \"Office Furnitures and Lightning\" sub-category and the \"Tables\" sub-sub-category.\r\nType on the search field."
+    ],
+    "then": [
+      "The screen \"Tables\" is displayed. \r\nThe result of the search is displayed."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The screen \"Tables\" is displayed. \r\nThe result of the search is displayed."
+      ]
+    }
+  }
+}
