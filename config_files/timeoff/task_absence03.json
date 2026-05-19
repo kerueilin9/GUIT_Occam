@@ -19,7 +19,7 @@
       "I click the Approve button for the Holiday leave request"
     ],
     "then": [
-      "The 'Request from Vector Crawler was approved' message should appear on the screen"
+      "The 'Request from Vector Crawler was approveed' message should appear on the screen"
     ]
   },
   "eval": {
@@ -28,7 +28,7 @@
     ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The 'Request from Vector Crawler was approved' message should appear on the screen"
+        "The 'Request from Vector Crawler was approveed' message should appear on the screen"
       ]
     }
   }

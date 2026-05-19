@@ -20,7 +20,7 @@
       "I save the changes"
     ],
     "then": [
-      "The message \"URL to LDAP server must be of following format: 'ldap://HOSTNAME:PORT'\" should appear on the screen",
+      "The message \"The URL must contain the protocol and port parts\" should appear on the screen",
       "The message \"Failed to update LDAP configuration. Error: Validation failed\" should appear on the screen"
     ]
   },
@@ -30,7 +30,7 @@
     ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The message \"URL to LDAP server must be of following format: 'ldap://HOSTNAME:PORT'\" should appear on the screen",
+        "The message \"The URL must contain the protocol and port parts\" should appear on the screen",
         "The message \"Failed to update LDAP configuration. Error: Validation failed\" should appear on the screen"
       ]
     }

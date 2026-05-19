@@ -25,7 +25,7 @@
     ],
     "then": [
       "The page should display 'Registration is complete.'",
-      "The home page should display 'Employee Calendar'"
+      "The home page should display 'Employee calendar'"
     ]
   },
   "isp": {
@@ -40,7 +40,7 @@
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display 'Registration is complete.'",
-        "The home page should display 'Employee Calendar'"
+        "The home page should display 'Employee calendar'"
       ]
     }
   }

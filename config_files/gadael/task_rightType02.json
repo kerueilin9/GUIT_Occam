@@ -1,0 +1,34 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_rightType01",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Create a leave right",
+    "scenario": "add Rule to a leave right",
+    "given": ["I am logged in as an user"],
+    "when": [
+        "I click the Admin menu",
+        "I click Rights types",
+        "I click Add Type",
+        "I fill in 'Right type name' field with \"test\"",
+        "I fill in 'Color' field with \"#caaaaa\"",
+        "I check Display type folded in the request creation page",
+        "I click the Save button"
+    ],
+    "then": [
+      "The message \"The right type has been created\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The right type has been created\" should appear on the screen"
+      ]
+    }
+  }
+}
+

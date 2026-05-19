@@ -1,0 +1,35 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_right01",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Create a leave right",
+    "scenario": "Create a leave right",
+    "given": ["I am logged in as an user"],
+    "when": [
+        "I click the Admin menu",
+        "I click Rights configuration",
+        "I click Add right",
+        "I click Continue button",
+        "I fill in 'Name' field with \"test\"",
+        "I fill in 'Description' field with \"test\"",
+        "I select 'Birth' from the Type Select dropdown",
+        "I click the Save button"
+    ],
+    "then": [
+      "The message \"The vacation right has been created\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The vacation right has been created\" should appear on the screen"
+      ]
+    }
+  }
+}
+

@@ -1,0 +1,31 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_recover02",
+  "order": 1,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Create a compulsory leave",
+    "scenario": "edit a recover quantity",
+    "given": ["I am logged in as an user"],
+    "when": [
+        "I click the Admin menu",
+        "I click Recover quantity",
+        "I click the Edit button for the \"test\" recover quantity",
+        "I click the cancel button"
+    ],
+    "then": [
+      "The recover quantity list page should be displayed"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The recover quantity list page should be displayed"
+      ]
+    }
+  }
+}
+

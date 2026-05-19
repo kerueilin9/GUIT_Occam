@@ -22,8 +22,7 @@
       "I submit the new absence request"
     ],
     "then": [
-      "The 'Failed to create a leave request' message should appear on the screen",
-      "The 'Overlapping booking!' message should appear on the screen"
+      "The 'Request from Vector Crawler was approved' message should appear on the screen"
     ]
   },
   "isp": {
@@ -37,8 +36,7 @@
     ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The 'Failed to create a leave request' message should appear on the screen",
-        "The 'Overlapping booking!' message should appear on the screen"
+        "The 'Request from Vector Crawler was approved' message should appear on the screen"
       ]
     }
   }

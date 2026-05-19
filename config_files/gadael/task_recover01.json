@@ -1,0 +1,35 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_recover01",
+  "order": 1,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Create a compulsory leave",
+    "scenario": "Create a recover quantity",
+    "given": ["I am logged in as an user"],
+    "when": [
+      "I click the Admin menu",
+      "I click the Recover quantity",
+      "I click Add a recover quantity",
+      "I fill in 'Name of the event to recover' field with \"test\"",
+      "I fill in 'Quantity to recover from the event' field with \"1\"",
+      "I click on the Save button"
+    ],
+    "then": [
+      "The message \"The recover quantity has been created\" should appear on the screen",
+      "The recover quantity list should include \"test\" with quantity \"1 day\""
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The recover quantity has been created\" should appear on the screen",
+        "The recover quantity list should include \"test\" with quantity \"1 day\""
+      ]
+    }
+  }
+}
+
