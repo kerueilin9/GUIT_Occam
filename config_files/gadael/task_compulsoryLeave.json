@@ -1,0 +1,36 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_compulsoryLeave01",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Create a compulsory leave request",
+    "scenario": "add compulsory leave request",
+    "given": ["I am logged in as an user"],
+    "when": [
+        "I click the Admin menu",
+        "I click Compulsory leaves",
+        "I click Add compulsory leave",
+        "I fill in 'Compulsory leave name' field with \"test\"",
+        "I fill in 'Description' field with \"test\"",
+        "I select 'test' from the Leave right dropdown",
+        "I fill in 'Leave period' field with \"5/10/26\" and \"5/20/26\"",
+        "I check 'Part-time 50%'",
+        "I click the Save button"
+    ],
+    "then": [
+      "The message \"The compulsory leave period has been created\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The compulsory leave period has been created\" should appear on the screen"
+      ]
+    }
+  }
+}
+

@@ -1,0 +1,34 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_calendar02",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Edit a calendar",
+    "scenario": "edit calendar",
+    "given": ["I am logged in as an user"],
+    "when": [
+        "I click the Admin menu",
+        "I click Calendars list",
+        "I click the Edit button for the \"test\" calendar",
+        "I fill in 'Calendar name' field with \"test2\"",
+        "I fill in 'Url of the calendar ICS file' field with \"http://example.com/calendar2.ics\"",
+        "I check Non working days",
+        "I click the Save button"
+    ],
+    "then": [
+      "The message \"The calendar has been modified\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The calendar has been modified\" should appear on the screen"
+      ]
+    }
+  }
+}
+

@@ -1,0 +1,30 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_logout",
+  "order": 99,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Logout of the application",
+    "scenario": "logout of the application",
+    "given": ["I am logged in as an user"],
+    "when": [
+        "I click the user menu",
+        "I click Logout"
+    ],
+    "then": [
+        "The message \"Welcome to your absence manager\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"Welcome to your absence manager\" should appear on the screen"
+      ]
+    }
+  }
+}
+
+

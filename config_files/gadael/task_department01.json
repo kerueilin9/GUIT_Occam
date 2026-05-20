@@ -1,0 +1,33 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_department01",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Create a department",
+    "scenario": "add department",
+    "given": ["I am logged in as an user"],
+    "when": [
+        "I click the Admin menu",
+        "I click Departments list",
+        "I click Add a department",
+        "I fill in 'Department name' field with \"test\"",
+        "I fill in 'Minimal number of active users' field with \"100\"",
+        "I click the Save button"
+    ],
+    "then": [
+      "The message \"The department has been created\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The department has been created\" should appear on the screen"
+      ]
+    }
+  }
+}
+

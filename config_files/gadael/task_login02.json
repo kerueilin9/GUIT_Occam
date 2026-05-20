@@ -1,0 +1,32 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_login02",
+  "order": 95,
+  "require_login": false,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Login to the application",
+    "scenario": "login to the application",
+    "given": ["I am on the welcome page"],
+    "when": [
+        "I click the Login button",
+        "I fill in 'Email' field with \"test1@gmail.com\"",
+        "I fill in 'Password' field with \"Password123\"",
+        "I click the Login button"
+    ],
+    "then": [
+        "The message \"Username and password combination not found or your account is inactive.\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"Username and password combination not found or your account is inactive.\" should appear on the screen"
+      ]
+    }
+  }
+}
+
+

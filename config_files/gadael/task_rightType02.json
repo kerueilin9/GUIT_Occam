@@ -12,21 +12,21 @@
     "when": [
         "I click the Admin menu",
         "I click Rights types",
-        "I click Add Type",
-        "I fill in 'Right type name' field with \"test\"",
-        "I fill in 'Color' field with \"#caaaaa\"",
-        "I check Display type folded in the request creation page",
+        "I click the Edit button for the \"test\" right type",
+        "I fill in 'Right type name' field with \"test2\"",
+        "I fill in 'Color' field with \"#cccccc\"",
+        "I uncheck Display type folded in the request creation page",
         "I click the Save button"
     ],
     "then": [
-      "The message \"The right type has been created\" should appear on the screen"
+      "The message \"The right type has been modified\" should appear on the screen"
     ]
   },
   "eval": {
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The message \"The right type has been created\" should appear on the screen"
+        "The message \"The right type has been modified\" should appear on the screen"
       ]
     }
   }

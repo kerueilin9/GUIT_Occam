@@ -13,9 +13,11 @@
         "I click the Admin menu",
         "I click Rights configuration",
         "I click View button for the \"test\" right",
-        "I click the Add button in the Renewals section",
-        "I fill in 'Start' field with \"5/13/26\"",
-        "I fill in 'Finish' field with \"5/19/26\"",
+        "我點擊在test 右側的 Edit 按鈕",
+        "I fill in 'Name' field with \"test2\"",
+        "I fill in 'Default quantity' field with \"2\"",
+        "I check the Adjust the available quantity automatically from the consumption of other rights",
+        "I fill in 'Adjustements quantity' field with \"1\"",
         "I click the Save button"
     ],
     "then": [

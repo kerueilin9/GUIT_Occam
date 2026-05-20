@@ -1,0 +1,35 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_Invitation01",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Create an invitation",
+    "scenario": "add invitation",
+    "given": ["I am logged in as an user"],
+    "when": [
+        "I click the Admin menu",
+        "I click Invitations",
+        "I click Invite someone",
+        "I check 'Insert the invited users into a department'",
+        "I select 'test' from the Set the department where the invited peoples will be recorded dropdown",
+        "I select 'test' from the Set a non-working days calendar dropdown",
+        "I fill in 'List of emails to invite, one per line' field",
+        "I click the Send button"
+    ],
+    "then": [
+      "The message \"The invitation has been created\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The invitation has been created\" should appear on the screen"
+      ]
+    }
+  }
+}
+

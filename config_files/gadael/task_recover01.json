@@ -22,6 +22,11 @@
       "The recover quantity list should include \"test\" with quantity \"1 day\""
     ]
   },
+  "isp": {
+    "enabled": true,
+    "max_test_cases": 15,
+    "isp_model": "gemini-2.5-flash"
+  },
   "eval": {
     "eval_types": ["gherkin_criteria"],
     "reference_answers": {

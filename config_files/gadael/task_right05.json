@@ -1,0 +1,38 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_right03",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "delete a leave right",
+    "scenario": "delete a leave right",
+    "given": ["I am logged in as an user"],
+    "when": [
+        "I click the Admin menu",
+        "I click Rights configuration",
+        "I click Add right",
+        "I click Continue button",
+        "I fill in 'Name' field with \"test\"",
+        "I fill in 'Description' field with \"test\"",
+        "I select 'Birth' from the Type Select dropdown",
+        "I click the Admin menu",
+        "I click Rights configuration",
+        "I click View button for the \"test\" right",
+        "我點擊在test 右側的 delete 按鈕"
+    ],
+    "then": [
+      "The message \"The leave right has been deleted\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The leave right has been deleted\" should appear on the screen"
+      ]
+    }
+  }
+}
+

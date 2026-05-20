@@ -1,0 +1,38 @@
+{
+  "sites": ["gadael"],
+  "task_id": "gadael_user01",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Create a user",
+    "scenario": "add user",
+    "given": ["I am logged in as an user"],
+    "when": [
+        "I click the Admin menu",
+        "I click User list",
+        "I click Add User",
+        "I check 'Application administrator'",
+        "I fill in 'Firstname' field with \"test\"",
+        "I fill in 'Lastname' field with \"test\"",
+        "I fill in 'Email' field with \"test1@test.com\"",
+        "I check 'Set a new password'",
+        "I fill in 'New password' field with \"Password123!\"",
+        "I fill in 'Confirm new password' field with \"Password123!\"",
+        "I click the Save button"
+    ],
+    "then": [
+      "The message \"The user has been created\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The user has been created\" should appear on the screen"
+      ]
+    }
+  }
+}
+
