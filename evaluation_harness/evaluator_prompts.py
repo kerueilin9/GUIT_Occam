@@ -63,9 +63,11 @@ def build_gherkin_criterion_prompt(
     criterion: str,
     page_snapshot: PageSnapshot,
     screenshot_attached: bool = False,
+    trajectory_evidence: str | None = None,
 ) -> str:
     a11y_section = _accessibility_section(page_snapshot)
     visual_section = _visual_section(screenshot_attached)
+    trajectory_section = _trajectory_section(trajectory_evidence)
 
     return f"""Evaluate the acceptance criterion and return JSON only.
 
@@ -79,12 +81,14 @@ Current Web Page:
 Page state text (accessibility tree first 20000 chars, or body text fallback):
 {a11y_section}
 {visual_section}
+{trajectory_section}
 
 Scoring standard:
 - 1.0: The criterion is satisfied by the page state.
 - 0.0: The criterion is not satisfied by the page state.
 - Only use one of these two scores: 1.0 or 0.0. Do not return partial credit.
 - If page-state text alone is insufficient because the criterion depends on visible layout, graphics, color, canvas/image content, or other visual evidence, set "needs_screenshot" to true. Otherwise set it to false.
+- For disappearance/removal criteria, do not infer success from final absence alone. Require supporting evidence that the target item existed earlier or was created during the run, and that the final page no longer contains that same item.
 
 Return strict JSON with keys:
 {{"score": <0.0 or 1.0>, "comment": "<short reason in one sentence>", "needs_screenshot": <true or false>}}"""
@@ -112,3 +116,10 @@ def _visual_section(screenshot_attached: bool) -> str:
         "that cannot be determined from the page-state text, then set "
         '"needs_screenshot" to false.'
     )
+
+
+def _trajectory_section(trajectory_evidence: str | None) -> str:
+    if not trajectory_evidence:
+        return ""
+
+    return f"\n\n{trajectory_evidence}"

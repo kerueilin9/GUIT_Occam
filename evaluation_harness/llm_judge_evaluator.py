@@ -32,6 +32,7 @@ from typing import Any
 
 from playwright.sync_api import Page
 
+from AgentOccam.logger import logger
 from evaluation_harness.evaluator_prompts import (
     LLM_JUDGE_SYSTEM_PROMPT,
     build_llm_judge_prompt,
@@ -83,6 +84,7 @@ def llm_judge_evaluate(
     page_snapshot = get_page_snapshot(page, trajectory)
 
     prompt = build_llm_judge_prompt(scenario_text, expected_hint, page_snapshot)
+    logger.debug(f"[LLMJudge] Text-only prompt:\n{prompt}")
 
     try:
         response = generate_from_llm_chat_completion(
@@ -94,9 +96,15 @@ def llm_judge_evaluate(
             temperature=0,
             max_tokens=1200,
         )
+        logger.debug(f"[LLMJudge] Text-only response:\n{response}")
         score, reason, needs_screenshot = _parse_response(response)
 
         if needs_screenshot:
+            logger.debug(
+                "[LLMJudge] Text-only judgement requested screenshot:\n"
+                f"Score: {score}\n"
+                f"Reason: {reason}"
+            )
             screenshot_bytes = _try_capture_screenshot(page)
             if screenshot_bytes:
                 try:
@@ -105,6 +113,11 @@ def llm_judge_evaluate(
                         expected_hint,
                         page_snapshot,
                         screenshot_attached=True,
+                    )
+                    logger.debug(
+                        "[LLMJudge] Screenshot-assisted prompt:\n"
+                        f"Screenshot bytes: {len(screenshot_bytes)}\n"
+                        f"{visual_prompt}"
                     )
                     visual_response = generate_from_llm_chat_completion(
                         messages=[
@@ -115,6 +128,10 @@ def llm_judge_evaluate(
                         temperature=0,
                         max_tokens=1200,
                         image_bytes=screenshot_bytes,
+                    )
+                    logger.debug(
+                        "[LLMJudge] Screenshot-assisted response:\n"
+                        f"{visual_response}"
                     )
                     score, reason, _ = _parse_response(visual_response)
                     reason = f"{reason} (Used screenshot because text evidence was insufficient.)"
@@ -358,7 +375,13 @@ def _mentions_screenshot_need(text: str) -> bool:
 
 def _try_capture_screenshot(page: Page) -> bytes | None:
     try:
-        return capture_page_screenshot(page)
+        screenshot_bytes = capture_page_screenshot(page)
+        logger.debug(
+            "[LLMJudge] Captured final screenshot for evaluation: "
+            f"{len(screenshot_bytes)} bytes"
+        )
+        return screenshot_bytes
     except Exception as exc:
         print(f"[LLMJudge] WARNING: Failed to capture final screenshot: {exc}")
+        logger.debug(f"[LLMJudge] Failed to capture final screenshot: {exc}")
         return None

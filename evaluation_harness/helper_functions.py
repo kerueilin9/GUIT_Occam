@@ -65,6 +65,42 @@ def _build_prompt_from_messages(messages: list[dict[str, Any]]) -> tuple[str, st
     return "\n\n".join(turns), system_prompt
 
 
+def _last_user_text(messages: list[dict[str, Any]]) -> str:
+    for message in reversed(messages):
+        if message.get("role") != "user":
+            continue
+        content = message.get("content", "")
+        if isinstance(content, str):
+            return content
+        return str(content)
+    return ""
+
+
+def _log_llm_request(
+    *,
+    provider: str,
+    model: str,
+    system_prompt: str | None,
+    user_prompt: str,
+    image_bytes: bytes | None,
+    image_mime_type: str,
+    history_length: int = 0,
+) -> None:
+    image_detail = "none"
+    if image_bytes:
+        image_detail = f"{image_mime_type}, {len(image_bytes)} bytes"
+
+    logger.debug(
+        "[LLM request]\n"
+        f"Provider: {provider}\n"
+        f"Model: {model}\n"
+        f"History length: {history_length}\n"
+        f"Image: {image_detail}\n"
+        f"System prompt:\n{system_prompt or ''}\n"
+        f"User prompt:\n{user_prompt}"
+    )
+
+
 def _attach_image_to_last_user_message(
     messages: list[dict[str, Any]],
     image_bytes: bytes,
@@ -106,6 +142,7 @@ def generate_from_llm_chat_completion(
     image_mime_type: str = "image/png",
 ) -> str:
     prompt, system_prompt = _build_prompt_from_messages(messages)
+    last_user_prompt = _last_user_text(messages)
 
     # 1. Decide Provider and Model
     if model == "auto":
@@ -146,7 +183,22 @@ def generate_from_llm_chat_completion(
                 if image_bytes:
                     raise ValueError(f"Image-assisted evaluation is not supported for model family '{family}'.")
                 call_model = build_call_model(model, system_prompt=system_prompt or "")
-                return call_model(prompt=prompt or "Please evaluate the request based on prior context.")
+                _log_llm_request(
+                    provider=family,
+                    model=model,
+                    system_prompt=system_prompt,
+                    user_prompt=prompt or "Please evaluate the request based on prior context.",
+                    image_bytes=None,
+                    image_mime_type=image_mime_type,
+                    history_length=len(messages),
+                )
+                response = call_model(
+                    prompt=prompt or "Please evaluate the request based on prior context."
+                )
+                logger.debug(
+                    f"[LLM response]\nProvider: {family}\nModel: {model}\n{response}"
+                )
+                return response
         except ValueError:
             pass
 
@@ -157,14 +209,22 @@ def generate_from_llm_chat_completion(
         if not prompt:
             prompt = "Please evaluate the request based on prior context."
 
-        # logger.debug(f"ADK Chat - System: {system_prompt}, User Input: {prompt}, History Length: {len(messages)}")  
+        _log_llm_request(
+            provider="adk",
+            model=model,
+            system_prompt=system_prompt,
+            user_prompt=prompt,
+            image_bytes=image_bytes,
+            image_mime_type=image_mime_type,
+            history_length=len(messages),
+        )
         
         adk_response = call_adk(
             prompt=prompt,
             model_id=model,
             system_prompt=system_prompt,
         )
-        # logger.debug(f"ADK Response Preview: {str(adk_response)[:500]}")
+        logger.debug(f"[LLM response]\nProvider: adk\nModel: {model}\n{adk_response}")
         return adk_response
 
     # --- Gemini path ---
@@ -185,9 +245,14 @@ def generate_from_llm_chat_completion(
 
         # Last message as current user prompt, previous turns as history
         user_input = history.pop()["parts"][0] if history else ""
-        logger.debug(
-            f"Gemini Chat - System: {sys_msg}, User Input: {user_input}, "
-            f"History Length: {len(history)}, Image Attached: {bool(image_bytes)}"
+        _log_llm_request(
+            provider="gemini",
+            model=model,
+            system_prompt=sys_msg,
+            user_prompt=user_input,
+            image_bytes=image_bytes,
+            image_mime_type=image_mime_type,
+            history_length=len(history),
         )
         genai_model = genai.GenerativeModel(
             model_name=model,
@@ -242,7 +307,16 @@ def generate_from_llm_chat_completion(
         if image_bytes
         else messages
     )
-    return generate_from_openai_chat_completion(
+    _log_llm_request(
+        provider="openai",
+        model=model,
+        system_prompt=system_prompt,
+        user_prompt=last_user_prompt or prompt,
+        image_bytes=image_bytes,
+        image_mime_type=image_mime_type,
+        history_length=len(messages),
+    )
+    response = generate_from_openai_chat_completion(
         messages=openai_messages,
         model=model,
         temperature=temperature,
@@ -250,6 +324,8 @@ def generate_from_llm_chat_completion(
         top_p=1.0,
         context_length=0,
     )
+    logger.debug(f"[LLM response]\nProvider: openai\nModel: {model}\n{response}")
+    return response
 
 
 def shopping_get_auth_token() -> str:

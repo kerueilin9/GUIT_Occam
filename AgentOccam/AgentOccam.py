@@ -967,8 +967,8 @@ class Actor(Agent):
                     model_response = self.call_model_with_message(system_prompt=instruction+"\nGenerating the command `{}` will be severely punished! Don't generate invalid actions! We don't have that element id in the current observation!".format(invalid_action_str), messages=self.arrange_message_for_model(online_input))
                 else:
                     # LLM Actor prompt
-                    logger.debug(f"Calling model with instruction system_prompt: {instruction}")
-                    logger.debug(f"Calling model with instruction messages: {self.arrange_message_for_model(online_input)}")
+                    # logger.debug(f"Calling model with instruction system_prompt: {instruction}")
+                    # logger.debug(f"Calling model with instruction messages: {self.arrange_message_for_model(online_input)}")
                     model_response = self.call_model_with_message(system_prompt=instruction, messages=self.arrange_message_for_model(online_input))
                 action_elements = self.parse_elements(text=model_response, key_list=self.config.output)
                 action_elements = self.parse_action_from_action_candidates(action_elements=action_elements)

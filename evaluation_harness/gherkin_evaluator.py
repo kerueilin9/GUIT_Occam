@@ -20,6 +20,7 @@ from evaluation_harness.page_snapshot import (
     capture_page_screenshot,
     get_page_snapshot,
 )
+from evaluation_harness.trajectory_evidence import build_trajectory_evidence
 
 
 def _binary_score(score: float) -> float:
@@ -61,9 +62,15 @@ def evaluate_gherkin_criteria(
     details = []
     
     for criterion in acceptance_criteria:
+        trajectory_evidence = build_trajectory_evidence(
+            trajectory,
+            criterion,
+            page_snapshot,
+        )
         result = evaluate_single_criterion(
             criterion=criterion,
             page_snapshot=page_snapshot,
+            trajectory_evidence=trajectory_evidence,
             page=page,
             screenshot_cache=screenshot_cache,
             return_comment=comment
@@ -87,9 +94,11 @@ def evaluate_gherkin_criteria(
 def evaluate_single_criterion(
     criterion: str,
     page_snapshot: PageSnapshot,
+    return_comment: bool = True,
+    *,
+    trajectory_evidence: str | None = None,
     page: Page | None = None,
     screenshot_cache: dict[str, bytes | bool | None] | None = None,
-    return_comment: bool = True,
 ) -> float | tuple[float, str]:
     """
     Evaluate a single Gherkin acceptance criterion
@@ -104,6 +113,7 @@ def evaluate_single_criterion(
     score, comment = llm_evaluate_criterion_with_comment(
         criterion=criterion,
         page_snapshot=page_snapshot,
+        trajectory_evidence=trajectory_evidence,
         page=page,
         screenshot_cache=screenshot_cache,
     )
@@ -112,7 +122,9 @@ def evaluate_single_criterion(
 
 def llm_evaluate_criterion_with_comment(
     criterion: str,
-                                       page_snapshot: PageSnapshot,
+    page_snapshot: PageSnapshot,
+    *,
+    trajectory_evidence: str | None = None,
     page: Page | None = None,
     screenshot_cache: dict[str, bytes | bool | None] | None = None,
 ) -> tuple[float, str]:
@@ -122,8 +134,16 @@ def llm_evaluate_criterion_with_comment(
     Returns:
         Score between 0.0 and 1.0
     """
-    prompt = build_gherkin_criterion_prompt(criterion, page_snapshot)
-    logger.debug(f"LLM evaluation prompt: {prompt}\n\n\n\n")
+    prompt = build_gherkin_criterion_prompt(
+        criterion,
+        page_snapshot,
+        trajectory_evidence=trajectory_evidence,
+    )
+    logger.debug(
+        "[GherkinEvaluator] Text-only criterion prompt:\n"
+        f"Criterion: {criterion}\n"
+        f"{prompt}"
+    )
     try:
         response = generate_from_llm_chat_completion(
             messages=[
@@ -134,8 +154,19 @@ def llm_evaluate_criterion_with_comment(
             temperature=0,
             max_tokens=1000,
         )
+        logger.debug(
+            "[GherkinEvaluator] Text-only criterion response:\n"
+            f"Criterion: {criterion}\n"
+            f"{response}"
+        )
         score, comment, needs_screenshot = _parse_criterion_response(response)
         if needs_screenshot and page is not None:
+            logger.debug(
+                "[GherkinEvaluator] Text-only judgement requested screenshot:\n"
+                f"Criterion: {criterion}\n"
+                f"Score: {score}\n"
+                f"Comment: {comment}"
+            )
             screenshot_bytes = _get_cached_screenshot(page, screenshot_cache)
             if screenshot_bytes:
                 try:
@@ -143,6 +174,13 @@ def llm_evaluate_criterion_with_comment(
                         criterion,
                         page_snapshot,
                         screenshot_attached=True,
+                        trajectory_evidence=trajectory_evidence,
+                    )
+                    logger.debug(
+                        "[GherkinEvaluator] Screenshot-assisted criterion prompt:\n"
+                        f"Criterion: {criterion}\n"
+                        f"Screenshot bytes: {len(screenshot_bytes)}\n"
+                        f"{visual_prompt}"
                     )
                     visual_response = generate_from_llm_chat_completion(
                         messages=[
@@ -154,6 +192,11 @@ def llm_evaluate_criterion_with_comment(
                         max_tokens=1000,
                         image_bytes=screenshot_bytes,
                     )
+                    logger.debug(
+                        "[GherkinEvaluator] Screenshot-assisted criterion response:\n"
+                        f"Criterion: {criterion}\n"
+                        f"{visual_response}"
+                    )
                     score, comment, _ = _parse_criterion_response(visual_response)
                     comment = f"{comment} (Used screenshot because text evidence was insufficient.)"
                 except Exception as exc:
@@ -162,7 +205,6 @@ def llm_evaluate_criterion_with_comment(
                 comment = f"{comment} Screenshot was requested but could not be captured."
 
         print(f"score: {score}, comment: {comment[:200]}")
-        logger.debug(f"LLM evaluation response: {response}\n\n\n\n")
         return score, comment
 
     except Exception as e:
@@ -228,7 +270,16 @@ def _get_cached_screenshot(
 
 def _try_capture_screenshot(page: Page) -> bytes | None:
     try:
-        return capture_page_screenshot(page)
+        screenshot_bytes = capture_page_screenshot(page)
+        logger.debug(
+            "[GherkinEvaluator] Captured final screenshot for evaluation: "
+            f"{len(screenshot_bytes)} bytes"
+        )
+        return screenshot_bytes
     except Exception as exc:
         print(f"Warning: Failed to capture final screenshot for Gherkin evaluation: {exc}")
+        logger.debug(
+            "[GherkinEvaluator] Failed to capture final screenshot: "
+            f"{exc}"
+        )
         return None
