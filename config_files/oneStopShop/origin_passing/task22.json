@@ -1,0 +1,37 @@
+{
+  "sites": [
+    "shopping"
+  ],
+  "task_id": "shopping_task22",
+  "order": 22,
+  "require_login": false,
+  "storage_state": ".auth/onestopshop_state.json",
+  "start_url": "http://localhost:7770",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "OneStopShop Newsletter",
+    "scenario": "Newsletter",
+    "given": [
+      "I am on the OneStopShop site"
+    ],
+    "when": [
+      "Scroll down.\r\nEnter an email adress on the field close to \"Subscribe\" button.\r\nClick on \"Subscribe\" button.",
+      "On the left menu, click on \"Newsletter Subscriptions\"."
+    ],
+    "then": [
+      "The screen \"Newsletter Subscription\" is displayed.\r\nThe option \"General Subscription\" is checked."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The screen \"Newsletter Subscription\" is displayed.\r\nThe option \"General Subscription\" is checked."
+      ]
+    }
+  }
+}

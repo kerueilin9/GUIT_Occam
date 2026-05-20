@@ -1,0 +1,37 @@
+{
+  "sites": [
+    "shopping"
+  ],
+  "task_id": "shopping_task19",
+  "order": 19,
+  "require_login": true,
+  "storage_state": ".auth/onestopshop_state.json",
+  "start_url": "http://localhost:7770",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "OneStopShop Shopping Cart",
+    "scenario": "View Order",
+    "given": [
+      "I am on the OneStopShop site and logged in as emma.lopez@gmail.com"
+    ],
+    "when": [
+      "On the left menu, click on \"My Orders\"",
+      "For any item, click on \"View order\"."
+    ],
+    "then": [
+      "The order is displayed on the screen, with the details."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The order is displayed on the screen, with the details."
+      ]
+    }
+  }
+}

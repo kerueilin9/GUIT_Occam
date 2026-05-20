@@ -1,0 +1,40 @@
+{
+  "sites": [
+    "shopping"
+  ],
+  "task_id": "shopping_task10",
+  "order": 10,
+  "require_login": false,
+  "storage_state": ".auth/onestopshop_state.json",
+  "start_url": "http://localhost:7770",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "OneStopShop Add New Credit Card",
+    "scenario": "Add New Credit Card",
+    "given": [
+      "I am on the OneStopShop site"
+    ],
+    "when": [
+      "Type \"http://localhost:7770\" on the url bar.\r\nAnd click on \"Enter\".",
+      "Sign In with Email \"emma.lopez@gmail.com\" and Password \"Password.123\".",
+      "Click on the tab \"My Account\"",
+      "On the \"Address Book\" section, click on the link \"Manage Addresses\"",
+      "Click on the button \"Add Credit Card\""
+    ],
+    "then": [
+      "The page \"Add New Credit Card\" is displayed."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The page \"Add New Credit Card\" is displayed."
+      ]
+    }
+  }
+}

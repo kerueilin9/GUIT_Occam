@@ -1,0 +1,37 @@
+{
+  "sites": [
+    "shopping"
+  ],
+  "task_id": "shopping_task01",
+  "order": 1,
+  "require_login": false,
+  "storage_state": ".auth/onestopshop_state.json",
+  "start_url": "http://localhost:7770",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "OneStopShop Check the availability of the check list when not logged in",
+    "scenario": "Check the availability of the check list when not logged in",
+    "given": [
+      "I am on the OneStopShop site"
+    ],
+    "when": [
+      "Log in with the following details: emma.lopez@gmail.com / Password.1234",
+      "Go to My Wish List"
+    ],
+    "then": [
+      "The message \"You have 2 items in your wish list.\" is displayed."
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"You have 2 items in your wish list.\" is displayed."
+      ]
+    }
+  }
+}
