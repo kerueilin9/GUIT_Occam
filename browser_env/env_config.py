@@ -3,6 +3,7 @@ import os
 
 REDDIT = os.environ.get("REDDIT", "http://localhost:9999")
 SHOPPING = os.environ.get("SHOPPING", "http://localhost:7770")
+ONESTOPSHOP = os.environ.get("ONESTOPSHOP", "http://localhost:7770")
 SHOPPING_ADMIN = os.environ.get("SHOPPING_ADMIN", "http://localhost:7780/admin")
 GITLAB = os.environ.get("GITLAB", "http://localhost:8023")
 WIKIPEDIA = os.environ.get("WIKIPEDIA", "http://localhost:8888/wikipedia_en_all_maxi_2022-05/A/User:The_other_Kiwix_guy/Landing")
@@ -16,6 +17,7 @@ POSTMILL = os.environ.get("POSTMILL", "http://localhost:3200")
 assert (
     REDDIT
     and SHOPPING
+    and ONESTOPSHOP
     and SHOPPING_ADMIN
     and GITLAB
     and WIKIPEDIA
@@ -29,6 +31,7 @@ assert (
     f"Please setup the URLs to each site. Current: \n"
     + f"Reddit: {REDDIT}\n"
     + f"Shopping: {SHOPPING}\n"
+    + f"OneStopShop: {ONESTOPSHOP}\n"
     + f"Shopping Admin: {SHOPPING_ADMIN}\n"
     + f"Gitlab: {GITLAB}\n"
     + f"Wikipedia: {WIKIPEDIA}\n"
@@ -48,6 +51,10 @@ ACCOUNTS = {
         "username": "emma.lopez@gmail.com",
         "password": "Password.123",
     },
+    "onestopshop": {
+        "username": "emma.lopez@gmail.com",
+        "password": "Password.123",
+    },
     "shopping_admin": {"username": "admin", "password": "admin1234"},
     "shopping_site_admin": {"username": "admin", "password": "admin1234"},
     "timeoff": {"username": "vector@selab.com", "password": "selab1623"},
@@ -59,6 +66,7 @@ ACCOUNTS = {
 URL_MAPPINGS = {
     REDDIT: "http://reddit.com",
     SHOPPING: "http://onestopmarket.com",
+    ONESTOPSHOP: "http://onestopmarket.com",
     SHOPPING_ADMIN: "http://luma.com/admin",
     GITLAB: "http://gitlab.com",
     WIKIPEDIA: "http://wikipedia.org",

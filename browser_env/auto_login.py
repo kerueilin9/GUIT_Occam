@@ -16,6 +16,7 @@ from browser_env.env_config import (
     ACCOUNTS,
     GITLAB,
     REDDIT,
+    ONESTOPSHOP,
     SHOPPING,
     SHOPPING_ADMIN,
     TIMEOFF,
@@ -30,6 +31,7 @@ SLOW_MO = 0
 
 SITES = [
     "gitlab",
+    "onestopshop",
     "shopping",
     "shopping_admin",
     "reddit",
@@ -40,6 +42,7 @@ SITES = [
 ]
 URLS = [
     f"{GITLAB}/-/profile",
+    f"{ONESTOPSHOP}/wishlist/",
     f"{SHOPPING}/wishlist/",
     f"{SHOPPING_ADMIN}/dashboard",
     f"{REDDIT}/user/{ACCOUNTS['reddit']['username']}/account",
@@ -48,8 +51,8 @@ URLS = [
     f"{NODEBB}/login",
     f"{POSTMILL}/user/{ACCOUNTS['postmill']['username']}",
 ]
-EXACT_MATCH = [True, True, True, True, False, False, False, False]
-KEYWORDS = ["", "", "Dashboard", "Delete", "", "", "", ACCOUNTS["postmill"]["username"]]
+EXACT_MATCH = [True, True, True, True, True, False, False, False, False]
+KEYWORDS = ["", "", "", "Dashboard", "Delete", "", "", "", ACCOUNTS["postmill"]["username"]]
 
 
 def login_postmill(page) -> None:
@@ -135,6 +138,14 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
                 page.get_by_label("Password", exact=True).fill(password)
                 page.get_by_role("button", name="Sign In").click()
 
+            if c == "onestopshop":
+                username = ACCOUNTS["onestopshop"]["username"]
+                password = ACCOUNTS["onestopshop"]["password"]
+                page.goto(f"{ONESTOPSHOP}/customer/account/login/")
+                page.get_by_label("Email", exact=True).fill(username)
+                page.get_by_label("Password", exact=True).fill(password)
+                page.get_by_role("button", name="Sign In").click()
+
             if c == "reddit":
                 username = ACCOUNTS["reddit"]["username"]
                 password = ACCOUNTS["reddit"]["password"]
@@ -211,6 +222,14 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
             username = ACCOUNTS["shopping"]["username"]
             password = ACCOUNTS["shopping"]["password"]
             page.goto(f"{SHOPPING}/customer/account/login/")
+            page.get_by_label("Email", exact=True).fill(username)
+            page.get_by_label("Password", exact=True).fill(password)
+            page.get_by_role("button", name="Sign In").click()
+
+        if "onestopshop" in comb:
+            username = ACCOUNTS["onestopshop"]["username"]
+            password = ACCOUNTS["onestopshop"]["password"]
+            page.goto(f"{ONESTOPSHOP}/customer/account/login/")
             page.get_by_label("Email", exact=True).fill(username)
             page.get_by_label("Password", exact=True).fill(password)
             page.get_by_role("button", name="Sign In").click()
