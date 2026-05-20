@@ -34,6 +34,19 @@ warnings.filterwarnings("ignore")
 DEFAULT_DOCUMENTED_INTERACTION_ELEMENTS = ["observation", "action"]
 DEFAULT_ONLINE_INTERACTION_ELEMENTS = ["url", "observation"]
 
+# Temporary cleanup switch: keep root play-*.txt / trash-*.txt files from being
+# created while preserving the verbose code path for easy re-enabling.
+ENABLE_ROOT_TXT_VERBOSE_OUTPUT = False
+
+
+def should_write_root_txt_verbose_output(config):
+    return (
+        ENABLE_ROOT_TXT_VERBOSE_OUTPUT
+        and getattr(config.others, "verbose", 0) > 0
+        and getattr(config, "verbose", 0) > 0
+    )
+
+
 class Agent:
     def __init__(self, config, objective, prompt_template):
         self.config = config
@@ -686,7 +699,7 @@ class Actor(Agent):
             "alter ego response": "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n".join(["|\tAgent {}:\n{}".format(identity.config.name, response) for identity, response in zip(self.identities, model_response_list[self.config.number:])])
         }
 
-        if self.config.others.verbose > 0 and self.config.verbose > 0:
+        if should_write_root_txt_verbose_output(self.config):
             with open(self.output_trash_path, "a", encoding="utf-8") as af:
                 af.write("-"*32+"ACTOR"+"-"*32+"\n")
             for t in self.config.trash:
@@ -1101,7 +1114,7 @@ class Critic(Agent):
             "online input": "\n".join([i[1] for i in online_input if i[0]=="text"]),
             "response": model_response
         }
-        if self.config.others.verbose > 0 and self.config.verbose > 0:
+        if should_write_root_txt_verbose_output(self.config):
             with open(self.output_trash_path, "a") as af:
                 af.write("-"*32+"CRITIC"+"-"*32+"\n")
             for t in self.config.trash:
@@ -1248,7 +1261,7 @@ class Judge(Agent):
             "online input": "\n".join([i[1] for i in online_input if i[0]=="text"]),
             "response": model_response
         }
-        if self.config.others.verbose > 0 and self.config.verbose > 0:
+        if should_write_root_txt_verbose_output(self.config):
             with open(self.output_trash_path, "a") as af:
                 af.write("-"*32+"JUDGE"+"-"*32+"\n")
             for t in self.config.trash:
@@ -1415,8 +1428,9 @@ class AgentOccam:
             is_gherkin_task=is_gherkin_task,
             is_isp_task=is_isp_task,
         )
-        with open(self.actor.output_trash_path, "w") as _:
-            pass
+        if should_write_root_txt_verbose_output(self.actor.config):
+            with open(self.actor.output_trash_path, "w") as _:
+                pass
 
     def init_critic(self):
         self.config.critic.others = self.config.others
