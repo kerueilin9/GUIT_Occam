@@ -139,11 +139,7 @@ def llm_evaluate_criterion_with_comment(
         page_snapshot,
         trajectory_evidence=trajectory_evidence,
     )
-    logger.debug(
-        "[GherkinEvaluator] Text-only criterion prompt:\n"
-        f"Criterion: {criterion}\n"
-        f"{prompt}"
-    )
+    logger.debug(f"[GherkinEvaluator] Evaluating criterion: {criterion}")
     try:
         response = generate_from_llm_chat_completion(
             messages=[
@@ -153,11 +149,6 @@ def llm_evaluate_criterion_with_comment(
             model="auto",
             temperature=0,
             max_tokens=1000,
-        )
-        logger.debug(
-            "[GherkinEvaluator] Text-only criterion response:\n"
-            f"Criterion: {criterion}\n"
-            f"{response}"
         )
         score, comment, needs_screenshot = _parse_criterion_response(response)
         if needs_screenshot and page is not None:
@@ -177,10 +168,8 @@ def llm_evaluate_criterion_with_comment(
                         trajectory_evidence=trajectory_evidence,
                     )
                     logger.debug(
-                        "[GherkinEvaluator] Screenshot-assisted criterion prompt:\n"
-                        f"Criterion: {criterion}\n"
-                        f"Screenshot bytes: {len(screenshot_bytes)}\n"
-                        f"{visual_prompt}"
+                        "[GherkinEvaluator] Screenshot-assisted criterion evaluation: "
+                        f"criterion={criterion}, screenshot_bytes={len(screenshot_bytes)}"
                     )
                     visual_response = generate_from_llm_chat_completion(
                         messages=[
@@ -191,11 +180,6 @@ def llm_evaluate_criterion_with_comment(
                         temperature=0,
                         max_tokens=1000,
                         image_bytes=screenshot_bytes,
-                    )
-                    logger.debug(
-                        "[GherkinEvaluator] Screenshot-assisted criterion response:\n"
-                        f"Criterion: {criterion}\n"
-                        f"{visual_response}"
                     )
                     score, comment, _ = _parse_criterion_response(visual_response)
                     comment = f"{comment} (Used screenshot because text evidence was insufficient.)"
