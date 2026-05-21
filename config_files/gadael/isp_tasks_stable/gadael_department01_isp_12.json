@@ -1,0 +1,40 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_department01_isp_12",
+  "order": 5,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael Department Management",
+    "scenario": "Create a department",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Departments list",
+      "I click Add a department",
+      "I fill in the Department name field with \"Support Department\"",
+      "I fill in the Minimal number of active users field with \"-5\"",
+      "I click the Save button"
+    ]
+  },
+  "isp_test_case": {
+    "_case_name": "active users negative",
+    "_expected": "fail",
+    "Department name": {
+      "value": "Support Department"
+    },
+    "Minimal number of active users": {
+      "value": "-5"
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

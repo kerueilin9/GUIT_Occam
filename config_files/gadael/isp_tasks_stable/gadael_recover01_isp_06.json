@@ -1,0 +1,40 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_recover01_isp_06",
+  "order": 1,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael Recover Quantity Management",
+    "scenario": "Create a recover quantity",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Recover quantities",
+      "I click Add a recover quantity",
+      "I fill in the Name of the event to recover field with \"\"",
+      "I fill in the Quantity to recover from the event field with \"1\"",
+      "I click the Save button"
+    ]
+  },
+  "isp_test_case": {
+    "_case_name": "name empty (required)",
+    "_expected": "fail",
+    "Name of the event to recover": {
+      "value": ""
+    },
+    "Quantity to recover from the event": {
+      "value": "1"
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_user01_isp_25",
+  "order": 10,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael User Management",
+    "scenario": "Create a user",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Users list",
+      "I click Add User",
+      "I check Application administrator",
+      "I fill in the Firstname field with \"test\"",
+      "I fill in the Lastname field with \"test\"",
+      "I fill in the Email field with \"test_unique23@test.com\"",
+      "I select 'test2' from the Department dropdown",
+      "I check Set a new password with \"P@ssword!!!\"",
+      "I fill in the New password field with \"P@ssword!!!\"",
+      "I fill in the Confirm new password field with \"P@ssword!!!\"",
+      "I click the Save button"
+    ]
+  },
+  "isp_test_case": {
+    "_case_name": "fail_password_no_digit",
+    "_expected": "fail",
+    "Firstname": {
+      "value": "test"
+    },
+    "Lastname": {
+      "value": "test"
+    },
+    "Email": {
+      "value": "test_unique23@test.com"
+    },
+    "New password": {
+      "value": "P@ssword!!!"
+    },
+    "Confirm new password": {
+      "value": "P@ssword!!!"
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

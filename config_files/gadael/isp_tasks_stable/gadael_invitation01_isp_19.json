@@ -1,0 +1,39 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_invitation01_isp_19",
+  "order": 6,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael Invitation Management",
+    "scenario": "Create an invitation",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Invitations",
+      "I click Invite someone",
+      "I check Insert the invited users into a department",
+      "I select \"test2\" from the Set the department where the invited people will be recorded dropdown",
+      "I select \"test2\" from the Set a non-working days calendar dropdown",
+      "I fill in the List of emails to invite, one per line field with \"tc14@example.com.\"",
+      "I click the Send button"
+    ]
+  },
+  "isp_test_case": {
+    "_case_name": "domain ending with dot",
+    "_expected": "fail",
+    "List of emails to invite, one per line": {
+      "value": "tc14@example.com."
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}

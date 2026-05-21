@@ -1,0 +1,48 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_calendar01_isp_25",
+  "order": 3,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael Calendar Management",
+    "scenario": "Create a calendar",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Calendars list",
+      "I click Add a calendar",
+      "I fill in the Calendar name field with \"test\"",
+      "I fill in the Url of the calendar ICS file field with \"http://example.com/calendar.ics\"",
+      "I fill in the Half day hour field with \"9:00 AM\"",
+      "I fill in the Average hours per day field with \"-1\"",
+      "I click the Save button"
+    ]
+  },
+  "isp_test_case": {
+    "_case_name": "avg_hours_negative",
+    "_expected": "fail",
+    "Calendar name": {
+      "value": "test"
+    },
+    "Url of the calendar ICS file": {
+      "value": "http://example.com/calendar.ics"
+    },
+    "Half day hour": {
+      "value": "9:00 AM"
+    },
+    "Average hours per day": {
+      "value": "-1"
+    }
+  },
+  "eval": {
+    "eval_types": [
+      "llm_judge"
+    ]
+  }
+}
