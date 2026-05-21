@@ -221,11 +221,14 @@ class ISPGenerator:
         self.expected_outcomes_by_category = {
             "original": "pass",
             "valid": "pass",
-            "boundary": "unknown",
+            "boundary": "fail",
             "invalid": "fail",
             "empty": "fail",
         }
-        self.expected_outcomes_by_category.update(expected_outcomes)
+        for category, expected in expected_outcomes.items():
+            self.expected_outcomes_by_category[category] = (
+                self._normalize_expected(expected) or "fail"
+            )
         # ISP prompts are self-contained; force empty system prompt for consistency.
         self._call_model = build_call_model(isp_model, system_prompt="")
 
@@ -233,6 +236,15 @@ class ISPGenerator:
     def _heuristic_fallbacks(field_meta: FieldMetadata) -> List[ISPPartition]:
         label_lower = (field_meta.label or "").lower()
         input_type = (field_meta.input_type or "text").lower()
+
+        if input_type in {"date", "datetime"} or re.search(r"\b(date|begin|start|from|end|until)\b", label_lower):
+            return [
+                ISPPartition("", "empty", "Empty date — required-field validation"),
+                ISPPartition("5/15/26", "valid", "Alternate valid date in the observed format"),
+                ISPPartition("13/40/26", "invalid", "Impossible month/day date"),
+                ISPPartition("not-a-date", "invalid", "Non-date text in a date field"),
+                ISPPartition("2/29/25", "invalid", "Invalid leap-day boundary"),
+            ]
 
         if input_type == "email" or "email" in label_lower:
             return [
@@ -307,9 +319,15 @@ class ISPGenerator:
             # LLM ISP testcase generation prompt
             logger.debug(f"[ISPGenerator] Testcase generation prompt:\n{prompt}")
             response = self._call_model(prompt=prompt)
+            print(f"[ISPGenerator] LLM response received: {len(str(response or ''))} chars")
             parsed_cases = self._parse_test_case_llm_response(response, field_metas)
+            if parsed_cases:
+                print(f"[ISPGenerator] Parsed {len(parsed_cases)} testcase(s) from LLM response.")
+            else:
+                print("[ISPGenerator] LLM response could not be parsed; using heuristic fallback.")
+                print(f"[ISPGenerator] LLM response preview: {self._response_preview(response)}")
         except Exception as exc:
-            print(f"[ISPGenerator] Testcase LLM call failed: {exc}")
+            print(f"[ISPGenerator] Testcase LLM call failed: {exc}; using heuristic fallback.")
 
         if not parsed_cases:
             fallback_cases = self._build_heuristic_test_cases(
@@ -317,6 +335,7 @@ class ISPGenerator:
                 case_limit,
                 gherkin_context=gherkin_context,
             )
+            print(f"[ISPGenerator] Heuristic fallback generated {len(fallback_cases)} testcase(s).")
             parsed_cases = fallback_cases
 
         return parsed_cases[:case_limit]
@@ -324,7 +343,42 @@ class ISPGenerator:
     # ── private helpers ───────────────────────────────────────────────────────
 
     @staticmethod
-    def _extract_json_array(response: str) -> list | None:
+    def _response_preview(response: str, limit: int = 800) -> str:
+        text = str(response or "").replace("\r", "\\r").replace("\n", "\\n")
+        if len(text) > limit:
+            text = text[:limit] + "...<truncated>"
+        return text or "<empty>"
+
+    @staticmethod
+    def _extract_partial_json_array(text: str) -> list | None:
+        """Best-effort recovery for arrays whose tail was truncated or malformed."""
+        stripped = str(text or "").strip()
+        start = stripped.find("[")
+        if start == -1:
+            return None
+
+        decoder = json.JSONDecoder()
+        idx = start + 1
+        items: list = []
+        while idx < len(stripped):
+            while idx < len(stripped) and stripped[idx].isspace():
+                idx += 1
+            if idx >= len(stripped) or stripped[idx] == "]":
+                break
+            if stripped[idx] == ",":
+                idx += 1
+                continue
+
+            try:
+                item, idx = decoder.raw_decode(stripped, idx)
+            except json.JSONDecodeError:
+                break
+            items.append(item)
+
+        return items or None
+
+    @classmethod
+    def _extract_json_array(cls, response: str) -> list | None:
         candidates = []
         stripped = str(response).strip()
         if stripped:
@@ -336,16 +390,39 @@ class ISPGenerator:
             candidates.append(stripped[start:end + 1])
 
         seen: set[str] = set()
+        last_error: json.JSONDecodeError | None = None
         for candidate in candidates:
             if candidate in seen:
                 continue
             seen.add(candidate)
             try:
                 parsed = json.loads(candidate)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as exc:
+                last_error = exc
                 continue
             if isinstance(parsed, list):
                 return parsed
+
+        if last_error is not None:
+            print(
+                "[ISPGenerator] JSON parse error: "
+                f"{last_error.msg} at line {last_error.lineno}, "
+                f"column {last_error.colno}, char {last_error.pos}"
+            )
+            error_start = max(0, last_error.pos - 160)
+            error_end = min(len(stripped), last_error.pos + 160)
+            print(
+                "[ISPGenerator] JSON error context: "
+                f"{cls._response_preview(stripped[error_start:error_end], limit=360)}"
+            )
+
+        partial = cls._extract_partial_json_array(stripped)
+        if partial:
+            print(
+                "[ISPGenerator] Recovered "
+                f"{len(partial)} complete item(s) from partial JSON array."
+            )
+            return partial
         return None
 
     @staticmethod
@@ -392,15 +469,13 @@ class ISPGenerator:
         return None
 
     @staticmethod
-    def _normalize_expected(expected: str) -> str:
+    def _normalize_expected(expected: str) -> str | None:
         text = str(expected or "").strip().lower()
         if text in {"pass", "accepted", "accept", "success", "succeed", "valid"}:
             return "pass"
         if text in {"fail", "failed", "reject", "rejected", "error", "invalid"}:
             return "fail"
-        if text == "unknown":
-            return "unknown"
-        return "unknown"
+        return None
 
     @staticmethod
     def _baseline_inputs(field_metas: dict[str, FieldMetadata]) -> dict[str, str]:
@@ -557,6 +632,39 @@ class ISPGenerator:
 
         return pairs
 
+    @classmethod
+    def _find_date_range_pairs(cls, labels: list[str]) -> list[tuple[str, str]]:
+        def _tokens(label: str) -> set[str]:
+            normalized = cls._normalize_field_reference(label).lower()
+            return {
+                token
+                for token in re.split(r"[^a-z0-9]+", normalized)
+                if token and token not in {"date", "time", "period", "field"}
+            }
+
+        begin_markers = {"begin", "start", "from"}
+        end_markers = {"end", "until", "to"}
+        token_map = {label: _tokens(label) for label in labels}
+        pairs: list[tuple[str, str]] = []
+
+        for begin_label, begin_tokens in token_map.items():
+            if not begin_tokens.intersection(begin_markers):
+                continue
+
+            begin_base = begin_tokens - begin_markers
+            best: tuple[int, str] | None = None
+            for end_label, end_tokens in token_map.items():
+                if end_label == begin_label or not end_tokens.intersection(end_markers):
+                    continue
+                overlap = len(begin_base.intersection(end_tokens - end_markers))
+                if overlap and (best is None or overlap > best[0]):
+                    best = (overlap, end_label)
+
+            if best:
+                pairs.append((begin_label, best[1]))
+
+        return pairs
+
     def _sanitize_test_case_inputs(
         self,
         raw_inputs,
@@ -584,7 +692,7 @@ class ISPGenerator:
         inputs: dict[str, str],
         field_metas: dict[str, FieldMetadata],
     ) -> str:
-        priority = {"fail": 0, "unknown": 1, "pass": 2}
+        priority = {"fail": 0, "pass": 1}
         outcome = "pass"
         labels = list(field_metas.keys())
 
@@ -618,8 +726,10 @@ class ISPGenerator:
                 else:
                     category = "valid"
 
-            mapped = self.expected_outcomes_by_category.get(category, "unknown")
-            if priority.get(mapped, 1) < priority.get(outcome, 2):
+            mapped = self._normalize_expected(
+                self.expected_outcomes_by_category.get(category, "")
+            ) or "fail"
+            if priority[mapped] < priority[outcome]:
                 outcome = mapped
 
         return outcome
@@ -636,12 +746,13 @@ class ISPGenerator:
         test_cases: List[ISPTestCase] = []
         seen: set[tuple[tuple[str, str], ...]] = set()
         confirmation_pairs = self._find_confirmation_pairs(labels)
+        date_range_pairs = self._find_date_range_pairs(labels)
         unique_labels = [
             label
             for label, field_meta in field_metas.items()
             if self._is_uniqueness_sensitive_field(label, field_meta)
         ]
-        duplicate_expected = "fail" if self._scenario_suggests_create(gherkin_context) else "unknown"
+        duplicate_expected = "fail"
 
         for label in unique_labels:
             valid_inputs[label] = self._fresh_valid_value(label, field_metas[label])
@@ -656,7 +767,7 @@ class ISPGenerator:
                 return
 
             resolved_expected = self._normalize_expected(expected or "")
-            if resolved_expected == "unknown":
+            if resolved_expected is None:
                 resolved_expected = self._infer_expected_from_inputs(
                     normalized_inputs,
                     field_metas,
@@ -695,11 +806,37 @@ class ISPGenerator:
             mismatch_inputs[confirm_label] = mismatch_value
             _append_case(f"{confirm_label} mismatch", mismatch_inputs, expected="fail")
 
-        for label in labels:
+        for begin_label, end_label in date_range_pairs:
+            if len(test_cases) >= max_cases:
+                return test_cases[:max_cases]
+
+            invalid_range_inputs = dict(valid_inputs)
+            begin_value = valid_inputs.get(begin_label, "")
+            end_value = valid_inputs.get(end_label, "")
+            if begin_value and end_value and begin_value != end_value:
+                invalid_range_inputs[begin_label] = end_value
+                invalid_range_inputs[end_label] = begin_value
+            else:
+                invalid_range_inputs[begin_label] = "5/20/26"
+                invalid_range_inputs[end_label] = "5/10/26"
+            _append_case(f"{begin_label} after {end_label}", invalid_range_inputs, expected="fail")
+
+        field_partitions = {
+            label: self._heuristic_fallbacks(field_metas[label]) + self._STATIC_FALLBACKS
+            for label in labels
+        }
+        max_partition_count = max((len(parts) for parts in field_partitions.values()), default=0)
+
+        for partition_idx in range(max_partition_count):
             if len(test_cases) >= max_cases:
                 break
-
-            for partition in self._heuristic_fallbacks(field_metas[label]) + self._STATIC_FALLBACKS:
+            for label in labels:
+                if len(test_cases) >= max_cases:
+                    break
+                partitions = field_partitions[label]
+                if partition_idx >= len(partitions):
+                    continue
+                partition = partitions[partition_idx]
                 candidate = str(partition.value)
                 if candidate == valid_inputs.get(label, ""):
                     continue
@@ -710,7 +847,6 @@ class ISPGenerator:
                     if label == source_label:
                         variant_inputs[confirm_label] = candidate
                 _append_case(f"{label} {partition.category}", variant_inputs)
-                break
 
         return test_cases[:max_cases]
 
@@ -721,23 +857,28 @@ class ISPGenerator:
     ) -> List[ISPTestCase]:
         payload = self._extract_json_array(response)
         if not payload:
+            print("[ISPGenerator] Parse diagnostic: no valid top-level JSON array found.")
             return []
 
         parsed_cases: List[ISPTestCase] = []
         seen: set[tuple[tuple[str, str], ...]] = set()
         field_order = list(field_metas.keys())
+        skipped_non_object = 0
+        skipped_duplicate = 0
 
         for item in payload:
             if not isinstance(item, dict):
+                skipped_non_object += 1
                 continue
 
             inputs = self._sanitize_test_case_inputs(item.get("inputs", {}), field_metas)
             signature = tuple((label, inputs.get(label, "")) for label in field_order)
             if signature in seen:
+                skipped_duplicate += 1
                 continue
 
             expected = self._normalize_expected(item.get("expected", ""))
-            if expected == "unknown":
+            if expected is None:
                 expected = self._infer_expected_from_inputs(inputs, field_metas)
 
             name = str(item.get("name", "")).strip() or f"case {len(parsed_cases) + 1}"
@@ -748,4 +889,9 @@ class ISPGenerator:
                 inputs=inputs,
             ))
 
+        print(
+            "[ISPGenerator] Parse diagnostic: "
+            f"payload_items={len(payload)}, accepted={len(parsed_cases)}, "
+            f"skipped_non_object={skipped_non_object}, skipped_duplicate={skipped_duplicate}"
+        )
         return parsed_cases

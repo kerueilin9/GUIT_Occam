@@ -17,6 +17,8 @@ def _format_field_info(field_name: str, field_meta) -> str:
         f"- Surrounding Context (from accessibility tree):\n"
         f"  {field_meta.surrounding_context[:300]}"
     )
+
+
 def build_isp_testcase_generation_prompt(
     field_metas: dict,
     max_cases: int,
@@ -51,24 +53,27 @@ Fields to cover:
 {fields_info}
 
 Generate a compact set of distinct test cases, with at most {max_cases} test cases total.
+Within that limit, include as many meaningful and distinct ISP combinations as practical.
 Each test case must be a JSON object with exactly these keys:
 - "name": a short descriptive name
-- "expected": one of "pass", "fail", or "unknown"
+- "expected": one of "pass" or "fail"
 - "inputs": a JSON object containing exactly these field keys: {field_keys}
 
 Rules:
 - Return ONLY a valid JSON array — no prose, no markdown fences.
-- The top-level JSON array must contain between 1 and {max_cases} test case objects.
+- The top-level JSON array must contain between 3 and {max_cases} test case objects.
 - Every "inputs" object must contain exactly these keys: {field_keys}
 - Keep values concrete and ready to type into the form.
-- Use each field's original value as the baseline unless the testcase intentionally changes it.
+- Keep each individual input value concise; use representative boundary strings, not thousands of repeated characters.
+- For ordinary non-unique fields, use each field's original value as the baseline unless the testcase intentionally changes it.
 - Include at least one fully valid baseline case.
 - For uniqueness-sensitive fields such as email, phone, mobile number, username, employee ID, or other record-unique identifiers:
-  use a fresh replacement value in almost every testcase instead of reusing the original value.
+  use a fresh valid replacement value in the baseline and in almost every testcase instead of reusing the original value.
 - Reserve at most one deliberate duplicate-existing testcase for those uniqueness-sensitive fields,
   where the value stays the same as the original input to test whether the system rejects duplicates.
 - If the scenario is clearly about creating or adding a new record, that duplicate-existing testcase should usually have "expected": "fail".
 - Include obvious cross-field dependency cases when labels imply them, such as password confirmation mismatches.
+- Prefer changing one logical validation condition per testcase unless the case is intentionally testing a cross-field dependency.
 - Do NOT add explanations, rationales, or extra keys.
 - All JSON string values must be properly escaped.
 
@@ -77,6 +82,17 @@ Example output:
   {{
     "name": "baseline valid",
     "expected": "pass",
+    "inputs": {{
+      "First Name": "John",
+      "Last Name": "Doe",
+      "Email Address": "john.doe+isp1@example.com",
+      "Password": "SecurePass!23",
+      "Confirm Password": "SecurePass!23"
+    }}
+  }},
+  {{
+    "name": "duplicate existing email",
+    "expected": "fail",
     "inputs": {{
       "First Name": "John",
       "Last Name": "Doe",
@@ -91,7 +107,7 @@ Example output:
     "inputs": {{
       "First Name": "John",
       "Last Name": "Doe",
-      "Email Address": "john.doe1@example.com",
+      "Email Address": "john.doe+isp2@example.com",
       "Password": "SecurePass!23",
       "Confirm Password": "MismatchPass"
     }}

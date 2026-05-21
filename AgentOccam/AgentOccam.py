@@ -2211,13 +2211,25 @@ class AgentOccam:
                 return str(payload.get("value", ""))
             return str(payload or "")
 
+        def _step_with_value(step: str, value: str) -> str:
+            quoted_value = json.dumps(str(value), ensure_ascii=False)
+            if re.search(r"\bwith\s+['\"]", step, re.IGNORECASE):
+                return re.sub(
+                    r"(\bwith\s+)(['\"]).*?\2",
+                    lambda m: f"{m.group(1)}{quoted_value}",
+                    step,
+                    count=1,
+                    flags=re.IGNORECASE,
+                )
+            return f"{step} with {quoted_value}"
+
         for idx, test_case in enumerate(generated_test_cases, start=1):
             nn       = str(idx).zfill(2)
             new_id   = f"{original_task_id}_isp_{nn}"
             case_name = str(getattr(test_case, "name", "") or f"case {idx}")
-            expected = str(getattr(test_case, "expected", "unknown") or "unknown").lower()
-            if expected not in {"pass", "fail", "unknown"}:
-                expected = "unknown"
+            expected = str(getattr(test_case, "expected", "fail") or "fail").lower()
+            if expected not in {"pass", "fail"}:
+                expected = "fail"
             case_inputs = {
                 label: str(value)
                 for label, value in dict(getattr(test_case, "inputs", {}) or {}).items()
@@ -2246,17 +2258,7 @@ class AgentOccam:
                 )
                 if matched_label is not None:
                     part_value = _extract_case_value(case_inputs[matched_label])
-                    quoted_value = json.dumps(str(part_value), ensure_ascii=False)
-                    if re.search(r"\bwith\s+['\"]", modified, re.IGNORECASE):
-                        modified = re.sub(
-                            r"(\bwith\s+)(['\"]).*?\2",
-                            lambda m: f"{m.group(1)}{quoted_value}",
-                            modified,
-                            count=1,
-                            flags=re.IGNORECASE,
-                        )
-                    else:
-                        modified = f"{modified} with {quoted_value}"
+                    modified = _step_with_value(modified, part_value)
                 else:
                     for label, payload in case_inputs.items():
                         kws = field_label_map.get(label, [label.lower()])
@@ -2264,17 +2266,7 @@ class AgentOccam:
                         if not is_keyword_match:
                             continue
                         part_value = _extract_case_value(payload)
-                        quoted_value = json.dumps(str(part_value), ensure_ascii=False)
-                        if re.search(r"\bwith\s+['\"]", modified, re.IGNORECASE):
-                            modified = re.sub(
-                                r"(\bwith\s+)(['\"]).*?\2",
-                                lambda m: f"{m.group(1)}{quoted_value}",
-                                modified,
-                                count=1,
-                                flags=re.IGNORECASE,
-                            )
-                        else:
-                            modified = f"{modified} with {quoted_value}"
+                        modified = _step_with_value(modified, part_value)
                         break
                 new_when.append(modified)
             new_config["gherkin"]["when"] = new_when
