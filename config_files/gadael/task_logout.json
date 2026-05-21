@@ -3,7 +3,7 @@
     "gadael"
   ],
   "task_id": "gadael_logout",
-  "order": 99,
+  "order": 95,
   "require_login": true,
   "storage_state": ".auth/gadael_state.json",
   "start_url": "http://localhost:3000",
