@@ -1,0 +1,136 @@
+logging: true
+verbose: 1
+debug: false
+logdir: "../AgentOccam-Trajectories"
+logname: "gadael"
+max_steps: 30
+
+agent:
+  type: "AgentOccam"
+  others:
+    max_steps: 30
+    logname: "gadael"
+    logging: true
+    verbose: 1
+    debug: false
+  actor:
+    debug: 0
+    verbose: 1
+    number: 1
+    model: "adk-gemini-2.5-flash"
+    adk_config:
+      runtime: "local" # Use local runtime for development
+      orchestration_mode: "sequential" # Sequential: Critic -> Actor -> Judge
+      toolsets:
+        - "browser_automation" # Enable browser interaction tools
+        - "planning" # Enable planning tools (branch, prune)
+      max_tool_calls: 10 # Maximum tool calls per step
+      tool_choice: "auto" # Let ADK decide when to use tools
+      enable_reasoning_traces: true # Log reasoning steps
+
+    documented_interaction_elements:
+      [
+        "url",
+        "plan",
+        "reason",
+        "observation summary",
+        "retained element ids",
+        "observation highlight",
+      ]
+    online_interaction_elements: []
+    input:
+      [
+        "step",
+        "objective",
+        "previous plans",
+        "interaction history",
+        "current observation",
+      ]
+    interaction_history:
+      verbose: true
+      type: ["text"]
+      step_num: 3
+    current_observation:
+      type: ["text"]
+    output:
+      [
+        "interaction history summary",
+        "observation description",
+        "reason",
+        "action",
+        "observation highlight",
+      ]
+    planning_command: ["branch", "prune"]
+    navigation_command: ["click", "type", "stop", "note", "go_back"]
+    play:
+      [
+        "step",
+        "objective",
+        "previous plans",
+        "observation description",
+        "reason",
+        "action",
+      ]
+    trash:
+      ["objective", "step", "url", "instruction", "online input", "response"]
+  critic:
+    mode: false
+    debug: 0
+    verbose: 1
+    model: "adk-gemini-2.5-flash"
+    character: "normal"
+    documented_interaction_elements: []
+    online_interaction_elements: []
+    input:
+      [
+        "objective",
+        "previous plans",
+        "interaction history",
+        "step",
+        "current observation",
+      ]
+    interaction_history:
+      verbose: true
+      type: ["text"]
+      step_num: "all"
+    current_observation:
+      type: ["text"]
+    output: ["observation description", "mistakes"]
+    trash: ["instruction", "online input", "response"]
+  judge:
+    mode: false
+    debug: 0
+    verbose: 1
+    model: "adk-gemini-2.5-flash"
+    strict: false
+    documented_interaction_elements: []
+    online_interaction_elements: []
+    input:
+      [
+        "objective",
+        "previous plans",
+        "interaction history",
+        "step",
+        "current observation",
+        "action choices",
+      ]
+    interaction_history:
+      verbose: true
+      type: ["text"]
+      step_num: "all"
+    current_observation:
+      type: ["text"]
+    output:
+      ["plan progress assessment", "action assessment", "action selection"]
+    trash: ["instruction", "online input", "response"]
+
+env:
+  fullpage: true
+  prune: false
+  max_browser_rows: 2000
+  headless: false
+  relative_task_dir: "gadael"
+  task_ids: ["task_nav01", "task_logout"]
+  viewport_size:
+    width: 1280
+    height: 720

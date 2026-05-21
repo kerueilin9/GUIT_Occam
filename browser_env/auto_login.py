@@ -14,6 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from browser_env.env_config import (
     ACCOUNTS,
+    GADAEL,
     GITLAB,
     REDDIT,
     ONESTOPSHOP,
@@ -39,6 +40,7 @@ SITES = [
     "keystonejs",
     "nodebb",
     "postmill",
+    "gadael",
 ]
 URLS = [
     f"{GITLAB}/-/profile",
@@ -50,9 +52,21 @@ URLS = [
     f"{KEYSTONEJS}/keystone",
     f"{NODEBB}/login",
     f"{POSTMILL}/user/{ACCOUNTS['postmill']['username']}",
+    f"{GADAEL}/#/home",
 ]
-EXACT_MATCH = [True, True, True, True, True, False, False, False, False]
-KEYWORDS = ["", "", "", "Dashboard", "Delete", "", "", "", ACCOUNTS["postmill"]["username"]]
+EXACT_MATCH = [True, True, True, True, True, False, False, False, False, False]
+KEYWORDS = [
+    "",
+    "",
+    "",
+    "Dashboard",
+    "Delete",
+    "",
+    "",
+    "",
+    ACCOUNTS["postmill"]["username"],
+    "test user",
+]
 
 
 def login_postmill(page) -> None:
@@ -88,6 +102,17 @@ def login_postmill(page) -> None:
         raise RuntimeError("Could not find Postmill password field")
 
     page.click('button[type="submit"], input[type="submit"]')
+    page.wait_for_timeout(2000)
+
+
+def login_gadael(page) -> None:
+    username = ACCOUNTS["gadael"]["username"]
+    password = ACCOUNTS["gadael"]["password"]
+    page.goto(f"{GADAEL}/#/login")
+    page.wait_for_timeout(1000)
+    page.locator("input").nth(0).fill(username)
+    page.locator("input").nth(1).fill(password)
+    page.get_by_role("button", name="Sign In").click()
     page.wait_for_timeout(2000)
 
 
@@ -206,6 +231,9 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
             if c == "postmill":
                 login_postmill(page)
 
+            if c == "gadael":
+                login_gadael(page)
+
             context.storage_state(path=f"{auth_folder}/{c}_state.json")
         finally:
             context_manager.__exit__(None, None, None)
@@ -292,6 +320,9 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
 
         if "postmill" in comb:
             login_postmill(page)
+
+        if "gadael" in comb:
+            login_gadael(page)
 
         context.storage_state(path=f"{auth_folder}/{'.'.join(comb)}_state.json")
     finally:
