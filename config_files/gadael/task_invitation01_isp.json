@@ -20,12 +20,12 @@
       "I check Insert the invited users into a department",
       "I select \"test2\" from the Set the department where the invited people will be recorded dropdown",
       "I select \"test2\" from the Set a non-working days calendar dropdown",
-      "I fill in the List of emails to invite, one per line field(ex: user1@example.com\\nuser2@example.com)",
+      "I fill in the List of emails to invite, one per line field with \"user1@example.com\\nuser2@example.com\"",
       "I click the Send button"
     ],
     "then": [
-      "The message \"The invitation for nuser2@example.com has been sent\" should appear on the screen",
-      "The message \"The invitation for user1@example.com has been sent\" should appear on the screen"
+      "The message \"The invitation for user1@example.com has been sent\" should appear on the screen",
+      "The message \"The invitation for user2@example.com has been sent\" should appear on the screen"
     ]
   },
   "isp": {

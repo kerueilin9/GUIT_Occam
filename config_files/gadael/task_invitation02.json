@@ -16,10 +16,10 @@
     "when": [
       "I click the Admin menu",
       "I click Invitations",
-      "I click the Delete button for nuser2@example.com invitation"
+      "I click the Delete button for the \"user2@example.com\" invitation"
     ],
     "then": [
-      "The message \"The invitation has been deleted\" should appear on the screen and nuser1@example.com should not appear in the list of invitations anymore"
+      "The message \"The invitation has been deleted\" should appear on the screen and user2@example.com should not appear in the list of invitations anymore"
     ]
   },
   "eval": {
@@ -28,7 +28,7 @@
     ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The message \"The invitation has been deleted\" should appear on the screen and nuser1@example.com should not appear in the list of invitations anymore"
+        "The message \"The invitation has been deleted\" should appear on the screen and user2@example.com should not appear in the list of invitations anymore"
       ]
     }
   }
