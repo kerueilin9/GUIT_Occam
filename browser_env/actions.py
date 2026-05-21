@@ -107,6 +107,7 @@ class Action(TypedDict):
     pw_code: str
     answer: str
     raw_prediction: str  # raw prediction from the model
+    option: str
 
 
 @beartype
@@ -319,6 +320,8 @@ def action2create_function(action: Action) -> str:
         case ActionTypes.CHECK:
             return f"create_check_action(pw_code={repr(action['pw_code'])})"
         case ActionTypes.SELECT_OPTION:
+            if action["element_id"]:
+                return f"select [{action['element_id']}] [{action['option']}]"
             return f"create_select_option_action(pw_code={repr(action['pw_code'])})"
         case ActionTypes.STOP:
             return f'create_stop_action({repr(action["answer"])})'
@@ -530,6 +533,7 @@ def create_none_action() -> Action:
         "key_comb": "",
         "direction": "",
         "answer": "",
+        "option": "",
         "raw_prediction": "",
         "label": "",
         "flag": False,
@@ -849,12 +853,14 @@ def create_our_select_option_action(
     pw_code: str,
     label: str,
     text: str,
+    element_id: str = "",
 ) -> Action:
     action = create_none_action()
     action.update(
         {
             "action_type": ActionTypes.SELECT_OPTION,
             "pw_code": pw_code,
+            "element_id": element_id,
             "label": label,
             "option": text,
         }
@@ -1227,6 +1233,68 @@ def execute_playwright_select_option(
     locator.select_option(*pw_action_args, **pw_action_kwargs)
 
 
+def execute_element_id_select_option(
+    element_id: str,
+    option: str,
+    page: Page,
+    obseration_processor: ObservationProcessor,
+) -> None:
+    node_info = getattr(obseration_processor, "obs_nodes_info", {}).get(element_id, {})
+    backend_node_id = node_info.get("backend_id")
+    if not backend_node_id:
+        raise ValueError(f"No backend node found for select element id {element_id}")
+
+    remote_object = page.client.send(
+        "DOM.resolveNode",
+        {"backendNodeId": int(backend_node_id)},
+    )
+    object_id = remote_object.get("object", {}).get("objectId")
+    if not object_id:
+        raise ValueError(f"Could not resolve select element id {element_id}")
+
+    response = page.client.send(
+        "Runtime.callFunctionOn",
+        {
+            "objectId": object_id,
+            "functionDeclaration": """
+                function(optionText) {
+                    if (!this || this.tagName !== 'SELECT') {
+                        return { ok: false, error: 'Target element is not a select.' };
+                    }
+
+                    const desired = String(optionText).trim();
+                    const options = Array.from(this.options || []);
+                    const normalize = (value) => String(value || '').trim();
+                    const selected = (
+                        options.find((item) => normalize(item.value) === desired) ||
+                        options.find((item) => normalize(item.label) === desired) ||
+                        options.find((item) => normalize(item.textContent) === desired) ||
+                        options.find((item) => normalize(item.textContent).includes(desired))
+                    );
+
+                    if (!selected) {
+                        return {
+                            ok: false,
+                            error: `Option not found: ${desired}`,
+                            options: options.map((item) => normalize(item.textContent || item.label || item.value))
+                        };
+                    }
+
+                    this.value = selected.value;
+                    this.dispatchEvent(new Event('input', { bubbles: true }));
+                    this.dispatchEvent(new Event('change', { bubbles: true }));
+                    return { ok: true, value: selected.value };
+                }
+            """,
+            "arguments": [{"value": option}],
+            "returnByValue": True,
+        },
+    )
+    result = response.get("result", {}).get("value", {})
+    if not result.get("ok"):
+        raise ValueError(result.get("error", f"Failed to select option {option!r}"))
+
+
 async def aexecute_playwright_select_option(
     locator_code: list[ParsedPlaywrightCode],
     page: APage,
@@ -1424,7 +1492,14 @@ def execute_action(
                 page = browser_ctx.new_page()
 
         case ActionTypes.SELECT_OPTION:
-            if action["pw_code"]:
+            if action["element_id"] and action["option"]:
+                execute_element_id_select_option(
+                    action["element_id"],
+                    action["option"],
+                    page,
+                    obseration_processor,
+                )
+            elif action["pw_code"]:
                 parsed_code = parse_playwright_code(action["pw_code"])
                 locator_code = parsed_code[:-1]
                 pw_action_args = parsed_code[-1].get('arguments', [])
@@ -1810,13 +1885,12 @@ def create_id_based_action(action_str: str):
                 answer = match.group(1)
             return create_stop_action(answer)
         case "select":
-            match = re.search(r"select ?\[(.+)\] ?\[(.+)\]", action_str)
+            match = re.search(r"select ?\[(\d+)\] ?\[(.+)\]", action_str)
             if not match:
                 raise ActionParsingError(f"Invalid select action {action_str}")
             elem = match.group(1)
             option = match.group(2)
-            pw_code = f'page.get_by_test_id("{elem}").select_option("{option}")'
-            return create_our_select_option_action(pw_code, elem, option)
+            return create_our_select_option_action("", elem, option, element_id=elem)
         case "record":
             match = re.search(r"record ?\[(.+)\]", action_str)
             text = match.group(1)
@@ -1931,13 +2005,12 @@ def create_id_based_actions(action_str: str):
                         answer = answer[:-1]
                 action_cmds.append(create_stop_action(answer))
             case "select":
-                match = re.search(r"select ?\[(.+)\] ?\[(.+)\]", raw_action_str)
+                match = re.search(r"select ?\[(\d+)\] ?\[(.+)\]", raw_action_str)
                 if not match:
                     raise ActionParsingError(f"Invalid select action {raw_action_str}")
                 elem = match.group(1)
                 option = match.group(2)
-                pw_code = f'page.get_by_test_id("{elem}").select_option("{option}")'
-                action_cmds.append(create_our_select_option_action(pw_code, elem, option))
+                action_cmds.append(create_our_select_option_action("", elem, option, element_id=elem))
             case "record":
                 match = re.search(r"record ?\[?(.+)\]?", raw_action_str, re.DOTALL)
                 text = match.group(1)

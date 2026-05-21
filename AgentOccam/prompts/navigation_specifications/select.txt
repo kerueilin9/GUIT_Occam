@@ -1,0 +1,1 @@
+select [id] [option]: To choose an option in a dropdown/select element with a specific numerical ID. Use this instead of clicking a combobox and then clicking an option. The option can be the visible option text or value. E.g., `select [291] [Yes]`

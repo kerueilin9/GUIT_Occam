@@ -8,6 +8,7 @@ from typing import Optional
 CLICK_RE = re.compile(r"click ?\[(\d+)\]")
 HOVER_RE = re.compile(r"hover ?\[(\d+)\]")
 TYPE_RE = re.compile(r"type ?\[(\d+)\] ?\[(.*)\] ?\[(\d+)\]", re.DOTALL)
+SELECT_RE = re.compile(r"select ?\[(\d+)\] ?\[(.+)\]", re.DOTALL)
 
 
 def action_name(action_str: str) -> str:
@@ -46,11 +47,21 @@ def parse_type(action_str: str) -> Optional[tuple[int, str, bool]]:
     return element_id, text, enter_flag
 
 
+def parse_select(action_str: str) -> Optional[tuple[int, str]]:
+    match = SELECT_RE.search((action_str or "").strip())
+    if not match:
+        return None
+    return int(match.group(1)), match.group(2)
+
+
 def parse_element_id(action_str: str) -> Optional[int]:
     name = action_name(action_str)
     if name in {"click", "hover"}:
         return parse_click_or_hover_element_id(action_str, name)
     if name == "type":
         parsed = parse_type(action_str)
+        return parsed[0] if parsed else None
+    if name == "select":
+        parsed = parse_select(action_str)
         return parsed[0] if parsed else None
     return None

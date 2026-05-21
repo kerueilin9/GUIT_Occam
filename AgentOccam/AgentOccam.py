@@ -7,7 +7,7 @@ from AgentOccam.llms.titan import call_titan, call_titan_with_messages, arrange_
 from AgentOccam.llms.gpt import call_gpt, call_gpt_with_messages, arrange_message_for_gpt
 from AgentOccam.llms.gemini import call_gemini, call_gemini_with_messages, arrange_message_for_gemini
 from AgentOccam.llms.adk import ADK_AVAILABLE, call_adk, call_adk_with_messages, arrange_message_for_adk
-from AgentOccam.action_parser import action_name, normalize_type_action, parse_element_id, parse_type
+from AgentOccam.action_parser import action_name, normalize_type_action, parse_element_id, parse_select, parse_type
 from AgentOccam.model_registry import (
     ARRANGE_MESSAGE_FOR_MODEL_MAP,
     CALL_MODEL_MAP,
@@ -471,6 +471,13 @@ class Actor(Agent):
                     text += "\n"
                 if str(element_id) in self.get_observation_text():
                     return True
+            case "select":
+                parsed = parse_select(action_str)
+                if not parsed:
+                    return False
+                element_id, _option = parsed
+                if str(element_id) in self.get_observation_text():
+                    return True
             case "go_back":
                 return True
             case "go_home":
@@ -817,6 +824,13 @@ class Actor(Agent):
                         text += "\n"
                     node = DOM_root_node.search_node_by_id(element_id)
                     return action + f" ({node.name})"
+                case "select":
+                    parsed = parse_select(action_str)
+                    if not parsed:
+                        raise ValueError(f"Invalid select action {action_str}")
+                    element_id, option = parsed
+                    node = DOM_root_node.search_node_by_id(element_id)
+                    return f"select [{element_id}] [{option}] ({node.role} {node.name})"
                 case "scroll":
                     return action_str
                 case "goto":
@@ -860,6 +874,12 @@ class Actor(Agent):
                         if not parsed:
                             raise ValueError(f"Invalid type action {action_str}")
                         element_id, text, enter_flag = parsed
+                        retained_element_ids.append(element_id)
+                    case "select":
+                        parsed = parse_select(action_str)
+                        if not parsed:
+                            raise ValueError(f"Invalid select action {action_str}")
+                        element_id, _option = parsed
                         retained_element_ids.append(element_id)
                     case "scroll":
                         pass
