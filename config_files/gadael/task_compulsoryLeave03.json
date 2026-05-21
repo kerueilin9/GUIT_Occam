@@ -1,0 +1,36 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_compulsoryLeave03",
+  "order": 7,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael Compulsory Leave Management",
+    "scenario": "Delete a compulsory leave period",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Compulsory leaves",
+      "I click the view button for the \"test2\" compulsory leave period",
+      "I click the Delete button"
+    ],
+    "then": [
+      "The message \"The compulsory leave has been deleted\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The compulsory leave has been deleted\" should appear on the screen"
+      ]
+    }
+  }
+}

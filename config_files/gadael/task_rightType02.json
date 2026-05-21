@@ -1,29 +1,35 @@
 {
-  "sites": ["gadael"],
-  "task_id": "gadael_rightType01",
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_rightType02",
   "order": 2,
   "require_login": true,
   "storage_state": ".auth/gadael_state.json",
   "start_url": "http://localhost:3000",
   "gherkin": {
-    "feature": "Create a leave right",
-    "scenario": "add Rule to a leave right",
-    "given": ["I am logged in as an user"],
+    "feature": "Gadael Right Type Management",
+    "scenario": "Edit a right type",
+    "given": [
+      "I am logged in as a user"
+    ],
     "when": [
-        "I click the Admin menu",
-        "I click Rights types",
-        "I click the Edit button for the \"test\" right type",
-        "I fill in 'Right type name' field with \"test2\"",
-        "I fill in 'Color' field with \"#cccccc\"",
-        "I uncheck Display type folded in the request creation page",
-        "I click the Save button"
+      "I click the Admin menu",
+      "I click Right types",
+      "I click the Edit button for the \"test\" right type",
+      "I fill in the Right type name field with \"test2\"",
+      "I fill in the Color field with \"#cccccc\"",
+      "I uncheck Display type folded in the request creation page",
+      "I click the Save button"
     ],
     "then": [
       "The message \"The right type has been modified\" should appear on the screen"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The message \"The right type has been modified\" should appear on the screen"
@@ -31,4 +37,3 @@
     }
   }
 }
-

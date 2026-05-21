@@ -1,36 +1,41 @@
 {
-  "sites": ["gadael"],
-  "task_id": "gadael_right03",
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_right04",
   "order": 2,
   "require_login": true,
   "storage_state": ".auth/gadael_state.json",
   "start_url": "http://localhost:3000",
   "gherkin": {
-    "feature": "Create a leave right",
-    "scenario": "edit a leave right",
-    "given": ["I am logged in as an user"],
+    "feature": "Gadael Leave Right Management",
+    "scenario": "Edit a leave right",
+    "given": [
+      "I am logged in as a user"
+    ],
     "when": [
-        "I click the Admin menu",
-        "I click Rights configuration",
-        "I click View button for the \"test\" right",
-        "我點擊在test 右側的 Edit 按鈕",
-        "I fill in 'Name' field with \"test2\"",
-        "I fill in 'Default quantity' field with \"2\"",
-        "I check the Adjust the available quantity automatically from the consumption of other rights",
-        "I fill in 'Adjustements quantity' field with \"1\"",
-        "I click the Save button"
+      "I click the Admin menu",
+      "I click Rights configuration",
+      "I click the View button for the \"test\" right",
+      "I click the Edit button for the \"test\" right",
+      "I fill in the Name field with \"test2\"",
+      "I fill in the Default quantity field with \"2\"",
+      "I check Adjust the available quantity automatically from the consumption of other rights",
+      "I fill in the Adjustments quantity field with \"1\"",
+      "I click the Save button"
     ],
     "then": [
-      "The message \"The right renewal period has been created\" should appear on the screen"
+      "The message \"The vacation right has been modified\" should appear on the screen"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The message \"The right renewal period has been created\" should appear on the screen"
+        "The message \"The vacation right has been modified\" should appear on the screen"
       ]
     }
   }
 }
-

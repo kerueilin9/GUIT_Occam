@@ -1,0 +1,40 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_user02",
+  "order": 10,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael User Management",
+    "scenario": "Edit a user",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Users list",
+      "I click the view button for the \"test test\" user",
+      "I click the Edit button for the \"test test\" user",
+      "I fill in the Firstname field with \"test2\"",
+      "I fill in the Lastname field with \"test2\"",
+      "I fill in the Email field with \"test2@test.com\"",
+      "I click the Save button"
+    ],
+    "then": [
+      "The message \"The user has been modified\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The user has been modified\" should appear on the screen"
+      ]
+    }
+  }
+}

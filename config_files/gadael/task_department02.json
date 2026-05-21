@@ -1,0 +1,40 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_department02",
+  "order": 5,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael Department Management",
+    "scenario": "Edit a department",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Departments list",
+      "I click the View button for the \"test\" department",
+      "I click the Edit button",
+      "I fill in the Department name field with \"test2\"",
+      "I check All managers must confirm approval step",
+      "I fill in the Minimal number of active users field with \"50\"",
+      "I click the Save button"
+    ],
+    "then": [
+      "The message \"The department has been modified\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The department has been modified\" should appear on the screen"
+      ]
+    }
+  }
+}

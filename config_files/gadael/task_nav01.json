@@ -1,33 +1,37 @@
 {
-  "sites": ["gadael"],
+  "sites": [
+    "gadael"
+  ],
   "task_id": "gadael_nav01",
-  "order": 2,
+  "order": 0,
   "require_login": true,
   "storage_state": ".auth/gadael_state.json",
   "start_url": "http://localhost:3000",
   "gherkin": {
-    "feature": "Navigate the application",
-    "scenario": "navigate the application",
-    "given": ["I am logged in as an user"],
+    "feature": "Gadael Navigation",
+    "scenario": "Navigate to user calendar settings",
+    "given": [
+      "I am logged in as a user"
+    ],
     "when": [
-        "I click the user menu",
-        "I click settings",
-        "I click Add User",
-        "I click Calendar"
+      "I click the user menu",
+      "I click Settings",
+      "I click Calendar"
     ],
     "then": [
       "The message \"Google calendar link service is disabled\" should appear on the screen",
-      "The url should be \"http://localhost:3000/#/user/settings/calendar\""
+      "The URL should be \"http://localhost:3000/#/user/settings/calendar\""
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The message \"Google calendar link service is disabled\" should appear on the screen",
-        "The url should be \"http://localhost:3000/#/user/settings/calendar\""
+        "The URL should be \"http://localhost:3000/#/user/settings/calendar\""
       ]
     }
   }
 }
-

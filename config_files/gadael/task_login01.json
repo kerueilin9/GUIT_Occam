@@ -1,26 +1,32 @@
 {
-  "sites": ["gadael"],
+  "sites": [
+    "gadael"
+  ],
   "task_id": "gadael_login01",
   "order": 95,
   "require_login": false,
   "storage_state": ".auth/gadael_state.json",
   "start_url": "http://localhost:3000",
   "gherkin": {
-    "feature": "Login to the application",
-    "scenario": "login to the application",
-    "given": ["I am on the welcome page"],
+    "feature": "Gadael Authentication",
+    "scenario": "Log in to the application",
+    "given": [
+      "I am on the welcome page"
+    ],
     "when": [
-        "I click the Login button",
-        "I fill in 'Email' field with \"test@gmail.com\"",
-        "I fill in 'Password' field with \"Password123\"",
-        "I click the Login button"
+      "I click the Login button",
+      "I fill in the Email field with \"test@gmail.com\"",
+      "I fill in the Password field with \"Password123\"",
+      "I click the Login button"
     ],
     "then": [
-        "The page should display 'Wellcome to Gadael'"
+      "The page should display 'Wellcome to Gadael'"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display 'Wellcome to Gadael'"
@@ -28,5 +34,3 @@
     }
   }
 }
-
-

@@ -1,0 +1,49 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_user01",
+  "order": 10,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael User Management",
+    "scenario": "Create a user",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Users list",
+      "I click Add User",
+      "I check Application administrator",
+      "I fill in the Firstname field with \"test\"",
+      "I fill in the Lastname field with \"test\"",
+      "I fill in the Email field with \"test1@test.com\"",
+      "I select 'test2' from the Department dropdown",
+      "I check Set a new password",
+      "I fill in the New password field with \"Password123!\"",
+      "I fill in the Confirm new password field with \"Password123!\"",
+      "I click the Save button"
+    ],
+    "then": [
+      "The message \"The user has been created\" should appear on the screen"
+    ]
+  },
+  "isp": {
+    "enabled": true,
+    "max_test_cases": 30,
+    "isp_model": "gemini-2.5-flash"
+  },
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The user has been created\" should appear on the screen"
+      ]
+    }
+  }
+}

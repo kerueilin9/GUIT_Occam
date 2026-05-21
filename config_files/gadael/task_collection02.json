@@ -1,0 +1,41 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_collection02",
+  "order": 4,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael Collection Management",
+    "scenario": "Edit a collection",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Collections list",
+      "I click the Edit button for the \"test\" collection",
+      "I fill in the Collection name field with \"test2\"",
+      "I fill in the Attendance field with \"80\"",
+      "I fill in the Package agreement worked days field with \"4\"",
+      "I click the Save button"
+    ],
+    "then": [
+      "The message \"The collection has been modified\" should appear on the screen",
+      "The message \"The right association has been modified\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The collection has been modified\" should appear on the screen",
+        "The message \"The right association has been modified\" should appear on the screen"
+      ]
+    }
+  }
+}

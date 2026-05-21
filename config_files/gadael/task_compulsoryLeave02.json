@@ -1,0 +1,42 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_compulsoryLeave02",
+  "order": 7,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael Compulsory Leave Management",
+    "scenario": "Edit a compulsory leave period",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Compulsory leaves",
+      "I click the view button for the \"test\" compulsory leave period",
+      "I click the Edit button",
+      "I fill in the Compulsory leave name field with \"test2\"",
+      "I fill in the Description field with \"test2\"",
+      "I fill in the Leave period Begin field with \"5/11/26\"",
+      "I fill in the Leave period End field with \"5/21/26\"",
+      "I check Part-time 70%",
+      "I click the Save button"
+    ],
+    "then": [
+      "The message \"The compulsory leave period has been modified\" should appear on the screen"
+    ]
+  },
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The compulsory leave period has been modified\" should appear on the screen"
+      ]
+    }
+  }
+}

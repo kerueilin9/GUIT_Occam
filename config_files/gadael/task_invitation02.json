@@ -1,0 +1,35 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_invitation02",
+  "order": 6,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael Invitation Management",
+    "scenario": "Delete an invitation",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Invitations",
+      "I click the Delete button for nuser2@example.com invitation"
+    ],
+    "then": [
+      "The message \"The invitation has been deleted\" should appear on the screen and nuser1@example.com should not appear in the list of invitations anymore"
+    ]
+  },
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The invitation has been deleted\" should appear on the screen and nuser1@example.com should not appear in the list of invitations anymore"
+      ]
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "sites": [
+    "gadael"
+  ],
+  "task_id": "gadael_invitation01",
+  "order": 6,
+  "require_login": true,
+  "storage_state": ".auth/gadael_state.json",
+  "start_url": "http://localhost:3000",
+  "gherkin": {
+    "feature": "Gadael Invitation Management",
+    "scenario": "Create an invitation",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin menu",
+      "I click Invitations",
+      "I click Invite someone",
+      "I check Insert the invited users into a department",
+      "I select \"test2\" from the Set the department where the invited people will be recorded dropdown",
+      "I select \"test2\" from the Set a non-working days calendar dropdown",
+      "I fill in the List of emails to invite, one per line field(ex: user1@example.com\\nuser2@example.com)",
+      "I click the Send button"
+    ],
+    "then": [
+      "The message \"The invitation for nuser2@example.com has been sent\" should appear on the screen",
+      "The message \"The invitation for user1@example.com has been sent\" should appear on the screen"
+    ]
+  },
+  "isp": {
+    "enabled": true,
+    "max_test_cases": 30,
+    "isp_model": "gemini-2.5-flash"
+  },
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The message \"The invitation for user1@example.com has been sent\" should appear on the screen",
+        "The message \"The invitation for user2@example.com has been sent\" should appear on the screen"
+      ]
+    }
+  }
+}

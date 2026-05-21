@@ -1,35 +1,44 @@
 {
-  "sites": ["gadael"],
+  "sites": [
+    "gadael"
+  ],
   "task_id": "gadael_collection01",
-  "order": 2,
+  "order": 4,
   "require_login": true,
   "storage_state": ".auth/gadael_state.json",
   "start_url": "http://localhost:3000",
   "gherkin": {
-    "feature": "Create a collection",
-    "scenario": "add collection",
-    "given": ["I am logged in as an user"],
+    "feature": "Gadael Collection Management",
+    "scenario": "Create a collection",
+    "given": [
+      "I am logged in as a user"
+    ],
     "when": [
-        "I click the Admin menu",
-        "I click Collections list",
-        "I click Add a collection",
-        "I fill in 'Collection name' field with \"test\"",
-        "I fill in 'Attendance (percentage relative to full-time)' field with \"100\"",
-        "I check 'Tuesday' in Business days for the users associated to this collection section",
-        "I fill in 'Package agreement worked days' field with \"3\"",
-        "I click the Save button"
+      "I click the Admin menu",
+      "I click Collections list",
+      "I click Add a collection",
+      "I fill in the Collection name field with \"test\"",
+      "I fill in the Attendance field with \"100\"",
+      "I check Tuesday in the business days section for users associated with this collection",
+      "I fill in the Package agreement worked days field with \"3\"",
+      "I click Add vacation right",
+      "select \"test2\" in the Vacation right dropdown",
+      "I click the Save button"
     ],
     "then": [
-      "The message \"The collection has been created\" should appear on the screen"
+      "The message \"The collection has been created\" should appear on the screen",
+      "The message \"The right association has been created\" should appear on the screen"
     ]
   },
   "eval": {
-    "eval_types": ["gherkin_criteria"],
+    "eval_types": [
+      "gherkin_criteria"
+    ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The message \"The collection has been created\" should appear on the screen"
+        "The message \"The collection has been created\" should appear on the screen",
+        "The message \"The right association has been created\" should appear on the screen"
       ]
     }
   }
 }
-
