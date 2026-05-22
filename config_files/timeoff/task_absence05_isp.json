@@ -15,20 +15,21 @@
     ],
     "when": [
       "I navigate to the new absence page",
-      "I fill in the absence request form",
+      "I click the New Absence button",
       "I fill in the From date field with \"2024/12/01\"",
       "I fill in the To date field with \"2024/12/01\"",
       "I fill in the comment field with \"test\"",
       "I submit the new absence request"
     ],
     "then": [
-      "The 'Request from Vector Crawler was approved' message should appear on the screen"
+      "The 'New leave request was added' message should appear on the screen"
     ]
   },
   "isp": {
-    "enabled": "false",
+    "enabled": "true",
     "max_test_cases": 15,
-    "isp_model": "gemini-2.5-flash"
+    "isp_model": "gemini-2.5-flash",
+    "allow_unmatched_type_actions": "true"
   },
   "eval": {
     "eval_types": [
@@ -36,7 +37,7 @@
     ],
     "reference_answers": {
       "gherkin_acceptance_criteria": [
-        "The 'Request from Vector Crawler was approved' message should appear on the screen"
+        "The 'New leave request was added' message should appear on the screen"
       ]
     }
   }
