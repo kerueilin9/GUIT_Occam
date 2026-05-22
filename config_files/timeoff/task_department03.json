@@ -16,12 +16,12 @@
     "when": [
       "I click Settings in the header",
       "I click Departments",
-      "I click the \"test\" department",
+      "I click the \"Sales1\" department",
       "I click the Delete button"
     ],
     "then": [
       "The page should display 'Department was successfully removed'",
-      "The department 'test' should no longer appear in the departments list"
+      "The department 'Sales1' should no longer appear in the departments list"
     ]
   },
   "eval": {
@@ -31,7 +31,7 @@
     "reference_answers": {
       "gherkin_acceptance_criteria": [
         "The page should display 'Department was successfully removed'",
-        "The department 'test' should no longer appear in the departments list"
+        "The department 'Sales1' should no longer appear in the departments list"
       ]
     }
   }

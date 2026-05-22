@@ -24,7 +24,7 @@
       "I fill in the Confirm Password field with 'Password123'",
       "I save the new employee",
       "I navigate to the departments management page",
-      "I edit the Sales1 department",
+      "I edit the Sales department",
       "I change the Manager to 'Test User'",
       "I save the changes"
     ],

@@ -18,7 +18,7 @@
       "I go to the Bank Holidays section",
       "I add a new bank holiday with the name \"Ker\"",
       "I set the date to \"2025/09/09\"",
-      "I save the bank holiday"
+      "I click the Create button"
     ],
     "then": [
       "I should see the success message \"Changes to bank holidays were saved\"",

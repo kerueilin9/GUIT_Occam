@@ -14,10 +14,9 @@
       "I am logged in as an employee"
     ],
     "when": [
-      "I navigate to the new absence page",
-      "I fill in the absence request form",
+      "I click the New Absence button",
       "I fill in the comment field with \"test\"",
-      "I submit the new absence request"
+      "I click the Create button"
     ],
     "then": [
       "The 'Failed to create a leave request' message should appear on the screen",

@@ -16,7 +16,7 @@
     "when": [
       "I click Settings in the header",
       "I click Departments",
-      "I edit the Sales department",
+      "I edit the test department",
       "I change the department name to 'Sales1'",
       "I set the allowance to '15'",
       "I check the 'Accrued allowance' checkbox",
