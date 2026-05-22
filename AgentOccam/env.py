@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from datetime import datetime
 from browser_env import (
     create_id_based_action,
@@ -127,10 +128,45 @@ class WebArenaEnvironmentWrapper():
             DOM_str = translate_node_to_str(node=DOM_root_node, mode="concise")
             return {"text": DOM_str, "image": self.obs["image"], "node": DOM_root_node}
         else:
-            browser_content = self.obs["text"][0]
-            browser_content = browser_content.split("\n")[:self.max_browser_rows] 
-            browser_content = "\n".join(browser_content)
+            return self._actor_observation(self.obs["text"][0])
+
+    def _actor_observation(self, browser_content: str):
+        lines = browser_content.split("\n")
+        if len(lines) <= self.max_browser_rows:
             return browser_content
+
+        keep: set[int] = set(range(min(80, len(lines))))
+        keep.update(range(max(0, len(lines) - 160), len(lines)))
+        important = re.compile(
+            r"\b(button|link|textbox|combobox|checkbox|radio|menuitem|option|search)\b"
+            r"|Browser(Dialog|Validation)"
+            r"|created|updated|deleted|saved|success|error|failed|required|invalid",
+            re.IGNORECASE,
+        )
+
+        for idx, line in enumerate(lines):
+            if not important.search(line):
+                continue
+            keep.update(range(max(0, idx - 2), min(len(lines), idx + 3)))
+            base_depth = len(line) - len(line.lstrip("\t"))
+            for child_idx in range(idx + 1, min(len(lines), idx + 8)):
+                child_depth = len(lines[child_idx]) - len(lines[child_idx].lstrip("\t"))
+                if child_depth <= base_depth:
+                    break
+                keep.add(child_idx)
+
+        ordered = sorted(keep)
+        if len(ordered) > self.max_browser_rows:
+            ordered = ordered[: self.max_browser_rows // 2] + ordered[-(self.max_browser_rows // 2):]
+
+        compacted = []
+        previous = -1
+        for idx in ordered:
+            if previous != -1 and idx > previous + 1:
+                compacted.append(f"... omitted {idx - previous - 1} observation line(s) ...")
+            compacted.append(lines[idx])
+            previous = idx
+        return "\n".join(compacted)
     
     def done(self):
         if self.is_done:

@@ -189,11 +189,13 @@ class ObservationProcessor:
 
 class ObservationMetadata(TypedDict):
     obs_nodes_info: dict[str, Any]
+    accessibility_tree_text: str
 
 
 def create_empty_metadata() -> ObservationMetadata:
     return {
         "obs_nodes_info": {},
+        "accessibility_tree_text": "",
     }
 
 
@@ -1129,17 +1131,8 @@ class TextObervationProcessor(ObservationProcessor):
         clean_lines: list[str] = []
         for line in tree_str.split("\n"):
             if "statictext" in line.lower():
-                prev_lines = clean_lines[-3:]
-                pattern = r"\[\d+\] StaticText '([^']+)'"
-
-                match = re.search(pattern, line)
-                if match:
-                    static_text = match.group(1)
-                    if all(
-                        static_text not in prev_line
-                        for prev_line in prev_lines
-                    ):
-                        clean_lines.append(line)
+                if not clean_lines or line.split("]", 1)[-1] != clean_lines[-1].split("]", 1)[-1]:
+                    clean_lines.append(line)
             else:
                 clean_lines.append(line)
 
@@ -1267,6 +1260,7 @@ class TextObervationProcessor(ObservationProcessor):
 
             self.node_root = node_root
             self.meta_data["obs_nodes_info"] = obs_nodes_info
+            self.meta_data["accessibility_tree_text"] = content
 
         else:
             raise ValueError(

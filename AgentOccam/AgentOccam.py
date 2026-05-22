@@ -1000,8 +1000,8 @@ class Actor(Agent):
                     model_response = self.call_model_with_message(system_prompt=instruction+"\nGenerating the command `{}` will be severely punished! Don't generate invalid actions! We don't have that element id in the current observation!".format(invalid_action_str), messages=self.arrange_message_for_model(online_input))
                 else:
                     # LLM Actor prompt
-                    # logger.debug(f"Calling model with instruction system_prompt: {instruction}")
-                    # logger.debug(f"Calling model with instruction messages: {self.arrange_message_for_model(online_input)}")
+                    logger.debug(f"Calling model with instruction system_prompt: {instruction}")
+                    logger.debug(f"Calling model with instruction messages: {self.arrange_message_for_model(online_input)}")
                     model_response = self.call_model_with_message(system_prompt=instruction, messages=self.arrange_message_for_model(online_input))
                 action_elements = self.parse_elements(text=model_response, key_list=self.config.output)
                 action_elements = self.parse_action_from_action_candidates(action_elements=action_elements)
@@ -1846,14 +1846,21 @@ class AgentOccam:
         return None
 
     _FIELD_MATCH_STOPWORDS = {"a", "an", "the", "field", "textbox", "input", "box"}
+    _FIELD_MATCH_SHORT_TOKENS = {"to", "id"}
 
     @classmethod
-    def _field_match_tokens(cls, text: str) -> list[str]:
+    def _field_match_tokens(cls, text: str, include_short: bool = False) -> list[str]:
         normalized = cls._normalize_field_reference(text).lower()
         tokens = [
             token
             for token in re.split(r"[^a-z0-9]+", normalized)
-            if len(token) >= 3 and token not in cls._FIELD_MATCH_STOPWORDS
+            if (
+                token not in cls._FIELD_MATCH_STOPWORDS
+                and (
+                    len(token) >= 3
+                    or (include_short and token in cls._FIELD_MATCH_SHORT_TOKENS)
+                )
+            )
         ]
         return list(dict.fromkeys(tokens))
 
@@ -1867,7 +1874,7 @@ class AgentOccam:
         """Return the best Gherkin fill step for a recorded typed field."""
         label = cls._normalize_field_reference(getattr(meta, "label", "")).lower()
         context = str(getattr(meta, "surrounding_context", "") or "").lower()
-        label_tokens = set(cls._field_match_tokens(label))
+        label_tokens = set(cls._field_match_tokens(label, include_short=True))
         context_tokens = set(cls._field_match_tokens(context))
         if label_tokens == {"name"}:
             label_tokens.add("title")
@@ -1876,7 +1883,7 @@ class AgentOccam:
         for idx, task_field in enumerate(fill_steps):
             tokens: list[str] = []
             for keyword in [task_field.get("display", ""), *(task_field.get("keywords", []) or [])]:
-                tokens.extend(cls._field_match_tokens(keyword))
+                tokens.extend(cls._field_match_tokens(keyword, include_short=True))
             tokens = [token for token in dict.fromkeys(tokens) if token]
             score = (
                 2 * sum(1 for token in tokens if token in label_tokens)
@@ -1885,6 +1892,8 @@ class AgentOccam:
             display_norm = cls._normalize_field_reference(task_field.get("display", "")).lower()
             if label and label == display_norm:
                 score += 10
+            elif label and display_norm and label.startswith(display_norm + " "):
+                score += 5
             reason = f"token match {tokens}"
             if score <= 0:
                 continue
