@@ -16,7 +16,7 @@
     "when": [
       "I click the Admin menu",
       "I click Users list",
-      "I click the view button for the \"test test\" user",
+      "I click the view button for the \"test2 test2\" user",
       "I click the Delete button"
     ],
     "then": [
