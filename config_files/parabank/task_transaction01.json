@@ -1,0 +1,26 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_transaction01",
+  "order": 3,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Transaction Search",
+    "scenario": "Find a transaction by transaction ID",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Find Transactions link",
+      "I select account '12345' from the Select an account dropdown",
+      "I fill in the Find by Transaction ID field with '12345'",
+      "I click the Find Transactions button in the Find by Transaction ID section"
+    ],
+    "then": [
+      "The page should display 'Transaction Results'"
+    ]
+  }
+}

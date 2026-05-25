@@ -1,0 +1,27 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_account04",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Account Services",
+    "scenario": "Transfer funds between accounts",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Transfer Funds link",
+      "I fill in the Amount field with '89.55'",
+      "I select account '12345' from the From Account dropdown",
+      "I select account '12456' from the To Account dropdown",
+      "I click the Transfer button"
+    ],
+    "then": [
+      "The page should display 'Transfer Complete!'"
+    ]
+  }
+}

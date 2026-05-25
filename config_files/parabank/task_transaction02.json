@@ -1,0 +1,27 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_transaction02",
+  "order": 3,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Transaction Search",
+    "scenario": "Find transactions by date",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Find Transactions link",
+      "I select account '12345' from the Select an account dropdown",
+      "I fill in the Find by Date field with '12-12-2025'",
+      "I click the Find Transactions button in the Find by Date section"
+    ],
+    "then": [
+      "The page should display 'Transaction Results'",
+      "The results should show transactions for account '12345' on '12-12-2025'"
+    ]
+  }
+}

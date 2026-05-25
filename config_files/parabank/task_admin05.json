@@ -1,0 +1,30 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_admin05",
+  "order": 110,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Administration",
+    "scenario": "Update application loan settings",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin Page link",
+      "I fill in the Init. Balance field with \"600.00\"",
+      "I fill in the Min. Balance field with \"150.00\"",
+      "I select \"Web Service\" from the Loan Provider dropdown",
+      "I select \"Down Payment\" from the Loan Processor dropdown",
+      "I fill in the Threshold field with \"30\"",
+      "I click the Submit button"
+    ],
+    "then": [
+      "The page should display 'Settings saved successfully.'",
+      "The Application Settings section should show an initial balance of \"600.00\", a minimum balance of \"150.00\", and a threshold of \"30\""
+    ]
+  }
+}

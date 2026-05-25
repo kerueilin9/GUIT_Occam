@@ -1,0 +1,23 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_logout",
+  "order": 95,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Authentication",
+    "scenario": "Log out of the application",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Log Out link"
+    ],
+    "then": [
+      "The page should display 'Customer Login'"
+    ]
+  }
+}

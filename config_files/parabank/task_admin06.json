@@ -1,0 +1,24 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_admin06",
+  "order": 110,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Administration",
+    "scenario": "Shut down the JMS service",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin Page link",
+      "I click the SHUTDOWN button in the JMS Service section"
+    ],
+    "then": [
+      "The JMS Service status should no longer display 'Running'"
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_contact01",
+  "order": 1,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Customer Support",
+    "scenario": "Submit a contact request",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Contact link",
+      "I fill in the Name field with 'test'",
+      "I fill in the Email field with 'test@example.com'",
+      "I fill in the Phone field with '123-456-7890'",
+      "I fill in the Message field with 'test message'",
+      "I click the Send button"
+    ],
+    "then": [
+      "The page should display 'Thank you test'",
+      "The page should display 'A Customer Care Representative will be contacting you.'"
+    ]
+  }
+}

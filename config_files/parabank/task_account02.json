@@ -1,0 +1,26 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_account02",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Account Services",
+    "scenario": "Filter account activity by transaction type",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Accounts Overview link",
+      "I click the '12345' account link",
+      "I select 'Credit' from the Type dropdown",
+      "I click the Go button"
+    ],
+    "then": [
+      "The page should display only one transaction with description 'Credit' for account '12345'"
+    ]
+  }
+}

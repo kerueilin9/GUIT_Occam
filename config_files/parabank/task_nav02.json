@@ -1,0 +1,24 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_nav02",
+  "order": 0,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Navigation",
+    "scenario": "Navigate to the Services page",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Services link"
+    ],
+    "then": [
+      "The page should display 'ParaSoft Demo Website'",
+      "The URL should be \"http://localhost:3301/parabank/services.htm\""
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_admin04",
+  "order": 110,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Administration",
+    "scenario": "Update web service endpoints",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Admin Page link",
+      "I fill in the ParaBank Service SOAP Endpoint field with \"http://localhost:3301/parabank/services/ParaBank\"",
+      "I fill in the ParaBank Service REST Endpoint field with \"http://localhost:3301/parabank/services/bank\"",
+      "I fill in the LoanProcessor Service Endpoint field with \"http://localhost:3301/parabank/services/LoanProcessor\"",
+      "I click the Submit button"
+    ],
+    "then": [
+      "The page should display 'Settings saved successfully.'",
+      "The Web Service section should keep the SOAP, REST, and LoanProcessor endpoint values that were entered"
+    ]
+  }
+}

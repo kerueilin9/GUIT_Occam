@@ -1,0 +1,36 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_register01",
+  "order": 98,
+  "require_login": false,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Registration",
+    "scenario": "Register for online banking access",
+    "given": [
+      "I am on the Parabank home page"
+    ],
+    "when": [
+      "I click the Register link",
+      "I fill in the First Name field with 'Jane'",
+      "I fill in the Last Name field with 'Smith'",
+      "I fill in the Address field with '123 Main Street'",
+      "I fill in the City field with 'New York'",
+      "I fill in the State field with 'NY'",
+      "I fill in the Zip Code field with '10001'",
+      "I fill in the Phone # field with '123-456-7890'",
+      "I fill in the SSN field with '123-45-6789'",
+      "I fill in the Username field with 'janesmith0525'",
+      "I fill in the Password field with 'Password123'",
+      "I fill in the Confirm Password field with 'Password123'",
+      "I click the Register button"
+    ],
+    "then": [
+      "The page should display 'Welcome janesmith0525'",
+      "The page should display 'Your account was created successfully. You are now logged in.'"
+    ]
+  }
+}

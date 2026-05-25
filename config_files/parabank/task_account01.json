@@ -1,0 +1,26 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_account01",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Account Services",
+    "scenario": "Open a new savings account",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Open New Account link",
+      "I select 'SAVINGS' from the Account Type dropdown",
+      "I select account '54321' from the From Account dropdown",
+      "I click the Open New Account button"
+    ],
+    "then": [
+      "The page should display 'Account Opened!'"
+    ]
+  }
+}

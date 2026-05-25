@@ -1,0 +1,32 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_forgot01",
+  "order": 99,
+  "require_login": false,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Account Recovery",
+    "scenario": "Recover forgotten login information",
+    "given": [
+      "I am on the Parabank home page"
+    ],
+    "when": [
+      "I click the Forgot login info link",
+      "I fill in the First Name field with 'Jane'",
+      "I fill in the Last Name field with 'Smith'",
+      "I fill in the Address field with '123 Main Street'",
+      "I fill in the City field with 'New York'",
+      "I fill in the State field with 'NY'",
+      "I fill in the Zip Code field with '10001'",
+      "I fill in the SSN field with '123-45-6789'",
+      "I click the Find my login info button"
+    ],
+    "then": [
+      "The page should display 'Customer Lookup'",
+      "The page should display the recovered login information"
+    ]
+  }
+}

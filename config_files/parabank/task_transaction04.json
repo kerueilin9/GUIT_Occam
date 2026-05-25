@@ -1,0 +1,29 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_transaction04",
+  "order": 3,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Transaction Search",
+    "scenario": "Find transactions by amount",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Find Transactions link",
+      "I select account '12345' from the Select an account dropdown",
+      "I fill in the Find by Amount field with '100'",
+      "I click the Find Transactions button in the Find by Amount section"
+    ],
+    "then": [
+      "The page should display 'Transaction Results'",
+      "The results should include 'Check # 1211' for account '12345'",
+      "The results should include 'Funds Transfer Sent' for account '12345'",
+      "The results should include 'Bill Payment to test' for account '12345'"
+    ]
+  }
+}

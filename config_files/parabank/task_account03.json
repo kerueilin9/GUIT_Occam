@@ -1,0 +1,26 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_account03",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Account Services",
+    "scenario": "View details for a check transaction",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Accounts Overview link",
+      "I click the '12345' account link",
+      "I click the 'Check # 1211' transaction link"
+    ],
+    "then": [
+      "The page should display 'Transaction Details'",
+      "The transaction description should be 'Check # 1211'"
+    ]
+  }
+}
