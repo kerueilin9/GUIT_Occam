@@ -1044,6 +1044,8 @@ async def aexecute_click_current(page: APage) -> None:
 
 def execute_type(keys: list[int], page: Page) -> None:
     """Send keystrokes to the focused element."""
+    if not keys:
+        return
     if _id2key[keys[-1]] == "\n":
         text = "".join([_id2key[key] for key in keys[:-1]])
         page.keyboard.type(text)
@@ -1424,7 +1426,7 @@ def execute_action(
         case ActionTypes.TYPE:
             if action["element_id"]:
                 if not obseration_processor.element_is_visible(page, element_id):
-                    press_enter = True if _id2key[action["text"][-1]] == "\n" else False
+                    press_enter = bool(action["text"]) and _id2key[action["text"][-1]] == "\n"
                     node = obseration_processor.get_node_info_by_element_id(int(element_id))
                     try:
                         if press_enter:
