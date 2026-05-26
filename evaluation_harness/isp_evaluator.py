@@ -336,8 +336,40 @@ def _parse_response(response: str) -> tuple[str, bool, dict[str, float]]:
         except (json.JSONDecodeError, ValueError):
             pass
 
-    reason = text if len(text) < 300 else text[:300] + "..."
-    return reason, _mentions_screenshot_need(reason), {}
+    reason = _extract_json_string_field(text, "reason") or (
+        text if len(text) < 300 else text[:300] + "..."
+    )
+    needs_screenshot = _coerce_bool(
+        _extract_json_bool_field(text, "needs_screenshot")
+    )
+    metrics: dict[str, float] = {}
+    for key in ("actual_fill_success", "submit_success_score"):
+        value = _extract_json_number_field(text, key)
+        if value is not None:
+            metrics[key] = _parse_binary_value(value)
+    return reason, needs_screenshot or _mentions_screenshot_need(reason), metrics
+
+
+def _extract_json_number_field(text: str, key: str) -> float | None:
+    match = re.search(rf'"{re.escape(key)}"\s*:\s*([01](?:\.0)?)', text)
+    return float(match.group(1)) if match else None
+
+
+def _extract_json_bool_field(text: str, key: str) -> bool | None:
+    match = re.search(rf'"{re.escape(key)}"\s*:\s*(true|false)', text, re.IGNORECASE)
+    if not match:
+        return None
+    return match.group(1).lower() == "true"
+
+
+def _extract_json_string_field(text: str, key: str) -> str:
+    pattern = rf'"{re.escape(key)}"\s*:\s*"(?P<value>.*?)"\s*(?:,\s*"[A-Za-z_]+":|\s*\}})'
+    match = re.search(pattern, text, flags=re.DOTALL)
+    if not match:
+        return ""
+    value = match.group("value")
+    value = value.replace('\\"', '"').replace("\\n", "\n")
+    return re.sub(r"\s+", " ", value).strip()
 
 
 def _build_isp_metrics(
@@ -355,8 +387,8 @@ def _build_isp_metrics(
         1.0 if actual_fill_success == 1.0 and expected_match_score == 1.0 else 0.0
     )
     return {
-        "isp_expected_score": isp_expected_score,
         "actual_fill_success": actual_fill_success,
+        "isp_expected_score": isp_expected_score,
         "submit_success_score": submit_success_score,
         "expected_match_score": expected_match_score,
         "effective_isp_score": effective_isp_score,

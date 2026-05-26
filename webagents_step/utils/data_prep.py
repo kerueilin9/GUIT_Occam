@@ -130,6 +130,20 @@ def log_run(log_file, log_data, summary_file=None, summary_data=None, json_inden
         else:
             df_summary = pd.DataFrame()
         df_summary = pd.concat([df_summary, pd.DataFrame([summary_data])], ignore_index=True)
+        preferred_order = [
+            "actual_fill_success",
+            "isp_expected_score",
+            "submit_success_score",
+            "expected_match_score",
+            "effective_isp_score",
+            "reason",
+        ]
+        existing_preferred = [col for col in preferred_order if col in df_summary.columns]
+        remaining_columns = [
+            col for col in df_summary.columns if col not in existing_preferred
+        ]
+        if existing_preferred:
+            df_summary = df_summary[remaining_columns + existing_preferred]
         df_summary.to_csv(summary_file, index=False)
         if verbose:
             print(f"Updated summary: {df_summary}")

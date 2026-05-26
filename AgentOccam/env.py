@@ -173,10 +173,12 @@ class WebArenaEnvironmentWrapper():
     
     def status(self):
         status = {'done': self.is_done, 'reward': self.reward, 'success': float(self.reward > 0), 'num_actions': self.steps}
-        if self.evaluation_comment:
-            status['evaluation_comment'] = self.evaluation_comment
         if self.evaluation_metrics:
             status.update(self.evaluation_metrics)
+            if self.evaluation_comment:
+                status['reason'] = self.evaluation_comment
+        elif self.evaluation_comment:
+            status['evaluation_comment'] = self.evaluation_comment
         return status
 
     def _capture_ax_trace(self):

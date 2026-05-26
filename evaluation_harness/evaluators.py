@@ -464,6 +464,9 @@ class EvaluatorComb:
             self.evaluation_comments.extend(
                 getattr(evaluator, "evaluation_comments", [])
             )
+            evaluator_comment = getattr(evaluator, "evaluation_comment", "")
+            if evaluator_comment:
+                self.evaluation_comment = evaluator_comment
             self.evaluation_metrics.update(
                 getattr(evaluator, "evaluation_metrics", {})
             )
@@ -540,6 +543,7 @@ class ISPEvaluator(Evaluator):
     def __init__(self, eval_tag: str = "") -> None:
         super().__init__(eval_tag)
         self.evaluation_metrics: dict[str, float] = {}
+        self.evaluation_comment: str = ""
 
     @beartype
     def __call__(
@@ -555,14 +559,16 @@ class ISPEvaluator(Evaluator):
         if page is None:
             print("[ISPEvaluator] WARNING: No page provided, cannot evaluate. Returning 0.0.")
             self.evaluation_metrics = {}
+            self.evaluation_comment = "No page provided, cannot evaluate."
             return 0.0
 
-        score, _reason, self.evaluation_metrics = isp_evaluate(
+        score, reason, self.evaluation_metrics = isp_evaluate(
             config=configs,
             page=page,
             trajectory=trajectory,
             return_metrics=True,
         )
+        self.evaluation_comment = reason
         return score
 
 

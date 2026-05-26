@@ -2268,7 +2268,7 @@ class AgentOccam:
                 if matched_label is not None:
                     part_value = _extract_case_value(case_inputs[matched_label])
                     modified = _step_with_value(modified, part_value)
-                else:
+                elif fill_match is not None:
                     for label, payload in case_inputs.items():
                         kws = field_label_map.get(label, [label.lower()])
                         is_keyword_match = any(kw in step_lower for kw in kws if kw)
