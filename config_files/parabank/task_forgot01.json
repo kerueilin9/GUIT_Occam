@@ -25,8 +25,7 @@
       "I click the Find my login info button"
     ],
     "then": [
-      "The page should display 'Customer Lookup'",
-      "The page should display the recovered login information"
+      "The page should display 'Customer Lookup' and the recovered login information"
     ]
   }
 }

@@ -14,6 +14,7 @@ KEYSTONEJS = os.environ.get("KEYSTONEJS", "http://localhost:3100")
 NODEBB = os.environ.get("NODEBB", "http://localhost:3101")
 POSTMILL = os.environ.get("POSTMILL", "http://localhost:3200")
 GADAEL = os.environ.get("GADAEL", "http://localhost:3000")
+PARABANK = os.environ.get("PARABANK", "http://localhost:3301/parabank")
 
 assert (
     REDDIT
@@ -29,6 +30,7 @@ assert (
     and NODEBB
     and POSTMILL
     and GADAEL
+    and PARABANK
 ), (
     f"Please setup the URLs to each site. Current: \n"
     + f"Reddit: {REDDIT}\n"
@@ -44,6 +46,7 @@ assert (
     + f"NodeBB: {NODEBB}\n"
     + f"Postmill: {POSTMILL}\n"
     + f"Gadael: {GADAEL}\n"
+    + f"Parabank: {PARABANK}\n"
 )
 
 
@@ -65,6 +68,7 @@ ACCOUNTS = {
     "nodebb": {"username": "vector@selab.com", "password": "selab1623"},
     "postmill": {"username": "MarvelsGrantMan136", "password": "test1234"},
     "gadael": {"username": "test@gmail.com", "password": "Password123"},
+    "parabank": {"username": "john", "password": "demo"},
 }
 
 URL_MAPPINGS = {
@@ -81,4 +85,5 @@ URL_MAPPINGS = {
     NODEBB: "http://nodebb.com",
     POSTMILL: "http://postmill.com",
     GADAEL: "http://gadael.com",
+    PARABANK: "http://parabank.com",
 }

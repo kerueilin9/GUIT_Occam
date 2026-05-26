@@ -1,0 +1,37 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_profile01",
+  "order": 10,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Profile Management",
+    "scenario": "Update contact information",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Update Contact Info link",
+      "I fill in the First Name field with 'test'",
+      "I fill in the Last Name field with 'user'",
+      "I fill in the Address field with '123 Test St'",
+      "I fill in the City field with 'Testville'",
+      "I fill in the State field with 'TestState'",
+      "I fill in the Zip Code field with '12345'",
+      "I fill in the Phone field with '123-456-7890'",
+      "I click the Update Profile button"
+    ],
+    "then": [
+      "The page should display 'Profile Updated'"
+    ]
+  },
+  "isp": {
+    "enabled": "true",
+    "max_test_cases": 15,
+    "isp_model": "gemini-2.5-flash",
+    "allow_unmatched_type_actions": "false"
+  }
+}

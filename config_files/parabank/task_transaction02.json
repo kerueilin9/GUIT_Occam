@@ -20,8 +20,7 @@
       "I click the Find Transactions button in the Find by Date section"
     ],
     "then": [
-      "The page should display 'Transaction Results'",
-      "The results should show transactions for account '12345' on '12-12-2025'"
+      "The page should display 'Transaction Results' with transactions dated '12-12-2025'"
     ]
   }
 }

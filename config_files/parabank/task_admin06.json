@@ -4,14 +4,14 @@
   ],
   "task_id": "parabank_admin06",
   "order": 110,
-  "require_login": true,
+  "require_login": false,
   "storage_state": ".auth/parabank_state.json",
   "start_url": "http://localhost:3301/parabank",
   "gherkin": {
     "feature": "Parabank Administration",
     "scenario": "Shut down the JMS service",
     "given": [
-      "I am logged in as a user"
+      "I am on the Parabank home page"
     ],
     "when": [
       "I click the Admin Page link",

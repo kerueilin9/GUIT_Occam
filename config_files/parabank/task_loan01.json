@@ -1,0 +1,26 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_loan01",
+  "order": 4,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Loan Request",
+    "scenario": "Request a loan",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Request Loan link",
+      "I fill in the Loan Amount field with '10'",
+      "I fill in the Down Payment field with '1'",
+      "I select account '12345' from the From account dropdown"
+    ],
+    "then": [
+      "The page should display 'Congratulations, your loan has been approved.'"
+    ]
+  }
+}

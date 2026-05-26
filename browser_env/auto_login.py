@@ -23,6 +23,7 @@ from browser_env.env_config import (
     TIMEOFF,
     KEYSTONEJS,
     NODEBB,
+    PARABANK,
     POSTMILL,
 )
 
@@ -41,6 +42,7 @@ SITES = [
     "nodebb",
     "postmill",
     "gadael",
+    "parabank",
 ]
 URLS = [
     f"{GITLAB}/-/profile",
@@ -53,8 +55,9 @@ URLS = [
     f"{NODEBB}/login",
     f"{POSTMILL}/user/{ACCOUNTS['postmill']['username']}",
     f"{GADAEL}/#/home",
+    f"{PARABANK}/overview.htm",
 ]
-EXACT_MATCH = [True, True, True, True, True, False, False, False, False, False]
+EXACT_MATCH = [True, True, True, True, True, False, False, False, False, False, False]
 KEYWORDS = [
     "",
     "",
@@ -66,6 +69,7 @@ KEYWORDS = [
     "",
     ACCOUNTS["postmill"]["username"],
     "test user",
+    "Account Services",
 ]
 
 
@@ -113,6 +117,17 @@ def login_gadael(page) -> None:
     page.locator("input").nth(0).fill(username)
     page.locator("input").nth(1).fill(password)
     page.get_by_role("button", name="Sign In").click()
+    page.wait_for_timeout(2000)
+
+
+def login_parabank(page) -> None:
+    username = ACCOUNTS["parabank"]["username"]
+    password = ACCOUNTS["parabank"]["password"]
+    page.goto(PARABANK)
+    page.wait_for_timeout(1000)
+    page.fill('input[name="username"]', username)
+    page.fill('input[name="password"]', password)
+    page.click('input[value="Log In"], button:has-text("Log In")')
     page.wait_for_timeout(2000)
 
 
@@ -234,6 +249,9 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
             if c == "gadael":
                 login_gadael(page)
 
+            if c == "parabank":
+                login_parabank(page)
+
             context.storage_state(path=f"{auth_folder}/{c}_state.json")
         finally:
             context_manager.__exit__(None, None, None)
@@ -323,6 +341,9 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
 
         if "gadael" in comb:
             login_gadael(page)
+
+        if "parabank" in comb:
+            login_parabank(page)
 
         context.storage_state(path=f"{auth_folder}/{'.'.join(comb)}_state.json")
     finally:

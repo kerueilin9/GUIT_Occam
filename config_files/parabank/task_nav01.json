@@ -17,8 +17,7 @@
       "I click the About Us link"
     ],
     "then": [
-      "The page should display 'ParaSoft Demo Website'",
-      "The URL should be \"http://localhost:3301/parabank/about.htm\""
+      "The page should display 'ParaSoft Demo Website' and the URL should be \"http://localhost:3301/parabank/about.htm\""
     ]
   }
 }

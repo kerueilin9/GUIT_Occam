@@ -20,10 +20,7 @@
       "I click the Find Transactions button in the Find by Amount section"
     ],
     "then": [
-      "The page should display 'Transaction Results'",
-      "The results should include 'Check # 1211' for account '12345'",
-      "The results should include 'Funds Transfer Sent' for account '12345'",
-      "The results should include 'Bill Payment to test' for account '12345'"
+      "The page should display 'Transaction Results' with 'Check # 1211', 'Funds Transfer Sent', and 'Bill Payment to test'"
     ]
   }
 }

@@ -1,0 +1,40 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_account05",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Account Services",
+    "scenario": "Pay a bill from an account",
+    "given": [
+      "I am logged in as a user"
+    ],
+    "when": [
+      "I click the Bill Pay link",
+      "I fill in the Payee Name field with 'test'",
+      "I fill in the Address field with 'test'",
+      "I fill in the City field with 'test'",
+      "I fill in the State field with 'test'",
+      "I fill in the Zip Code field with '12345'",
+      "I fill in the Phone field with '1234567890'",
+      "I fill in the Account field with '12345'",
+      "I fill in the Verify Account field with '12345'",
+      "I fill in the Amount field with '100'",
+      "I select account '12345' from the From Account dropdown",
+      "I click the Send Payment button"
+    ],
+    "then": [
+      "The page should display 'Bill Payment Complete'"
+    ]
+  },
+  "isp": {
+    "enabled": "true",
+    "max_test_cases": 15,
+    "isp_model": "gemini-2.5-flash",
+    "allow_unmatched_type_actions": "false"
+  }
+}

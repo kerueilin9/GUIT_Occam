@@ -31,5 +31,11 @@
     "then": [
       "The page should display 'Welcome janesmith0525' and 'Your account was created successfully.'. You are now logged in.'"
     ]
+  },
+  "isp": {
+    "enabled": "true",
+    "max_test_cases": 15,
+    "isp_model": "gemini-2.5-flash",
+    "allow_unmatched_type_actions": "false"
   }
 }

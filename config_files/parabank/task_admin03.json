@@ -4,14 +4,14 @@
   ],
   "task_id": "parabank_admin03",
   "order": 110,
-  "require_login": true,
+  "require_login": false,
   "storage_state": ".auth/parabank_state.json",
   "start_url": "http://localhost:3301/parabank",
   "gherkin": {
     "feature": "Parabank Administration",
     "scenario": "Change the data access mode to SOAP",
     "given": [
-      "I am logged in as a user"
+      "I am on the Parabank home page"
     ],
     "when": [
       "I click the Admin Page link",
@@ -19,8 +19,7 @@
       "I click the Submit button"
     ],
     "then": [
-      "The page should display 'Settings saved successfully.'",
-      "The SOAP option should be selected as the data access mode"
+      "The page should display 'Settings saved successfully.' and the SOAP option should be selected as the data access mode"
     ]
   }
 }

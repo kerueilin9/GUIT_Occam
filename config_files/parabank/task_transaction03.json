@@ -21,9 +21,7 @@
       "I click the Find Transactions button in the Find by Date Range section"
     ],
     "then": [
-      "The page should display 'Transaction Results'",
-      "The results should include 'Check # 1111' for account '12345'",
-      "The results should include 'Check # 1112' for account '12345'"
+      "The page should display 'Transaction Results' with 'Check # 1111' and 'Check # 1211'"
     ]
   }
 }

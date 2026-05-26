@@ -19,8 +19,7 @@
       "I click the 'Check # 1211' transaction link"
     ],
     "then": [
-      "The page should display 'Transaction Details'",
-      "The transaction description should be 'Check # 1211'"
+      "The page should display 'Transaction Details' and the transaction description should be 'Check # 1211'"
     ]
   }
 }

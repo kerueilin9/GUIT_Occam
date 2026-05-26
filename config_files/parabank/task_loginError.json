@@ -1,0 +1,24 @@
+{
+  "sites": [
+    "parabank"
+  ],
+  "task_id": "parabank_loginError",
+  "order": 96,
+  "require_login": false,
+  "storage_state": ".auth/parabank_state.json",
+  "start_url": "http://localhost:3301/parabank",
+  "gherkin": {
+    "feature": "Parabank Authentication",
+    "scenario": "Attempt to log in with invalid credentials",
+    "given": [
+      "I am on the Parabank home page"
+    ],
+    "when": [
+      "I fill in the Username field with 'john' and the Password field with 'invalid_password'",
+      "I click the Log In button"
+    ],
+    "then": [
+      "The page should display 'The username and password could not be verified.'"
+    ]
+  }
+}

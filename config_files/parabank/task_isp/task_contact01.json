@@ -24,5 +24,11 @@
     "then": [
       "The page should display 'Thank you test' and 'A Customer Care Representative will be contacting you.'"
     ]
+  },
+    "isp": {
+    "enabled": "true",
+    "max_test_cases": 15,
+    "isp_model": "gemini-2.5-flash",
+    "allow_unmatched_type_actions": "false"
   }
 }

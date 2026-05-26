@@ -17,8 +17,7 @@
       "I click the Services link"
     ],
     "then": [
-      "The page should display 'ParaSoft Demo Website'",
-      "The URL should be \"http://localhost:3301/parabank/services.htm\""
+      "The page should display 'Available Bookstore SOAP services:' and the URL should be \"http://localhost:3301/parabank/services.htm\""
     ]
   }
 }

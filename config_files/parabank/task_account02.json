@@ -20,7 +20,7 @@
       "I click the Go button"
     ],
     "then": [
-      "The page should display only one transaction with description 'Credit' for account '12345'"
+      "The Account Activity table should display exactly one Credit transaction, 'Check # 1111', with a credit amount of '$300.00'"
     ]
   }
 }
