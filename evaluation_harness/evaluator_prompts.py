@@ -5,10 +5,10 @@ from __future__ import annotations
 from evaluation_harness.page_snapshot import PageSnapshot
 
 
-LLM_JUDGE_SYSTEM_PROMPT = (
-    "You are an expert QA engineer evaluating whether a web automation agent "
-    "successfully completed a task. Be objective and base your judgement solely "
-    "on the task description and the actual page state provided."
+ISP_EVALUATOR_SYSTEM_PROMPT = (
+    "You are an expert QA engineer evaluating ISP-generated web form tests. "
+    "Judge only observable form-fill and form-submit facts from the supplied "
+    "page states."
 )
 
 GHERKIN_CRITERION_SYSTEM_PROMPT = (
@@ -16,20 +16,24 @@ GHERKIN_CRITERION_SYSTEM_PROMPT = (
     "Gherkin acceptance criteria."
 )
 
-def build_llm_judge_prompt(
+def build_isp_evaluation_prompt(
     scenario_text: str,
-    expected_hint: str | None,
     page_snapshot: PageSnapshot,
     screenshot_attached: bool = False,
+    pre_submit_snapshot: PageSnapshot | None = None,
+    isp_expected_score: float | None = None,
 ) -> str:
-    hint_section = f"\n\n{expected_hint}" if expected_hint else ""
     a11y_section = _accessibility_section(page_snapshot)
     visual_section = _visual_section(screenshot_attached)
+    pre_submit_section = _pre_submit_section(pre_submit_snapshot)
+    isp_metric_section = _isp_metric_section(isp_expected_score)
 
-    return f"""You are evaluating whether a web automation agent successfully completed the following task.
+    return f"""You are evaluating an ISP-generated form submission test.
 
---- TASK SCENARIO ---
-{scenario_text}{hint_section}
+--- TEST SCENARIO ---
+{scenario_text}
+{isp_metric_section}
+{pre_submit_section}
 
 --- CURRENT PAGE STATE (after agent finished) ---
 URL   : {page_snapshot['url']}
@@ -41,22 +45,29 @@ Page state text (accessibility tree first 20000 chars, or body text fallback):
 {visual_section}
 
 --- YOUR TASK ---
-Based on the scenario description and the actual page state above, judge whether the agent
-completed the task correctly. Consider:
-1. Did the agent perform the required actions (When steps)?
-2. Do the acceptance criteria (Then steps) appear to be satisfied on the page?
-3. For ISP scenarios: did the system respond appropriately (accept valid inputs / reject invalid ones)?
-4. Use the provided page-state evidence as ground truth. It uses the accessibility tree when available and body text only when the accessibility tree is unavailable.
-5. For ISP scenarios with invalid inputs, note that some forms may clear or reset previously filled fields after validation fails. Treat this as a possible system response, not automatically as evidence that the agent skipped those inputs.
-6. If the page-state text alone is insufficient because the result depends on visible layout, graphics, color, canvas/image content, or other visual evidence, set "needs_screenshot" to true. Otherwise set it to false.
+Judge exactly two observable facts:
 
-Scoring standard:
-- 1.0: The result appears to match the expected outcome. The required task behavior was completed successfully, or for ISP scenarios the system response matches the expected pass/fail behavior.
-- 0.0: The result appears not to match the expected outcome. The task was not completed correctly, or for ISP scenarios the system response contradicts the expected pass/fail behavior.
-- Only use one of these two scores: 1.0 or 0.0.
+1. actual_fill_success
+- Return 1.0 only if the pre-submit page state shows that the relevant form fields actually retained the intended ISP test values before submission.
+- Return 0.0 if any intended value was cleared, replaced, normalized to a non-equivalent value, reverted to a default/current value, or cannot be confirmed from the pre-submit page state.
+- Do not assume a value was filled successfully merely because the scenario or action trace says it was typed.
+- When returning 0.0, identify the problematic field(s) by label/name when possible, and include both the intended ISP value and the observed pre-submit value or state.
+
+2. submit_success_score
+- Return 1.0 if the final page shows that the form submission succeeded, such as a success message, created/saved/updated record, redirect to a success/list/detail page, or persisted data.
+- Return 0.0 if the final page shows validation errors, rejection, unchanged form, no created/saved/updated data, or an unresolved failed state.
+- Do not compare submit_success_score with isp_expected_score. Downstream code will compute that comparison.
+
+Reason requirements:
+- Clearly explain the evidence for both actual_fill_success and submit_success_score.
+- If any field was not correctly filled, name the field and state the mismatch in the form "field: expected X, observed Y" when the evidence is available.
+- Mention values that were auto-normalized, reverted to defaults/current dates, cleared, missing, or unverifiable.
+- Keep the reason concise but specific; use two to four sentences if needed.
+
+If page-state text alone is insufficient because the result depends on visible layout, graphics, color, canvas/image content, or other visual evidence, set "needs_screenshot" to true. Otherwise set it to false.
 
 Respond with ONLY a JSON object in this exact format (no markdown, no extra text):
-{{"score": <0.0 or 1.0>, "reason": "<one or two sentences explaining your judgement>", "needs_screenshot": <true or false>}}"""
+{{"actual_fill_success": <0.0 or 1.0>, "submit_success_score": <0.0 or 1.0>, "reason": "<specific evidence-based explanation, including field mismatches when present>", "needs_screenshot": <true or false>}}"""
 
 
 def build_gherkin_criterion_prompt(
@@ -116,6 +127,42 @@ def _visual_section(screenshot_attached: bool) -> str:
         "that cannot be determined from the page-state text, then set "
         '"needs_screenshot" to false.'
     )
+
+
+def _pre_submit_section(pre_submit_snapshot: PageSnapshot | None) -> str:
+    if not pre_submit_snapshot:
+        return """
+
+--- PRE-SUBMIT PAGE STATE (before the final submit/save action) ---
+Not available. Do not use the current/final page as pre-submit evidence. If the
+intended field values cannot be confirmed from a pre-submit state, return
+actual_fill_success as 0.0 and explain that the pre-submit field values are
+unverifiable.
+"""
+
+    return f"""
+
+--- PRE-SUBMIT PAGE STATE (before the final submit/save action) ---
+URL   : {pre_submit_snapshot.get('url', '')}
+Title : {pre_submit_snapshot.get('title', '')}
+Primary snapshot source: {pre_submit_snapshot.get('snapshot_source', 'unknown')}
+
+Pre-submit page state text:
+{_accessibility_section(pre_submit_snapshot)}
+"""
+
+
+def _isp_metric_section(isp_expected_score: float | None) -> str:
+    if isp_expected_score is None:
+        return ""
+
+    return f"""
+
+--- ISP EXPECTATION ---
+isp_expected_score: {isp_expected_score}
+This value is generated by the ISP test case: pass is 1.0 and fail is 0.0.
+You should not change this value. It is provided so downstream code can compare it with submit_success_score.
+"""
 
 
 def _trajectory_section(trajectory_evidence: str | None) -> str:

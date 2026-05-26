@@ -29,7 +29,7 @@ from evaluation_harness.helper_functions import (
     shopping_get_sku_latest_review_rating,
 )
 from evaluation_harness.gherkin_evaluator import evaluate_gherkin_criteria
-from evaluation_harness.llm_judge_evaluator import llm_judge_evaluate
+from evaluation_harness.isp_evaluator import isp_evaluate
 try:
     # Import gherkin_to_objective to support configs that use Gherkin instead of intent
     from AgentOccam.gherkin_parser import GherkinParser, gherkin_to_objective
@@ -76,11 +76,11 @@ def _extract_gherkin_acceptance_criteria(configs: dict[str, Any]) -> list[str]:
 
 def _infer_eval_types(configs: dict[str, Any]) -> list[str]:
     """Infer evaluator types when a task omits the legacy eval block."""
+    if configs.get("isp_test_case"):
+        return ["isp"]
     criteria = _extract_gherkin_acceptance_criteria(configs)
     if criteria:
         return ["gherkin_criteria"]
-    if configs.get("isp_test_case"):
-        return ["llm_judge"]
     raise ValueError("Task config must define eval.eval_types or provide gherkin.then / isp_test_case.")
 
 
@@ -444,6 +444,7 @@ class EvaluatorComb:
         self.evaluators = evaluators
         self.evaluation_comments: list[dict[str, Any]] = []
         self.evaluation_comment: str = ""
+        self.evaluation_metrics: dict[str, float] = {}
 
     @beartype
     def __call__(
@@ -456,11 +457,15 @@ class EvaluatorComb:
         score = 1.0
         self.evaluation_comments = []
         self.evaluation_comment = ""
+        self.evaluation_metrics = {}
         for evaluator in self.evaluators:
             cur_score = evaluator(trajectory, config_file, page, client)
             score *= cur_score
             self.evaluation_comments.extend(
                 getattr(evaluator, "evaluation_comments", [])
+            )
+            self.evaluation_metrics.update(
+                getattr(evaluator, "evaluation_metrics", {})
             )
         if self.evaluation_comments:
             self.evaluation_comment = "\n".join(
@@ -510,17 +515,14 @@ class GherkinCriteriaEvaluator(Evaluator):
         return score
 
 
-class LLMJudgeEvaluator(Evaluator):
+class ISPEvaluator(Evaluator):
     """
-    Evaluator that delegates to an LLM to autonomously judge whether the
-    agent completed the task correctly.
+    Evaluator for ISP-generated form submission tests.
 
-    The LLM reads the full Gherkin scenario (or intent text) along with the
-    current page state, and returns a score in [0.0, 1.0] plus a reason.
-
-    When the config contains ``isp_test_case``, the ISP input values are
-    injected into the Gherkin ``when`` steps before sending to the LLM.
-    The ``_expected`` field is forwarded as a reference hint only.
+    The LLM judges two observable facts: whether the intended ISP values
+    were actually retained before submission, and whether the final page
+    shows submit success. The evaluator computes expected-match and effective
+    scores deterministically.
 
     Config example
     --------------
@@ -528,13 +530,16 @@ class LLMJudgeEvaluator(Evaluator):
 
         {
           "eval": {
-            "eval_types": ["llm_judge"]
+            "eval_types": ["isp"]
           }
         }
 
-    No ``reference_answers`` block is required – the evaluator derives
-    everything from ``gherkin`` / ``intent`` / ``isp_test_case``.
+    ``llm_judge`` remains accepted as a legacy alias for ``isp``.
     """
+
+    def __init__(self, eval_tag: str = "") -> None:
+        super().__init__(eval_tag)
+        self.evaluation_metrics: dict[str, float] = {}
 
     @beartype
     def __call__(
@@ -548,13 +553,15 @@ class LLMJudgeEvaluator(Evaluator):
             configs = json.load(f)
 
         if page is None:
-            print("[LLMJudge] WARNING: No page provided, cannot evaluate. Returning 0.5.")
-            return 0.5
+            print("[ISPEvaluator] WARNING: No page provided, cannot evaluate. Returning 0.0.")
+            self.evaluation_metrics = {}
+            return 0.0
 
-        score, _reason = llm_judge_evaluate(
+        score, _reason, self.evaluation_metrics = isp_evaluate(
             config=configs,
             page=page,
             trajectory=trajectory,
+            return_metrics=True,
         )
         return score
 
@@ -582,8 +589,8 @@ def evaluator_router(config_file: Path | str) -> EvaluatorComb:
                 evaluators.append(HTMLContentEvaluator())
             case "gherkin_criteria":
                 evaluators.append(GherkinCriteriaEvaluator())
-            case "llm_judge":
-                evaluators.append(LLMJudgeEvaluator())
+            case "isp" | "llm_judge":
+                evaluators.append(ISPEvaluator())
             case _:
                 raise ValueError(f"eval_type {eval_type} is not supported")
 

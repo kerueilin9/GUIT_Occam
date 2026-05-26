@@ -1,7 +1,7 @@
 import json
+from copy import deepcopy
 import os
 import re
-from datetime import datetime
 from browser_env import (
     create_id_based_action,
     create_id_based_actions,
@@ -79,10 +79,9 @@ class WebArenaEnvironmentWrapper():
         self.steps = 0
         self.is_done = False
         self.reward = 0.0
-        self._isp_screenshot_saved = False
-        self.isp_screenshot_path = None
         self.evaluation_comment = ""
         self.evaluation_comments = []
+        self.evaluation_metrics = {}
         task_name = self.config.get("task_id") or os.path.splitext(os.path.basename(self.config_file))[0]
         self.ax_trace_recorder = AXTraceRecorder(task_name)
         
@@ -92,10 +91,9 @@ class WebArenaEnvironmentWrapper():
         
     def reset(self):
         self.obs, self.info = self.webarena_env.reset(options={"config_file": self.config_file})
-        self._isp_screenshot_saved = False
-        self.isp_screenshot_path = None
         self.evaluation_comment = ""
         self.evaluation_comments = []
+        self.evaluation_metrics = {}
         self.ax_trace_recorder = AXTraceRecorder(self.config.get("task_id") or os.path.splitext(os.path.basename(self.config_file))[0])
         self._capture_ax_trace()
 
@@ -175,42 +173,11 @@ class WebArenaEnvironmentWrapper():
     
     def status(self):
         status = {'done': self.is_done, 'reward': self.reward, 'success': float(self.reward > 0), 'num_actions': self.steps}
-        if self.isp_screenshot_path:
-            status['isp_screenshot_path'] = self.isp_screenshot_path
         if self.evaluation_comment:
             status['evaluation_comment'] = self.evaluation_comment
+        if self.evaluation_metrics:
+            status.update(self.evaluation_metrics)
         return status
-
-    def _save_isp_screenshot_if_needed(self):
-        """Save a final-page screenshot for manual ISP result verification."""
-        if self._isp_screenshot_saved:
-            return
-        if "isp_test_case" not in self.config:
-            return
-        try:
-            abs_config_path = os.path.abspath(self.config_file)
-            marker = f"{os.sep}config_files{os.sep}"
-            if marker in abs_config_path:
-                workspace_root = abs_config_path.split(marker, 1)[0]
-            else:
-                workspace_root = os.path.dirname(abs_config_path)
-            out_dir = os.path.join(workspace_root, "output", "isp_manual_review")
-            os.makedirs(out_dir, exist_ok=True)
-
-            task_id = self.config.get("task_id", "task")
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            screenshot_name = f"{task_id}_{timestamp}.png"
-            screenshot_path = os.path.join(out_dir, screenshot_name)
-
-            self.webarena_env.page.screenshot(path=screenshot_path, full_page=True)
-            self.isp_screenshot_path = screenshot_path
-            if isinstance(self.info, dict):
-                self.info["isp_screenshot_path"] = screenshot_path
-            print(f"[ISP] Manual review screenshot saved: {screenshot_path}")
-        except Exception as e:
-            print(f"[ISP] Failed to save manual review screenshot: {e}")
-        finally:
-            self._isp_screenshot_saved = True
 
     def _capture_ax_trace(self):
         try:
@@ -254,21 +221,25 @@ class WebArenaEnvironmentWrapper():
     def update_webarena_metrics(self, action_cmd=None):
         # Append action (if any) and resulting sate
         if action_cmd:
-            self.trajectory.append(action_cmd)
+            self.trajectory.append(deepcopy(action_cmd))
             if action_cmd["action_type"]== ActionTypes.STOP:
                 self.is_done = True
 
         if not self.is_done: # If we are done, no need to append state
-            state_info: StateInfo = {"observation": self.obs, "info": self.info}
+            state_info: StateInfo = {
+                "observation": deepcopy(self.obs),
+                "info": deepcopy(self.info),
+            }
             self.trajectory.append(state_info)
             
         if self.is_done:    
-            self._save_isp_screenshot_if_needed()
             try:
                 evaluator = evaluator_router(self.config_file)
                 self.reward = evaluator(trajectory=self.trajectory, config_file=self.config_file, page=self.webarena_env.page, client=self.webarena_env.get_page_client(self.webarena_env.page))
                 self.evaluation_comment = getattr(evaluator, "evaluation_comment", "")
                 self.evaluation_comments = getattr(evaluator, "evaluation_comments", [])
+                self.evaluation_metrics = getattr(evaluator, "evaluation_metrics", {})
             except Exception as e:
                 print(f"Got excepetion: {e}")
                 self.reward = 0
+                self.evaluation_metrics = {}

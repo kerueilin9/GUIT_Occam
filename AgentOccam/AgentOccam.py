@@ -1000,8 +1000,8 @@ class Actor(Agent):
                     model_response = self.call_model_with_message(system_prompt=instruction+"\nGenerating the command `{}` will be severely punished! Don't generate invalid actions! We don't have that element id in the current observation!".format(invalid_action_str), messages=self.arrange_message_for_model(online_input))
                 else:
                     # LLM Actor prompt
-                    logger.debug(f"Calling model with instruction system_prompt: {instruction}")
-                    logger.debug(f"Calling model with instruction messages: {self.arrange_message_for_model(online_input)}")
+                    # logger.debug(f"Calling model with instruction system_prompt: {instruction}")
+                    # logger.debug(f"Calling model with instruction messages: {self.arrange_message_for_model(online_input)}")
                     model_response = self.call_model_with_message(system_prompt=instruction, messages=self.arrange_message_for_model(online_input))
                 action_elements = self.parse_elements(text=model_response, key_list=self.config.output)
                 action_elements = self.parse_action_from_action_candidates(action_elements=action_elements)
@@ -2293,12 +2293,13 @@ class AgentOccam:
                 isp_test_case[label] = {"value": _extract_case_value(case_inputs.get(label, ""))}
             new_config["isp_test_case"] = isp_test_case
 
-            # ISP child tasks use llm_judge so the LLM can autonomously
-            # decide whether the agent handled the test case correctly.
+            # ISP child tasks use the ISP evaluator so the LLM judges
+            # fill/submit evidence while deterministic metrics compare
+            # against the generated expected outcome.
             # The evaluator reads gherkin + isp_test_case at runtime,
             # so no reference_answers block is needed.
             new_config.pop("eval", None)
-            new_config["eval"] = {"eval_types": ["llm_judge"]}
+            new_config["eval"] = {"eval_types": ["isp"]}
 
             # Write file
             out_path = os.path.join(out_dir, f"{new_id}.json")
