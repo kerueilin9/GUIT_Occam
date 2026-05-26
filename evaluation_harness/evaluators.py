@@ -32,11 +32,56 @@ from evaluation_harness.gherkin_evaluator import evaluate_gherkin_criteria
 from evaluation_harness.llm_judge_evaluator import llm_judge_evaluate
 try:
     # Import gherkin_to_objective to support configs that use Gherkin instead of intent
-    from AgentOccam.gherkin_parser import gherkin_to_objective
+    from AgentOccam.gherkin_parser import GherkinParser, gherkin_to_objective
 except Exception:
+    GherkinParser = None
     gherkin_to_objective = None
 
 Trajectory = list[Union[Action, StateInfo]]
+
+
+def _extract_gherkin_acceptance_criteria(configs: dict[str, Any]) -> list[str]:
+    """Return Then-style acceptance criteria from legacy eval config or gherkin.then."""
+    eval_config = configs.get("eval", {})
+    reference_answers = (
+        eval_config.get("reference_answers", {})
+        if isinstance(eval_config, dict)
+        else {}
+    )
+    legacy_criteria = reference_answers.get("gherkin_acceptance_criteria", [])
+    if isinstance(legacy_criteria, str):
+        legacy_criteria = [legacy_criteria]
+    if legacy_criteria:
+        return [str(item) for item in legacy_criteria if str(item).strip()]
+
+    if GherkinParser is not None and (
+        "gherkin" in configs
+        or all(key in configs for key in ("feature", "scenario", "given", "when", "then"))
+    ):
+        try:
+            scenario = GherkinParser.parse_from_dict(configs)
+            return [str(item) for item in scenario.then if str(item).strip()]
+        except Exception:
+            pass
+
+    gherkin = configs.get("gherkin", {})
+    if isinstance(gherkin, dict):
+        then = gherkin.get("then", [])
+        if isinstance(then, str):
+            then = [then]
+        return [str(item) for item in then if str(item).strip()]
+
+    return []
+
+
+def _infer_eval_types(configs: dict[str, Any]) -> list[str]:
+    """Infer evaluator types when a task omits the legacy eval block."""
+    criteria = _extract_gherkin_acceptance_criteria(configs)
+    if criteria:
+        return ["gherkin_criteria"]
+    if configs.get("isp_test_case"):
+        return ["llm_judge"]
+    raise ValueError("Task config must define eval.eval_types or provide gherkin.then / isp_test_case.")
 
 
 class Evaluator(object):
@@ -442,9 +487,11 @@ class GherkinCriteriaEvaluator(Evaluator):
         with open(config_file, "r", encoding="utf-8") as f:
             configs = json.load(f)
         
-        # Get acceptance criteria from config
-        acceptance_criteria = configs["eval"]["reference_answers"].get("gherkin_acceptance_criteria", [])
-        comment = configs["eval"].get("comment", True)  # any additional comment or instruction for evaluation
+        # Prefer gherkin.then as the source of acceptance criteria, while
+        # preserving the legacy eval.reference_answers format for old tasks.
+        acceptance_criteria = _extract_gherkin_acceptance_criteria(configs)
+        eval_config = configs.get("eval", {})
+        comment = eval_config.get("comment", True) if isinstance(eval_config, dict) else True
         
         if not acceptance_criteria or not page:
             self.evaluation_comments = []
@@ -518,7 +565,12 @@ def evaluator_router(config_file: Path | str) -> EvaluatorComb:
     with open(config_file, "r", encoding="utf-8") as f:
         configs = json.load(f)
 
-    eval_types = configs["eval"]["eval_types"]
+    eval_config = configs.get("eval", {})
+    eval_types = (
+        eval_config.get("eval_types")
+        if isinstance(eval_config, dict)
+        else None
+    ) or _infer_eval_types(configs)
     evaluators: list[Evaluator] = []
     for eval_type in eval_types:
         match eval_type:
