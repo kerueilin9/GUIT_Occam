@@ -68,6 +68,7 @@ class FieldAnalyzer:
     _NUMBER_RE   = re.compile(r'\bnumber\b|\bnumeric\b', re.IGNORECASE)
     _PASSWORD_RE = re.compile(r'\bpassword\b', re.IGNORECASE)
     _TEXTAREA_RE = re.compile(r'\btextarea\b|\bmultiline\b', re.IGNORECASE)
+    _REQUIRED_VALUE_RE = re.compile(r'\brequired\s*:\s*(true|false)\b', re.IGNORECASE)
 
     @classmethod
     def extract(
@@ -150,7 +151,12 @@ class FieldAnalyzer:
             else:
                 input_type = "text"
 
-            required = bool(cls._REQUIRED_RE.search(target_line))
+            required_match = cls._REQUIRED_VALUE_RE.search(target_line)
+            required = (
+                required_match.group(1).lower() == "true"
+                if required_match
+                else bool(cls._REQUIRED_RE.search(target_line))
+            )
 
         # ── 3. Enrich with task-level field_hints (if provided) ──────────────
         if field_hints and label:
