@@ -2,7 +2,7 @@
   "sites": [
     "timeoff"
   ],
-  "task_id": "timeoff_general04_isp",
+  "task_id": "timeoff_general_isp",
   "order": 4,
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
@@ -16,7 +16,7 @@
     "when": [
       "I navigate to General settings",
       "I go to the Leave Types section",
-      "I fill in the name field with \"test\"",
+      "I fill in the name field with \"ispTest\"",
       "I check the \"Use allowance\" checkbox",
       "I select Color 3",
       "I fill in the limit field with \"5\"",
@@ -24,23 +24,12 @@
     ],
     "then": [
       "The page should display \"Changes to leave types were saved\"",
-      "The leave type \"test\" should be visible in the leave types list and have Color 3 and a limit of 5"
+      "The leave type \"ispTest\" should be visible in the leave types list and have Color 3 and a limit of 5"
     ]
   },
   "isp": {
     "enabled": "false",
     "max_test_cases": 15,
     "isp_model": "gemini-2.5-flash"
-  },
-  "eval": {
-    "eval_types": [
-      "gherkin_criteria"
-    ],
-    "reference_answers": {
-      "gherkin_acceptance_criteria": [
-        "The page should display \"Changes to leave types were saved\"",
-        "The leave type \"test\" should be visible in the leave types list and have Color 3 and a limit of 5"
-      ]
-    }
   }
 }

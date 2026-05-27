@@ -2,7 +2,7 @@
   "sites": [
     "timeoff"
   ],
-  "task_id": "timeoff_absence05_isp",
+  "task_id": "timeoff_absence_isp",
   "order": 2,
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
@@ -18,7 +18,7 @@
       "I click the New Absence button",
       "I fill in the From date field with \"2026/4/01\"",
       "I fill in the To date field with \"2026/4/01\"",
-      "I fill in the comment field with \"test\"",
+      "I fill in the comment field with \"isp test\"",
       "I submit the new absence request"
     ],
     "then": [
