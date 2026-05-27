@@ -16,9 +16,9 @@
     "when": [
       "I click the New Absence button",
       "I select \"Sick Leave\" as the leave type",
-      "I fill in the From date field with \"2025/12/01\"",
+      "I fill in the From date field with \"2025-12-01\"",
       "I select \"Morning\" in the From field",
-      "I fill in the To date field with \"2025/12/01\"",
+      "I fill in the To date field with \"2025-12-01\"",
       "I select \"Afternoon\" in the To field",
       "I fill in the comment field with \"test\"",
       "I click the Create button"

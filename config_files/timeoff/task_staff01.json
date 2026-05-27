@@ -2,14 +2,14 @@
   "sites": [
     "timeoff"
   ],
-  "task_id": "timeoff_staff04",
+  "task_id": "timeoff_staff01",
   "order": 7,
   "require_login": true,
   "storage_state": ".auth/timeoff_state.json",
   "start_url": "http://localhost:3102",
   "gherkin": {
-    "feature": "TimeOff Departments Management",
-    "scenario": "Update Sales department manager",
+    "feature": "TimeOff Staff Management",
+    "scenario": "Add a new employee account",
     "given": [
       "I am logged in as an administrator"
     ],
@@ -18,19 +18,28 @@
       "I add a new employee",
       "I fill in the First Name field with 'Test'",
       "I fill in the Last Name field with 'User'",
-      "I check the 'Is administrator user' checkbox",
       "I fill in the Email Address field with 'test.user@example.com'",
       "I fill in the Password field with 'Password123'",
       "I fill in the Confirm Password field with 'Password123'",
-      "I save the new employee",
-      "I navigate to the departments management page",
-      "I edit the Sales department",
-      "I change the Manager to 'Test User'",
-      "I save the changes"
+      "I save the new employee"
     ],
     "then": [
-      "The page should display 'Department Sales was updated'",
-      "The Sales department should show manager 'Test User'"
+      "The page should display 'New user account successfully added'"
     ]
+  },
+  "isp": {
+    "enabled": true,
+    "max_test_cases": 15,
+    "isp_model": "gemini-2.5-flash"
+  },
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The page should display 'New user account successfully added'"
+      ]
+    }
   }
 }

@@ -1,0 +1,25 @@
+{
+  "sites": [
+    "timeoff"
+  ],
+  "task_id": "timeoff_absence05",
+  "order": 2,
+  "require_login": true,
+  "storage_state": ".auth/timeoff_state.json",
+  "start_url": "http://localhost:3102",
+  "gherkin": {
+    "feature": "TimeOff Leave Request Approval",
+    "scenario": "Reject leave request",
+    "given": [
+      "I am logged in as an administrator"
+    ],
+    "when": [
+      "I click the user menu",
+      "I click Requests",
+      "I click the Reject button for the Sick leave request"
+    ],
+    "then": [
+      "The 'Request from Vector Crawler was processed' message should appear on the screen"
+    ]
+  }
+}

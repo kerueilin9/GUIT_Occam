@@ -17,23 +17,12 @@
       "I navigate to General settings",
       "I go to the Bank Holidays section",
       "I add a new bank holiday with the name \"Ker\"",
-      "I set the date to \"2025/09/09\"",
+      "I set the date to \"2026/04/01\"",
       "I click the Create button"
     ],
     "then": [
       "I should see the success message \"Changes to bank holidays were saved\"",
-      "The bank holiday \"Ker\" with date \"2025/09/09\" should be in the list"
+      "The bank holiday \"Ker\" with date \"2026/04/01\" should be in the list"
     ]
-  },
-  "eval": {
-    "eval_types": [
-      "gherkin_criteria"
-    ],
-    "reference_answers": {
-      "gherkin_acceptance_criteria": [
-        "I should see the success message \"Changes to bank holidays were saved\"",
-        "The bank holiday \"Ker\" with date \"2025/09/09\" should be in the list"
-      ]
-    }
   }
 }
