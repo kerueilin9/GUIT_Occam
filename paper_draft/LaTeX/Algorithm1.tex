@@ -11,7 +11,7 @@
 \begin{document}
 
 \begin{algorithm}[t]
-\caption{Generate ISP Test Cases from Form Discoveries}
+\caption{Generate ISP-Assisted Form Test Cases}
 \label{alg:isp-generation}
 
 \SetKwInOut{KwIn}{Input}
@@ -22,10 +22,10 @@ $\mathit{discoveries}$: recorded type actions, each containing $\{element\_id,\ 
 $\mathit{gherkin}$: original Gherkin task;\\
 $\mathit{field\_hints}$: optional field hints;\\
 $\mathit{max\_fields}$: maximum number of aligned fields;\\
-$\mathit{max\_cases}$: maximum number of ISP test cases
+$\mathit{max\_cases}$: maximum number of generated form test cases
 }
 \KwOut{
-$\mathit{cases}$: structured ISP test cases, each containing $\{name,\ expected,\ inputs\}$
+$\mathit{cases}$: structured form test cases, each containing $\{name,\ expected\_hint,\ inputs\}$
 }
 
 \BlankLine
@@ -45,7 +45,7 @@ $\mathit{matchCounts} \leftarrow \emptyset$\;
 
     $(f,\ idx) \leftarrow \Call{MatchToFillStep}{m,\ \mathit{fillSteps},\ \mathit{matchCounts}}$\;
 
-    \If{$f = \texttt{null} \text{ and } \Call{FallbackApplicable}{\mathit{discoveries},\ \mathit{fillSteps}}$}{
+    \If{$f = \texttt{null} \text{ and } \Call{OrderFallbackApplicable}{\mathit{discoveries},\ \mathit{fillSteps}}$}{
         $(f,\ idx) \leftarrow \Call{OrderFallback}{d,\ \mathit{fillSteps}}$\;
     }
 
@@ -60,14 +60,15 @@ $\mathit{matchCounts} \leftarrow \emptyset$\;
 $\mathit{logicalFields} \leftarrow \Call{FinalizeLogicalFields}{\mathit{logicalFields},\ \mathit{max\_fields}}$\;
 $\mathit{fieldMetas} \leftarrow \Call{PrepareFieldMetadata}{\mathit{logicalFields}}$\;
 
-$\mathit{cases} \leftarrow \Call{GenerateWithLLM}{\mathit{fieldMetas},\ \mathit{gherkin},\ \mathit{max\_cases}}$\;
+$\mathit{rawCases} \leftarrow \Call{GenerateWithLLM}{\mathit{fieldMetas},\ \mathit{gherkin},\ \mathit{max\_cases}}$\;
+$\mathit{cases} \leftarrow \Call{ParseAndNormalizeCases}{\mathit{rawCases},\ \mathit{fieldMetas}}$\;
 
 \If{$\mathit{cases} = \emptyset$}{
-    $\mathit{cases} \leftarrow \Call{GenerateWithHeuristics}{\mathit{fieldMetas},\ \mathit{gherkin},\ \mathit{max\_cases}}$\;
+    $\mathit{cases} \leftarrow \Call{GenerateFallbackCases}{\mathit{fieldMetas},\ \mathit{gherkin},\ \mathit{max\_cases}}$\;
 }
 
 \ForEach{$c \in \mathit{cases}$}{
-    $c.\mathit{expected} \leftarrow \Call{NormalizeOrInferExpected}{c,\ \mathit{fieldMetas}}$\;
+    $c.\mathit{expected\_hint} \leftarrow \Call{NormalizeOrInferExpectedHint}{c,\ \mathit{fieldMetas}}$\;
 }
 
 \Return $\mathit{cases}$\;

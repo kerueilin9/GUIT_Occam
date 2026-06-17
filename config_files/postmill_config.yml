@@ -129,8 +129,8 @@ env:
   prune: false
   max_browser_rows: 2000
   headless: false
-  relative_task_dir: "postmill/origin_failing"
-  task_ids: ["all"]
+  relative_task_dir: "postmill/origin_passing"
+  task_ids: ["task09"]
   viewport_size:
     width: 1280
     height: 720

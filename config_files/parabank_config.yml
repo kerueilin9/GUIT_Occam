@@ -129,8 +129,8 @@ env:
   prune: false
   max_browser_rows: 2000
   headless: true
-  relative_task_dir: "parabank"
-  task_ids: ["all"]
+  relative_task_dir: "parabank/task_isp"
+  task_ids: ["task_admin04"]
   viewport_size:
     width: 1280
     height: 720

@@ -61,7 +61,7 @@ agent:
         "observation highlight",
       ]
     planning_command: ["branch", "prune"]
-    navigation_command: ["click", "type", "stop", "note", "go_back"]
+    navigation_command: ["click", "type", "select", "stop", "note", "go_back"]
     play:
       [
         "step",
@@ -128,9 +128,9 @@ env:
   fullpage: true
   prune: false
   max_browser_rows: 2000
-  headless: false
-  relative_task_dir: "gadael"
-  task_ids: ["task_nav01", "task_logout"]
+  headless: true
+  relative_task_dir: "gadael/isp_tasks"
+  task_ids: ["all"]
   viewport_size:
     width: 1280
     height: 720
