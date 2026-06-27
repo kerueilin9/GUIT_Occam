@@ -17,6 +17,7 @@ from evaluation_harness.helper_functions import generate_from_llm_chat_completio
 from evaluation_harness.page_snapshot import (
     PageSnapshot,
     capture_page_screenshot,
+    compact_accessibility_tree_text,
     extract_accessibility_tree_text,
     get_page_snapshot,
 )
@@ -429,6 +430,7 @@ def _get_pre_submit_snapshot(trajectory: list | None) -> PageSnapshot | None:
     if not accessibility_tree_text:
         logger.debug("[ISPEvaluator] Pre-submit state had no accessibility text.")
         return None
+    accessibility_tree_text = compact_accessibility_tree_text(accessibility_tree_text)
 
     logger.debug(
         "[ISPEvaluator] Pre-submit snapshot selected:\n"

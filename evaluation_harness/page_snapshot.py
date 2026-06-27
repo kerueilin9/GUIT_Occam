@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from playwright.sync_api import Page
@@ -57,7 +58,7 @@ def get_page_snapshot(
 
     accessibility_tree_text = extract_accessibility_tree_text(trajectory)
     if accessibility_tree_text:
-        accessibility_tree_text = _filter_unselected_items(accessibility_tree_text)
+        accessibility_tree_text = compact_accessibility_tree_text(accessibility_tree_text)
         snapshot["accessibility_tree_text"] = accessibility_tree_text[:accessibility_limit]
         snapshot["snapshot_source"] = "accessibility_tree"
 
@@ -104,6 +105,51 @@ def _filter_unselected_items(accessibility_tree_text: str) -> str:
         for line in str(accessibility_tree_text).splitlines()
         if "selected: False" not in line
     )
+
+
+def compact_accessibility_tree_text(accessibility_tree_text: str) -> str:
+    """Keep evaluator snapshots focused on form evidence, not calendar grids."""
+    return _drop_static_calendar_cells(_filter_unselected_items(accessibility_tree_text))
+
+
+_STATIC_CALENDAR_CELL_RE = re.compile(
+    r"^\s*\[\d+\]\s+gridcell\s+'(?:\\xa0|\s*|\d{1,2})'\s+required:\s*False\b",
+    re.IGNORECASE,
+)
+_INTERACTIVE_ROLES = (
+    "textbox",
+    "button",
+    "link",
+    "combobox",
+    "checkbox",
+    "radio",
+    "menuitem",
+    "option",
+)
+
+
+def _drop_static_calendar_cells(accessibility_tree_text: str) -> str:
+    lines = str(accessibility_tree_text).splitlines()
+    kept: list[str] = []
+    idx = 0
+    while idx < len(lines):
+        line = lines[idx]
+        if _STATIC_CALENDAR_CELL_RE.match(line):
+            depth = _indent_depth(line)
+            end = idx + 1
+            while end < len(lines) and _indent_depth(lines[end]) > depth:
+                end += 1
+            block = "\n".join(lines[idx:end]).lower()
+            if not any(role in block for role in _INTERACTIVE_ROLES):
+                idx = end
+                continue
+        kept.append(line)
+        idx += 1
+    return "\n".join(kept)
+
+
+def _indent_depth(line: str) -> int:
+    return len(line) - len(line.lstrip("\t"))
 
 
 def _extract_from_observation(observation: Any) -> str:

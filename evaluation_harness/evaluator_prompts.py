@@ -66,7 +66,7 @@ Reason requirements:
 
 If page-state text alone is insufficient because the result depends on visible layout, graphics, color, canvas/image content, or other visual evidence, set "needs_screenshot" to true. Otherwise set it to false.
 
-Respond with ONLY a JSON object in this exact format (no markdown, no extra text):
+Respond with ONLY a JSON object that Python json.loads can parse. Do not use markdown. Keep "reason" on one line:
 {{"actual_fill_success": <0.0 or 1.0>, "submit_success_score": <0.0 or 1.0>, "reason": "<specific evidence-based explanation, including field mismatches when present>", "needs_screenshot": <true or false>}}"""
 
 
