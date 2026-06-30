@@ -1,21 +1,18 @@
-[1] D. North, "Introducing BDD," *Better Software*, Mar. 2006. [Online]. Available: https://dannorth.net/blog/introducing-bdd (accessed May 8, 2026).
-
-[2] M. Wynne and A. Hellesøy, *The Cucumber Book: Behaviour-Driven Development for Testers and Developers*. Dallas, TX, USA: Pragmatic Bookshelf, 2012.
-
-[3] P. Ammann and J. Offutt, *Introduction to Software Testing*, 2nd ed. Cambridge, U.K.: Cambridge University Press, 2017.
-
-[4] C. Solís and X. Wang, "A Study of the Characteristics of Behaviour Driven Development," in *2011 37th EUROMICRO Conference on Software Engineering and Advanced Applications*, Oulu, Finland, 2011, pp. 383-387, doi: 10.1109/SEAA.2011.76.
-
-[5] L. P. Binamungu and S. Maro, "Behaviour driven development: A systematic mapping study," *Journal of Systems and Software*, vol. 203, Art. no. 111749, 2023, doi: 10.1016/j.jss.2023.111749.
-
-[6] K. Yang, Y. Liu, S. Chaudhary, R. Fakoor, P. Chaudhari, G. Karypis, and H. Rangwala, "AgentOccam: A Simple Yet Strong Baseline for LLM-Based Web Agents," in *13th International Conference on Learning Representations (ICLR 2025)*, 2025. [Online]. Available: https://openreview.net/forum?id=oWdzUpOlkX (accessed May 8, 2026).
-
-[7] M. L. Dihan, T. Hashem, M. E. Ali, and M. R. Parvez, "WebOperator: Action-Aware Tree Search for Autonomous Agents in Web Environment," *arXiv preprint* arXiv:2512.12692, 2025. [Online]. Available: https://arxiv.org/abs/2512.12692 (accessed May 8, 2026).
-
-[8] S. Marreed, A. Oved, A. Yaeli, S. Shlomov, I. Levy, A. Sela, A. Adi, and N. Mashkif, "Towards Enterprise-Ready Computer Using Generalist Agent," *arXiv preprint* arXiv:2503.01861, 2025. [Online]. Available: https://arxiv.org/abs/2503.01861 (accessed May 8, 2026).
-
-[9] A. Chevrot, A. Vernotte, J.-R. Falleri, and X. Blanc, "Are Autonomous Web Agents Good Testers?" *Proceedings of the ACM on Software Engineering*, vol. 2, no. ISSTA, pp. 206-228, 2025, doi: 10.1145/3728879.
-
-[10] S. Zhou, F. F. Xu, H. Zhu, X. Zhou, R. Lo, A. Sridhar, X. Cheng, T. Ou, Y. Bisk, D. Fried, U. Alon, and G. Neubig, "WebArena: A Realistic Web Environment for Building Autonomous Agents," *arXiv preprint* arXiv:2307.13854, 2023. [Online]. Available: https://arxiv.org/abs/2307.13854 (accessed May 8, 2026).
-
-[11] H. He, W. Yao, K. Ma, W. Yu, Y. Dai, H. Zhang, Z. Lan, and D. Yu, "WebVoyager: Building an End-to-End Web Agent with Large Multimodal Models," *arXiv preprint* arXiv:2401.13919, 2024. [Online]. Available: https://arxiv.org/abs/2401.13919 (accessed May 8, 2026).
+[1]	S. Zhou, F. F. Xu, H. Zhu, X. Zhou, R. Lo, A. Sridhar, X. Cheng, T. Ou, Y. Bisk, D. Fried, U. Alon, and G. Neubig, "WebArena: A Realistic Web Environment for Building Autonomous Agents," arXiv preprint arXiv:2307.13854, 2023. [Online]. Available: https://arxiv.org/abs/2307.13854
+[2]	H. He, W. Yao, K. Ma, W. Yu, Y. Dai, H. Zhang, Z. Lan, and D. Yu, "WebVoyager: Building an End-to-End Web Agent with Large Multimodal Models," arXiv preprint arXiv:2401.13919, 2024. [Online]. Available: https://arxiv.org/abs/2401.13919
+[3]	K. Yang, Y. Liu, S. Chaudhary, R. Fakoor, P. Chaudhari, G. Karypis, and H. Rangwala, "AgentOccam: A Simple Yet Strong Baseline for LLM-Based Web Agents," in Proc. International Conference on Learning Representations (ICLR), 2025. [Online]. Available: https://openreview.net/forum?id=oWdzUpOlkX
+[4]	M. L. Dihan, T. Hashem, M. E. Ali, and M. R. Parvez, "WebOperator: Action-Aware Tree Search for Autonomous Agents in Web Environment," arXiv preprint arXiv:2512.12692, 2025. [Online]. Available: https://arxiv.org/abs/2512.12692
+[5]	S. Marreed, A. Oved, A. Yaeli, S. Shlomov, I. Levy, A. Sela, A. Adi, and N. Mashkif, "Towards Enterprise-Ready Computer Using Generalist Agent," arXiv preprint arXiv:2503.01861, 2025. [Online]. Available: https://arxiv.org/abs/2503.01861
+[6]	D. North, "Introducing BDD," Better Software, Mar. 2006. [Online]. Available: https://dannorth.net/blog/introducing-bdd
+[7]	Cucumber, "Gherkin Reference," Cucumber Documentation. [Online]. Available: https://cucumber.io/docs/gherkin/reference
+[8]	P. Ammann and J. Offutt, Introduction to Software Testing, 2nd ed. Cambridge, U.K.: Cambridge University Press, 2017.
+[9]	E. T. Barr, M. Harman, P. McMinn, M. Shahbaz, and S. Yoo, "The Oracle Problem in Software Testing: A Survey," IEEE Transactions on Software Engineering, vol. 41, no. 5, pp. 507-525, 2015, doi: 10.1109/TSE.2014.2372785.
+[10]	L. Zheng et al., "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena," in Advances in Neural Information Processing Systems, vol. 36, 2023.
+[11]	A. Chevrot, A. Vernotte, J.-R. Falleri, and X. Blanc, "Are Autonomous Web Agents Good Testers?" Proceedings of the ACM on Software Engineering, vol. 2, no. ISSTA, pp. 206-228, 2025, doi: 10.1145/3728879.
+[12]	Z. Gu, C. Liu, G. Wu, Y. Zhang, C. Yang, Z. Liang, W. Chen, and J. Wei, "Deep Reinforcement Learning for Automated Web GUI Testing," arXiv preprint arXiv:2504.19237, 2025. [Online]. Available: https://arxiv.org/abs/2504.19237
+[13]	C. Liu, Z. Gu, G. Wu, Y. Zhang, J. Wei, and T. Xie, "Temac: Multi-Agent Collaboration for Automated Web GUI Testing," arXiv preprint arXiv:2506.00520, 2025. [Online]. Available: https://arxiv.org/abs/2506.00520
+[14]	X. Deng, Y. Gu, B. Zheng, S. Chen, S. Stevens, B. Wang, H. Sun, and Y. Su, "Mind2Web: Towards a Generalist Agent for the Web," in Advances in Neural Information Processing Systems, vol. 36, 2023. [Online]. Available: https://proceedings.neurips.cc/paper_files/paper/2023/hash/5950bf290a1570ea401bf98882128160-Abstract-Datasets_and_Benchmarks.html
+[15]	B. Zheng, B. Gou, J. Kil, H. Sun, and Y. Su, "GPT-4V(ision) is a Generalist Web Agent, if Grounded," in Proc. 41st International Conference on Machine Learning (ICML), PMLR, vol. 235, pp. 61349-61385, 2024. [Online]. Available: https://proceedings.mlr.press/v235/zheng24e.html
+[16]	A. Mesbah, A. van Deursen, and S. Lenselink, "Crawling Ajax-Based Web Applications through Dynamic Analysis of User Interface State Changes," ACM Transactions on the Web, vol. 6, no. 1, pp. 1-30, 2012, doi: 10.1145/2109205.2109208.
+[17]	S. Artzi, J. Dolby, S. H. Jensen, A. Møller, and F. Tip, "A Framework for Automated Testing of JavaScript Web Applications," in Proc. 33rd International Conference on Software Engineering (ICSE), pp. 571-580, 2011, doi: 10.1145/1985793.1985871.
+[18]	A. Milani Fard, M. Mirzaaghaei, and A. Mesbah, "Leveraging Existing Tests in Automated Test Generation for Web Applications," in Proc. 29th ACM/IEEE International Conference on Automated Software Engineering (ASE), pp. 67-78, 2014, doi: 10.1145/2642937.2642991.

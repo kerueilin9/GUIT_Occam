@@ -1,0 +1,17 @@
+flowchart TB
+    A["Natural-language<br/>Task"] --> B["LLM Web Agent"]
+    B --> C["Browser<br/>Actions"]
+    C --> D["Task completed?"]
+
+    C --> E["Testing requires:<br/>Expected Results<br/>+ Evidence"]
+
+    F["Gherkin<br/>Given / When / Then"] -.-> B
+    F -.-> E
+
+    classDef blue fill:#e8f1ff,stroke:#1f4e8c,stroke-width:2px,color:#111;
+    classDef orange fill:#fff3df,stroke:#c77a1d,stroke-width:2px,color:#111;
+    classDef green fill:#e8f5e8,stroke:#4d8f5a,stroke-width:2px,color:#111;
+
+    class A,B,C,D blue;
+    class E orange;
+    class F green;

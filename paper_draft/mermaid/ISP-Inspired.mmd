@@ -1,0 +1,20 @@
+flowchart TB
+    A[/"ISP-inspired Test Case<br>Input Values and Expected Hint"/] --> B["Child Task Construction<br>Inject Values into When Steps<br>Remove Original Then Conditions"]
+    B --> C["ISP TEST MODE Execution<br>Use Specified Values and Submit Form"]
+    C --> D[("Page-state Evidence<br>Pre-submit and Final Page States")]
+    D --> E{{"ISP Evaluator<br>Evaluate Input Retention<br>and Submission Result"}}
+    E --> F(["Form Subtask Result<br>Component Scores and Final Pass / Fail"])
+    n1[" "]
+
+    n1@{ icon: "fa:bell-slash", pos: "b"}
+     A:::input
+     B:::process
+     C:::process
+     D:::evidence
+     E:::evaluator
+     F:::output
+    classDef input fill:#fff2cc,stroke:#c99520,color:#222
+    classDef process fill:#d9e8fb,stroke:#5686c5,color:#222
+    classDef evidence fill:#e8def4,stroke:#8965a8,color:#222
+    classDef evaluator fill:#fce4d6,stroke:#d88428,color:#222
+    classDef output fill:#e2f0d9,stroke:#548b54,color:#222
