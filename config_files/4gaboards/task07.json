@@ -1,0 +1,37 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task07",
+  "order": 7,
+  "require_login": true,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards User Management",
+    "scenario": "Open a user actions menu",
+    "given": [
+      "I am on the 4gaBoards site and logged in with account demo@demo.demo / demo"
+    ],
+    "when": [
+      "Open the users settings page",
+      "Open the actions menu for the non-admin user \"testuser\""
+    ],
+    "then": [
+      "The user actions menu for \"testuser\" should show Edit Information, 編輯用户名, 編輯邮箱, 編輯密码, and 删除用户 options"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The user actions menu for \"testuser\" should show Edit Information, 編輯用户名, 編輯邮箱, 編輯密码, and 删除用户 options"
+      ]
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task18",
+  "order": 18,
+  "require_login": true,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards Labels",
+    "scenario": "Create a label",
+    "given": [
+      "I am on the 4gaBoards site and logged in with account demo@demo.demo / demo"
+    ],
+    "when": [
+      "Open a board",
+      "Open the labels menu",
+      "Create a label named \"Coverage Label\" with the berry-red color"
+    ],
+    "then": [
+      "The new label should be available on the board"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The new label should be available on the board"
+      ]
+    }
+  }
+}

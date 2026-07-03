@@ -1,0 +1,39 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task15",
+  "order": 15,
+  "require_login": true,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards Cards",
+    "scenario": "Edit card details",
+    "given": [
+      "I am on the 4gaBoards site and logged in with account demo@demo.demo / demo"
+    ],
+    "when": [
+      "Open an existing card",
+      "Change the card name to \"Coverage Card Edited\"",
+      "Update the description, due date, and timer",
+      "Save the card"
+    ],
+    "then": [
+      "The card should display the edited name, description, due date, and timer"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The card should display the edited name, description, due date, and timer"
+      ]
+    }
+  }
+}

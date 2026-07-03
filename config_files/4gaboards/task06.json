@@ -1,0 +1,42 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task06",
+  "order": 6,
+  "require_login": true,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards User Management",
+    "scenario": "Create a user",
+    "given": [
+      "I am on the 4gaBoards site and logged in with account demo@demo.demo / demo"
+    ],
+    "when": [
+      "Open the users settings page",
+      "Click Add User",
+      "Enter \"testuser_20260702_1500@example.com\" as the email",
+      "Enter \"StrongPassword123!\" as the password",
+      "Enter \"Test User Name\" as the name",
+      "Enter \"testuser\" as the username",
+      "Save the user"
+    ],
+    "then": [
+      "The users table should show \"Test User Name\", \"testuser\", and \"testuser_20260702_1500@example.com\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The users table should show \"Test User Name\", \"testuser\", and \"testuser_20260702_1500@example.com\""
+      ]
+    }
+  }
+}

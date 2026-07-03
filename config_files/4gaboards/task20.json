@@ -1,0 +1,38 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task20",
+  "order": 20,
+  "require_login": true,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards Card Labels",
+    "scenario": "Open the card label selector",
+    "given": [
+      "I am on the 4gaBoards site and logged in with account demo@demo.demo / demo"
+    ],
+    "when": [
+      "Open the \"Coverage Card Edited\" card",
+      "Open the labels section",
+      "Search for \"Coverage Label\" in the label selector"
+    ],
+    "then": [
+      "The label selector for \"Coverage Card Edited\" should show \"Coverage Label\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The label selector for \"Coverage Card Edited\" should show \"Coverage Label\""
+      ]
+    }
+  }
+}

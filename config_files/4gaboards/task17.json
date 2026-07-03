@@ -1,0 +1,38 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task17",
+  "order": 17,
+  "require_login": true,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards Cards",
+    "scenario": "Duplicate a card",
+    "given": [
+      "I am on the 4gaBoards site and logged in with account demo@demo.demo / demo"
+    ],
+    "when": [
+      "Open an existing card with details",
+      "Click Duplicate Card",
+      "Confirm the duplicate action"
+    ],
+    "then": [
+      "A copied card should be created on the board"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "A copied card should be created on the board"
+      ]
+    }
+  }
+}

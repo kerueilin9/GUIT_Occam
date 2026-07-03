@@ -1,0 +1,37 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task23",
+  "order": 23,
+  "require_login": true,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards Tasks",
+    "scenario": "Inspect a card task",
+    "given": [
+      "I am on the 4gaBoards site and logged in with account demo@demo.demo / demo"
+    ],
+    "when": [
+      "Open the \"Coverage Card Edited\" card",
+      "Open the tasks section"
+    ],
+    "then": [
+      "The card tasks section should show a task named \"Coverage Task\""
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The card tasks section should show a task named \"Coverage Task\""
+      ]
+    }
+  }
+}

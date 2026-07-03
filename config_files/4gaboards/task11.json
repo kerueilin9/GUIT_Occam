@@ -1,0 +1,40 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task11",
+  "order": 11,
+  "require_login": true,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards Boards",
+    "scenario": "Edit board details",
+    "given": [
+      "I am on the 4gaBoards site and logged in with account demo@demo.demo / demo"
+    ],
+    "when": [
+      "Open an existing board",
+      "Open the board edit menu",
+      "Change the board name to \"Coverage Board Edited\"",
+      "Enable GitHub connection and enter \"example/repo\"",
+      "Save the board"
+    ],
+    "then": [
+      "The board should show the edited name and GitHub repository"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The board should show the edited name and GitHub repository"
+      ]
+    }
+  }
+}

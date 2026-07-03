@@ -1,0 +1,39 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task29",
+  "order": 29,
+  "require_login": true,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards Comments",
+    "scenario": "Edit and delete a card comment",
+    "given": [
+      "I am on the 4gaBoards site and logged in with account demo@demo.demo / demo"
+    ],
+    "when": [
+      "Open a card with a comment",
+      "Edit the comment text to \"Coverage comment edited\"",
+      "Save the comment",
+      "Delete the edited comment"
+    ],
+    "then": [
+      "The edited comment should be removed from the card activity"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The edited comment should be removed from the card activity"
+      ]
+    }
+  }
+}

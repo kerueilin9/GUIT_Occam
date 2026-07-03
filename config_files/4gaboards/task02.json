@@ -1,0 +1,38 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task02",
+  "order": 2,
+  "require_login": false,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000/login",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards Authentication",
+    "scenario": "Reject invalid credentials",
+    "given": [
+      "I am on the 4gaBoards login page"
+    ],
+    "when": [
+      "Enter \"demo@demo.demo\" in the email or username field",
+      "Enter \"wrong-password\" in the password field",
+      "Click the login button"
+    ],
+    "then": [
+      "An invalid username or password message should be displayed"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "An invalid username or password message should be displayed"
+      ]
+    }
+  }
+}

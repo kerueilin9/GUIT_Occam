@@ -1,0 +1,40 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task04",
+  "order": 4,
+  "require_login": true,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards User Preferences",
+    "scenario": "Update personal display preferences",
+    "given": [
+      "I am on the 4gaBoards site and logged in with account demo@demo.demo / demo"
+    ],
+    "when": [
+      "Open Settings",
+      "Open the user preferences section",
+      "Enable compact sidebar",
+      "Set the default view to board",
+      "Save the preferences"
+    ],
+    "then": [
+      "The Preferences table should show Compact Sidebar as Enabled and Default View as Board"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The Preferences table should show Compact Sidebar as Enabled and Default View as Board"
+      ]
+    }
+  }
+}

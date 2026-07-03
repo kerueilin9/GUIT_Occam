@@ -1,0 +1,38 @@
+{
+  "sites": [
+    "4gaboards"
+  ],
+  "task_id": "4gaboards_task01",
+  "order": 1,
+  "require_login": false,
+  "storage_state": ".auth/4gaboards_state.json",
+  "start_url": "http://localhost:3000/login",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "4gaBoards Authentication",
+    "scenario": "Log in with valid credentials",
+    "given": [
+      "I am on the 4gaBoards login page"
+    ],
+    "when": [
+      "Enter \"demo@demo.demo\" in the email or username field",
+      "Enter \"demo\" in the password field",
+      "Click the login button"
+    ],
+    "then": [
+      "The dashboard should be displayed"
+    ]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "gherkin_criteria"
+    ],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": [
+        "The dashboard should be displayed"
+      ]
+    }
+  }
+}
