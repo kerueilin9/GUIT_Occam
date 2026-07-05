@@ -1,0 +1,27 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task07",
+  "order": 7,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Feed Filters",
+    "scenario": "Open the date filter",
+    "given": ["I am logged in as Heath93"],
+    "when": [
+      "I click the Date filter button",
+      "I select a date from the calendar"
+    ],
+    "then": ["The Date filter should update from \"Date: ALL\" and the transaction feed should refresh"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["The Date filter should update from \"Date: ALL\" and the transaction feed should refresh"]
+    }
+  }
+}

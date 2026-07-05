@@ -1,0 +1,21 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task06",
+  "order": 6,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Feed Navigation",
+    "scenario": "View my personal transactions",
+    "given": ["I am logged in as Heath93"],
+    "when": [
+      "I click the Home link",
+      "I click the Mine tab"
+    ],
+    "then": ["The transaction feed should switch to the Personal timeline and display transactions involving Heath93"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

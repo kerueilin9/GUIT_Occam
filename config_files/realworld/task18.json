@@ -1,0 +1,21 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task18",
+  "order": 18,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Notifications",
+    "scenario": "Dismiss a notification",
+    "given": ["I am logged in as Heath93 and unread notifications are available"],
+    "when": [
+      "I click the Notifications link",
+      "I click the Dismiss button for the first notification"
+    ],
+    "then": ["The unread notification count should decrease to 9 and the Notifications page should remain displayed"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

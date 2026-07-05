@@ -1,0 +1,26 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task16",
+  "order": 16,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Bank Accounts",
+    "scenario": "Create and delete a bank account",
+    "given": ["I am logged in as Heath93"],
+    "when": [
+      "I click the Bank Accounts link",
+      "I click the Create link",
+      "I fill in the Bank Name field with \"Coverage Delete Bank\"",
+      "I fill in the Routing Number field with \"123456780\"",
+      "I fill in the Account Number field with \"987654320\"",
+      "I click the Save button",
+      "I click the Delete button for the \"Coverage Delete Bank\" account"
+    ],
+    "then": ["The Bank Accounts page should display \"Coverage Delete Bank (Deleted)\" after the account is deleted"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

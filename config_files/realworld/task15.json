@@ -1,0 +1,25 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task15",
+  "order": 15,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Bank Accounts",
+    "scenario": "Create a bank account",
+    "given": ["I am logged in as Heath93"],
+    "when": [
+      "I click the Bank Accounts link",
+      "I click the Create link",
+      "I fill in the Bank Name field with \"Coverage Bank\"",
+      "I fill in the Routing Number field with \"123456789\"",
+      "I fill in the Account Number field with \"987654321\"",
+      "I click the Save button"
+    ],
+    "then": ["The Bank Accounts page should display \"Coverage Bank\" in the account list"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

@@ -1,0 +1,24 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task11",
+  "order": 11,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Transactions",
+    "scenario": "Request money from a contact",
+    "given": ["I am logged in as Heath93"],
+    "when": [
+      "I click the New link",
+      "I click Lia Rosenbaum from the contact list",
+      "I fill in the Amount field with \"42\"",
+      "I fill in the Add a note field with \"Coverage request from Lia\"",
+      "I click the Request button"
+    ],
+    "then": ["The page should display \"Requested $42.00 for Coverage request from Lia\""]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

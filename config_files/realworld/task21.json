@@ -1,0 +1,26 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task21",
+  "order": 21,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Authentication",
+    "scenario": "register a new user",
+    "given": ["I am on the Sign in page"],
+    "when": [
+      "I click Don't have an account? Sign up link",
+      "I fill in the First Name field with \"Coverage\"",
+      "I fill in the Last Name field with \"User\"",
+      "I fill in the Username field with \"coverage_user_1901\"",
+      "I fill in the Password field with \"s3cret1\"",
+      "I fill in the Confirm Password field with \"s3cret1\"",
+      "I click the Sign Up button"
+    ],
+    "then": ["The page should display the Sign in form"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

@@ -1,0 +1,22 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task12",
+  "order": 12,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Transactions",
+    "scenario": "Like a transaction",
+    "given": ["I am logged in as Heath93"],
+    "when": [
+      "I click the Home link",
+      "I open a transaction from the feed",
+      "I click the Like button"
+    ],
+    "then": ["The transaction detail page should show that the like count increased"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

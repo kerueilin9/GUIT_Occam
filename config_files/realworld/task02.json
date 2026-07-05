@@ -1,0 +1,22 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task02",
+  "order": 2,
+  "require_login": false,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303/signin",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Authentication",
+    "scenario": "Reject sign-in with an invalid password",
+    "given": ["I am on the RealWorld sign-in page"],
+    "when": [
+      "I fill in the Username field with \"Heath93\"",
+      "I fill in the Password field with \"wrongpass\"",
+      "I click the Sign In button"
+    ],
+    "then": ["The page should display \"Username or password is invalid\" and remain on the sign-in page"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

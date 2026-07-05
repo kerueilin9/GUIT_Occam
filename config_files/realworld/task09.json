@@ -1,0 +1,27 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task09",
+  "order": 9,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Transactions",
+    "scenario": "Search for a transaction contact",
+    "given": ["I am logged in as Heath93"],
+    "when": [
+      "I click the New link",
+      "I fill in the Search field with \"Darrel\""
+    ],
+    "then": ["The contact list should display Darrel Ortiz as a selectable transaction contact"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false,
+  "eval": {
+    "eval_types": ["gherkin_criteria"],
+    "reference_answers": {
+      "gherkin_acceptance_criteria": ["The contact list should display Darrel Ortiz as a selectable transaction contact"]
+    }
+  }
+}

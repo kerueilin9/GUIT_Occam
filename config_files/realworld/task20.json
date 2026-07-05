@@ -1,0 +1,20 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task20",
+  "order": 20,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Authentication",
+    "scenario": "Log out of the application",
+    "given": ["I am logged in as Heath93"],
+    "when": [
+      "I click the Logout button"
+    ],
+    "then": ["The page should display the Sign in form"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

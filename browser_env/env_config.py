@@ -15,6 +15,9 @@ NODEBB = os.environ.get("NODEBB", "http://localhost:3101")
 POSTMILL = os.environ.get("POSTMILL", "http://localhost:3200")
 GADAEL = os.environ.get("GADAEL", "http://localhost:3000")
 PARABANK = os.environ.get("PARABANK", "http://localhost:3301/parabank")
+REALWORLD = os.environ.get("REALWORLD", "http://localhost:3303")
+AGILEFANT = os.environ.get("AGILEFANT", "http://localhost:3302/agilefant")
+FOURGABOARDS = os.environ.get("FOURGABOARDS", "http://localhost:3000")
 
 assert (
     REDDIT
@@ -31,6 +34,9 @@ assert (
     and POSTMILL
     and GADAEL
     and PARABANK
+    and REALWORLD
+    and AGILEFANT
+    and FOURGABOARDS
 ), (
     f"Please setup the URLs to each site. Current: \n"
     + f"Reddit: {REDDIT}\n"
@@ -47,6 +53,9 @@ assert (
     + f"Postmill: {POSTMILL}\n"
     + f"Gadael: {GADAEL}\n"
     + f"Parabank: {PARABANK}\n"
+    + f"Realworld: {REALWORLD}\n"
+    + f"Agilefant: {AGILEFANT}\n"
+    + f"4gaBoards: {FOURGABOARDS}\n"
 )
 
 
@@ -69,6 +78,9 @@ ACCOUNTS = {
     "postmill": {"username": "MarvelsGrantMan136", "password": "test1234"},
     "gadael": {"username": "test@gmail.com", "password": "Password123"},
     "parabank": {"username": "john", "password": "demo"},
+    "realworld": {"username": "Heath93", "password": "s3cret"},
+    "agilefant": {"username": "admin", "password": "123456"},
+    "4gaboards": {"username": "demo@demo.demo", "password": "demo"},
 }
 
 URL_MAPPINGS = {
@@ -86,4 +98,7 @@ URL_MAPPINGS = {
     POSTMILL: "http://postmill.com",
     GADAEL: "http://gadael.com",
     PARABANK: "http://parabank.com",
+    REALWORLD: "http://realworld.com",
+    AGILEFANT: "http://agilefant.com",
+    FOURGABOARDS: "http://4gaboards.com",
 }

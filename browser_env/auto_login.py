@@ -14,6 +14,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from browser_env.env_config import (
     ACCOUNTS,
+    AGILEFANT,
+    FOURGABOARDS,
     GADAEL,
     GITLAB,
     REDDIT,
@@ -25,6 +27,7 @@ from browser_env.env_config import (
     NODEBB,
     PARABANK,
     POSTMILL,
+    REALWORLD,
 )
 
 HEADLESS = True
@@ -43,6 +46,9 @@ SITES = [
     "postmill",
     "gadael",
     "parabank",
+    "realworld",
+    "agilefant",
+    "4gaboards",
 ]
 URLS = [
     f"{GITLAB}/-/profile",
@@ -56,8 +62,11 @@ URLS = [
     f"{POSTMILL}/user/{ACCOUNTS['postmill']['username']}",
     f"{GADAEL}/#/home",
     f"{PARABANK}/overview.htm",
+    f"{REALWORLD}/",
+    f"{AGILEFANT}/dailyWork.action",
+    f"{FOURGABOARDS}/",
 ]
-EXACT_MATCH = [True, True, True, True, True, False, False, False, False, False, False]
+EXACT_MATCH = [True, True, True, True, True, False, False, False, False, False, False, False, False, False]
 KEYWORDS = [
     "",
     "",
@@ -70,6 +79,9 @@ KEYWORDS = [
     ACCOUNTS["postmill"]["username"],
     "test user",
     "Account Services",
+    "@Heath93",
+    "The daily work of",
+    "Dashboard",
 ]
 
 
@@ -129,6 +141,39 @@ def login_parabank(page) -> None:
     page.fill('input[name="password"]', password)
     page.click('input[value="Log In"], button:has-text("Log In")')
     page.wait_for_timeout(2000)
+
+
+def login_realworld(page) -> None:
+    username = ACCOUNTS["realworld"]["username"]
+    password = ACCOUNTS["realworld"]["password"]
+    page.goto(f"{REALWORLD}/signin")
+    page.wait_for_timeout(1000)
+    page.fill('input[name="username"]', username)
+    page.fill('input[name="password"]', password)
+    page.click('button:has-text("Sign In")')
+    page.wait_for_timeout(2000)
+
+
+def login_agilefant(page) -> None:
+    username = ACCOUNTS["agilefant"]["username"]
+    password = ACCOUNTS["agilefant"]["password"]
+    page.goto(f"{AGILEFANT}/login.jsp")
+    page.wait_for_timeout(1000)
+    page.fill('input[name="j_username"]', username)
+    page.fill('input[name="j_password"]', password)
+    page.click('input[type="submit"][value="Log in"]')
+    page.wait_for_timeout(3000)
+
+
+def login_4gaboards(page) -> None:
+    username = ACCOUNTS["4gaboards"]["username"]
+    password = ACCOUNTS["4gaboards"]["password"]
+    page.goto(f"{FOURGABOARDS}/login")
+    page.wait_for_timeout(1000)
+    page.fill('input[name="emailOrUsername"]', username)
+    page.fill('input[name="password"]', password)
+    page.click('button[type="submit"], button:has-text("登录"), button:has-text("Log in")')
+    page.wait_for_timeout(3000)
 
 
 def is_expired(
@@ -252,6 +297,15 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
             if c == "parabank":
                 login_parabank(page)
 
+            if c == "realworld":
+                login_realworld(page)
+
+            if c == "agilefant":
+                login_agilefant(page)
+
+            if c == "4gaboards":
+                login_4gaboards(page)
+
             context.storage_state(path=f"{auth_folder}/{c}_state.json")
         finally:
             context_manager.__exit__(None, None, None)
@@ -344,6 +398,15 @@ def renew_comb(comb: list[str], auth_folder: str = "./.auth") -> None:
 
         if "parabank" in comb:
             login_parabank(page)
+
+        if "realworld" in comb:
+            login_realworld(page)
+
+        if "agilefant" in comb:
+            login_agilefant(page)
+
+        if "4gaboards" in comb:
+            login_4gaboards(page)
 
         context.storage_state(path=f"{auth_folder}/{'.'.join(comb)}_state.json")
     finally:

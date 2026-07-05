@@ -1,0 +1,23 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task03",
+  "order": 3,
+  "require_login": false,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303/signin",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Authentication",
+    "scenario": "Sign in with Remember me enabled",
+    "given": ["I am on the RealWorld sign-in page"],
+    "when": [
+      "I fill in the Username field with \"Heath93\"",
+      "I fill in the Password field with \"s3cret\"",
+      "I check the Remember me checkbox",
+      "I click the Sign In button"
+    ],
+    "then": ["The home page should display \"@Heath93\" and the Account Balance panel"]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

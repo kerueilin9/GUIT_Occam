@@ -1,0 +1,25 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task17",
+  "order": 17,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld User Settings",
+    "scenario": "Update account contact information",
+    "given": ["I am logged in as Heath93"],
+    "when": [
+      "I click the My Account link",
+      "I fill in the First Name field with \"Ted\"",
+      "I fill in the Last Name field with \"Parisian\"",
+      "I fill in the Email field with \"coverage.heath93@example.com\"",
+      "I fill in the Phone Number field with \"555-123-4567\"",
+      "I click the Save button"
+    ],
+    "then": ["The User Settings page should keep the updated email \"coverage.heath93@example.com\" and phone number \"555-123-4567\""]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}

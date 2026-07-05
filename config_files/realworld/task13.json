@@ -1,0 +1,23 @@
+{
+  "sites": ["realworld"],
+  "task_id": "realworld_task13",
+  "order": 13,
+  "require_login": true,
+  "storage_state": ".auth/realworld_state.json",
+  "start_url": "http://localhost:3303",
+  "geolocation": null,
+  "gherkin": {
+    "feature": "RealWorld Transactions",
+    "scenario": "Comment on a transaction",
+    "given": ["I am logged in as Heath93"],
+    "when": [
+      "I click the Home link",
+      "I open a transaction from the feed",
+      "I fill in the comment field with \"Coverage comment\"",
+      "I submit the comment"
+    ],
+    "then": ["The transaction detail page should display the comment \"Coverage comment\""]
+  },
+  "intent_template_id": 0,
+  "require_reset": false
+}
