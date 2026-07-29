@@ -128,9 +128,9 @@ env:
   fullpage: true
   prune: false
   max_browser_rows: 2000
-  headless: true
-  relative_task_dir: "timeoff/task_isp/isp_tasks"
-  task_ids: ["all"]
+  headless: false
+  relative_task_dir: "timeoff"
+  task_ids: ["task_staff01"]
   viewport_size:
     width: 1280
     height: 720

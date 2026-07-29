@@ -12,6 +12,9 @@ python browser_env/auto_login.py --site_list postmill
 python browser_env/auto_login.py --site_list onestopshop 
 python browser_env/auto_login.py --site_list gadael   
 python browser_env/auto_login.py --site_list parabank
+python browser_env/auto_login.py --site_list realworld
+python browser_env/auto_login.py --site_list agilefant
+python browser_env/auto_login.py --site_list 4gaboards
 python eval_webarena.py --config config_files/timeoff_config.yml  
 python eval_webarena.py --config config_files/keystonejs_config.yml  
 python eval_webarena.py --config config_files/nodebb_config.yml  
@@ -19,6 +22,9 @@ python eval_webarena.py --config config_files/postmill_config.yml
 python eval_webarena.py --config config_files/onestopshop_config.yml 
 python eval_webarena.py --config config_files/gadael_config.yml 
 python eval_webarena.py --config config_files/parabank_config.yml 
+python eval_webarena.py --config config_files/realworld_config.yml 
+python eval_webarena.py --config config_files/agilefant_config.yml 
+python eval_webarena.py --config config_files/4gaboards_config.yml 
 ```
 
 ```

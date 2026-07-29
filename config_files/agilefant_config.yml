@@ -2,14 +2,14 @@ logging: true
 verbose: 1
 debug: false
 logdir: "../AgentOccam-Trajectories"
-logname: "postmill"
+logname: "agilefant"
 max_steps: 30
 
 agent:
   type: "AgentOccam"
   others:
     max_steps: 30
-    logname: "postmill"
+    logname: "agilefant"
     logging: true
     verbose: 1
     debug: false
@@ -61,7 +61,7 @@ agent:
         "observation highlight",
       ]
     planning_command: ["branch", "prune"]
-    navigation_command: ["click", "type", "stop", "note", "go_back"]
+    navigation_command: ["click", "type", "select", "stop", "note", "go_back"]
     play:
       [
         "step",
@@ -129,7 +129,7 @@ env:
   prune: false
   max_browser_rows: 2000
   headless: false
-  relative_task_dir: "postmill/origin_passing"
+  relative_task_dir: "agilefant"
   task_ids: ["all"]
   viewport_size:
     width: 1280
